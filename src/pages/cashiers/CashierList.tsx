@@ -7,6 +7,7 @@ import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
 import { CrudHeader } from '../../components/ui/CrudHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdPointOfSale, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
@@ -38,21 +39,36 @@ const CashierList: React.FC = () => {
     },
   });
 
+  // ── Toggle Status mutation ─────────────
+  const toggleStatusMutation = useMutation({
+    mutationFn: (cashier: Cashier) => {
+      const payload = {
+        name: cashier.name,
+        branch_id: cashier.branch_id,
+        status: !cashier.status,
+      };
+      return cashierApi.update(cashier.id, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [CASHIERS_KEY] });
+    },
+  });
+
   // ── Client-side search filter ──────────
-  const filtered = search
+  const filtered = [...(search
     ? cashiers.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         String(c.id).includes(search) ||
         c.branch?.name.toLowerCase().includes(search.toLowerCase()))
-    : cashiers;
+    : cashiers)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
   const columns: ColumnDef<Cashier>[] = [
     {
       header: '#',
-      render: (row) => (
+      render: (_, __, globalIndex) => (
         <code className="text-xs font-mono bg-slate-100 dark:bg-slate-700 text-primary px-2 py-0.5 rounded-md">
-          {row.id}
+          {globalIndex}
         </code>
       )
     },
@@ -69,19 +85,32 @@ const CashierList: React.FC = () => {
       )
     },
     {
+      header: 'الحالة',
+      render: (row) => (
+        <button 
+          onClick={() => toggleStatusMutation.mutate(row)}
+          disabled={toggleStatusMutation.isPending}
+          className="hover:opacity-80 transition-opacity disabled:opacity-50"
+          title="تغيير الحالة"
+        >
+          <StatusBadge active={row.status} />
+        </button>
+      )
+    },
+    {
       header: 'الإجراءات',
       render: (row) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button onClick={() => setViewTarget(row)}
-            className="p-2 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200" title="عرض التفاصيل">
+            className="p-2 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50" title="عرض التفاصيل">
             <MdVisibility size={16} />
           </button>
-          <Link to={`/cashiers/edit/${row.id}`}
-            className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all duration-200" title="تعديل">
+          <Link to={`/dashboard/cashiers/edit/${row.id}`}
+            className="p-2 rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 transition-all shadow-sm border border-amber-100 dark:border-amber-800/50" title="تعديل">
             <MdEdit size={16} />
           </Link>
           <button onClick={() => setDeleteTarget(row)}
-            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200" title="حذف">
+            className="p-2 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 transition-all shadow-sm border border-rose-100 dark:border-rose-800/50" title="حذف">
             <MdDelete size={16} />
           </button>
         </div>
@@ -101,7 +130,7 @@ const CashierList: React.FC = () => {
         onSearchChange={setSearch}
         searchPlaceholder="ابحث باسم الماكينة، المعرف، أو الفرع..."
         onRefresh={() => refetch()}
-        addLink="/cashiers/add"
+        addLink="/dashboard/cashiers/add"
         addText="إضافة ماكينة كاشير"
       />
 
@@ -134,6 +163,7 @@ const CashierList: React.FC = () => {
           { label: 'اسم الماكينة', value: viewTarget?.name },
           { label: 'الفرع', value: viewTarget?.branch?.name || '—' },
           { label: 'رقم الموظف المرتبط', value: viewTarget?.cashier_man_id || '—' },
+          { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }
         ]}

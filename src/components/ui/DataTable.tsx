@@ -6,7 +6,7 @@ import type { PaginatedMeta } from '../../types';
 export interface ColumnDef<T> {
   header: string;
   accessorKey?: keyof T | string; // The dot-notation key (e.g. 'name.ar') or a top-level key
-  render?: (row: T) => React.ReactNode;
+  render?: (row: T, index: number, globalIndex: number) => React.ReactNode;
   className?: string; // e.g. 'text-right max-w-sm truncate'
 }
 
@@ -65,12 +65,14 @@ export function DataTable<T>({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {data.map((row) => (
+              {data.map((row, rowIndex) => {
+                const globalIndex = meta ? (meta.current_page - 1) * meta.per_page + rowIndex + 1 : rowIndex + 1;
+                return (
                 <tr key={keyExtractor(row)} className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors">
                   {columns.map((col, idx) => {
                     let cellContent: React.ReactNode = null;
                     if (col.render) {
-                      cellContent = col.render(row);
+                      cellContent = col.render(row, rowIndex, globalIndex);
                     } else if (col.accessorKey) {
                       cellContent = getNestedValue(row, col.accessorKey as string);
                     }
@@ -82,7 +84,7 @@ export function DataTable<T>({
                     );
                   })}
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

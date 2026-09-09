@@ -15,6 +15,15 @@ import {
   MdTableBar,
   MdClose,
   MdDashboard,
+  MdSoupKitchen,
+  MdPrecisionManufacturing,
+  MdLayers,
+  MdPayment,
+  MdFastfood,
+  MdReceiptLong,
+  MdLocalShipping,
+  MdMonetizationOn,
+  MdDeleteOutline,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -30,18 +39,27 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'الرئيسية', path: '/dashboard', icon: <MdDashboard size={20} /> },
-  { label: 'الإدارة', path: '/admin', icon: <MdAdminPanelSettings size={20} /> },
-  { label: 'الصلاحيات', path: '/auth', icon: <MdSecurity size={20} /> },
-  { label: 'الفروع', path: '/branches', icon: <MdStorefront size={20} /> },
-  { label: 'الكاشير', path: '/cashier', icon: <MdPointOfSale size={20} /> },
-  { label: 'موظفي الكاشير', path: '/cashier-employees', icon: <MdPeople size={20} /> },
-  { label: 'الأقسام', path: '/categories', icon: <MdCategory size={20} /> },
-  { label: 'التوصيل', path: '/delivery', icon: <MdDeliveryDining size={20} /> },
-  { label: 'الخصومات', path: '/discounts', icon: <MdDiscount size={20} /> },
-  { label: 'قائمة المصروفات', path: '/expenses', icon: <MdReceiptLong size={20} /> },
-  { label: 'الحسابات المالية', path: '/financial', icon: <MdAccountBalance size={20} /> },
-  { label: 'الصالات', path: '/halls', icon: <MdMeetingRoom size={20} /> },
-  { label: 'طاولات الصالة', path: '/hall-tables', icon: <MdTableBar size={20} /> },
+  { label: 'الإدارة', path: '/dashboard/admin', icon: <MdAdminPanelSettings size={20} /> },
+  { label: 'الصلاحيات', path: '/dashboard/auth', icon: <MdSecurity size={20} /> },
+  { label: 'الفروع', path: '/dashboard/branches', icon: <MdStorefront size={20} /> },
+  { label: 'الكاشير', path: '/dashboard/cashiers', icon: <MdPointOfSale size={20} /> },
+  { label: 'موظفي الكاشير', path: '/dashboard/cashier-men', icon: <MdPeople size={20} /> },
+  { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} /> },
+  { label: 'التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} /> },
+  { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} /> },
+  { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} /> },
+  { label: 'الحسابات المالية', path: '/dashboard/financial', icon: <MdAccountBalance size={20} /> },
+  { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} /> },
+  { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableBar size={20} /> },
+  { label: 'المطابخ', path: '/dashboard/kitchens', icon: <MdSoupKitchen size={20} /> },
+  { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} /> },
+  { label: 'وصفات المنتجات', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} /> },
+  { label: 'قوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} /> },
+  { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} /> },
+  { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} /> },
+  { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} /> },
+  { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} /> },
+  { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} /> },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
@@ -92,6 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <li key={item.path}>
                 <NavLink
                   to={item.path}
+                  end={item.path === '/dashboard'}
                   onClick={() => window.innerWidth < 1024 && onClose()}
                   className={({ isActive }) => `
                     flex items-center gap-3 px-3 py-2.5 rounded-xl

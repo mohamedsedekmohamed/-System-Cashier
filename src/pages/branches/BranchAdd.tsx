@@ -52,7 +52,7 @@ const BranchAdd: React.FC = () => {
     mutationFn: (data: BranchFormData) => branchApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [BRANCHES_KEY] });
-      setTimeout(() => navigate('/branches'), 1200);
+      setTimeout(() => navigate('/dashboard/branches'), 1200);
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -92,7 +92,7 @@ const BranchAdd: React.FC = () => {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link to="/branches" className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+        <Link to="/dashboard/branches" className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           <MdArrowForward size={20} />
         </Link>
         <div>
@@ -178,7 +178,7 @@ const BranchAdd: React.FC = () => {
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col sm:flex-row items-center gap-3 sm:justify-end">
-            <Link to="/branches"
+            <Link to="/dashboard/branches"
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm text-center">
               إلغاء
             </Link>

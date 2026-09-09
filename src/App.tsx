@@ -49,6 +49,51 @@ import HallTableList from './pages/hallTables/HallTableList';
 import HallTableAdd from './pages/hallTables/HallTableAdd';
 import HallTableEdit from './pages/hallTables/HallTableEdit';
 
+// Kitchens
+import KitchenList from './pages/kitchens/KitchenList';
+import KitchenAdd from './pages/kitchens/KitchenAdd';
+import KitchenEdit from './pages/kitchens/KitchenEdit';
+
+// Manufacturing
+import ManufacturingList from './pages/manufacturing/ManufacturingList';
+import ManufacturingAdd from './pages/manufacturing/ManufacturingAdd';
+import ManufacturingEdit from './pages/manufacturing/ManufacturingEdit';
+
+// Materials
+import MaterialList from './pages/materials/MaterialList';
+import MaterialAdd from './pages/materials/MaterialAdd';
+import MaterialEdit from './pages/materials/MaterialEdit';
+
+// Payment Methods
+import PaymentMethodList from './pages/paymentMethods/PaymentMethodList';
+import PaymentMethodAdd from './pages/paymentMethods/PaymentMethodAdd';
+import PaymentMethodEdit from './pages/paymentMethods/PaymentMethodEdit';
+
+// Products
+import ProductList from './pages/products/ProductList';
+import ProductAdd from './pages/products/ProductAdd';
+import ProductEdit from './pages/products/ProductEdit';
+
+// Product Recipes
+import ProductRecipeList from './pages/productRecipes/ProductRecipeList';
+import ProductRecipeAdd from './pages/productRecipes/ProductRecipeAdd';
+import ProductRecipeEdit from './pages/productRecipes/ProductRecipeEdit';
+
+// Suppliers
+import SupplierList from './pages/suppliers/SupplierList';
+import SupplierAdd from './pages/suppliers/SupplierAdd';
+import SupplierEdit from './pages/suppliers/SupplierEdit';
+
+// Taxes
+import TaxList from './pages/taxes/TaxList';
+import TaxAdd from './pages/taxes/TaxAdd';
+import TaxEdit from './pages/taxes/TaxEdit';
+
+// Wastes
+import WasteList from './pages/wastes/WasteList';
+import WasteAdd from './pages/wastes/WasteAdd';
+import WasteEdit from './pages/wastes/WasteEdit';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -61,55 +106,100 @@ function App() {
 
               {/* Protected */}
               <Route element={<PrivateRoute />}>
-                <Route element={<DashboardLayout />}>
-                  <Route path="/dashboard" element={<DashboardHome />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/admin" element={<AdminPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                  <Route index element={<DashboardHome />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="admin" element={<AdminPage />} />
+                  <Route path="auth" element={<AuthPage />} />
 
                   {/* Branches — full CRUD */}
-                  <Route path="/branches" element={<BranchList />} />
-                  <Route path="/branches/add" element={<BranchAdd />} />
-                  <Route path="/branches/edit/:id" element={<BranchEdit />} />
+                  <Route path="branches" element={<BranchList />} />
+                  <Route path="branches/add" element={<BranchAdd />} />
+                  <Route path="branches/edit/:id" element={<BranchEdit />} />
 
                   {/* Admins — full CRUD */}
-                  <Route path="/admins" element={<AdminList />} />
-                  <Route path="/admins/add" element={<AdminAdd />} />
-                  <Route path="/admins/edit/:id" element={<AdminEdit />} />
+                  <Route path="admins" element={<AdminList />} />
+                  <Route path="admins/add" element={<AdminAdd />} />
+                  <Route path="admins/edit/:id" element={<AdminEdit />} />
 
                   {/* Cashiers — full CRUD */}
-                  <Route path="/cashiers" element={<CashierList />} />
-                  <Route path="/cashiers/add" element={<CashierAdd />} />
-                  <Route path="/cashiers/edit/:id" element={<CashierEdit />} />
-                  <Route path="/cashier" element={<Navigate to="/cashiers" replace />} /> {/* Legacy fallback */}
+                  <Route path="cashiers" element={<CashierList />} />
+                  <Route path="cashiers/add" element={<CashierAdd />} />
+                  <Route path="cashiers/edit/:id" element={<CashierEdit />} />
+                  <Route path="cashier" element={<Navigate to="/dashboard/cashiers" replace />} /> {/* Legacy fallback */}
 
                   {/* Cashier Men — full CRUD */}
-                  <Route path="/cashier-men" element={<CashierManList />} />
-                  <Route path="/cashier-men/add" element={<CashierManAdd />} />
-                  <Route path="/cashier-men/edit/:id" element={<CashierManEdit />} />
-                  <Route path="/cashier-employees" element={<Navigate to="/cashier-men" replace />} /> {/* Legacy fallback */}
+                  <Route path="cashier-men" element={<CashierManList />} />
+                  <Route path="cashier-men/add" element={<CashierManAdd />} />
+                  <Route path="cashier-men/edit/:id" element={<CashierManEdit />} />
+                  <Route path="cashier-employees" element={<Navigate to="/dashboard/cashier-men" replace />} /> {/* Legacy fallback */}
 
                   {/* Deliveries — full CRUD */}
-                  <Route path="/deliveries" element={<DeliveryList />} />
-                  <Route path="/deliveries/add" element={<DeliveryAdd />} />
-                  <Route path="/deliveries/edit/:id" element={<DeliveryEdit />} />
-                  <Route path="/delivery" element={<Navigate to="/deliveries" replace />} /> {/* Legacy fallback */}
+                  <Route path="deliveries" element={<DeliveryList />} />
+                  <Route path="deliveries/add" element={<DeliveryAdd />} />
+                  <Route path="deliveries/edit/:id" element={<DeliveryEdit />} />
+                  <Route path="delivery" element={<Navigate to="/dashboard/deliveries" replace />} /> {/* Legacy fallback */}
 
                   {/* Expense Lists — full CRUD */}
-                  <Route path="/expense-lists" element={<ExpenseListList />} />
-                  <Route path="/expense-lists/add" element={<ExpenseListAdd />} />
-                  <Route path="/expense-lists/edit/:id" element={<ExpenseListEdit />} />
-                  <Route path="/expenses" element={<Navigate to="/expense-lists" replace />} /> {/* Legacy fallback */}
+                  <Route path="expense-lists" element={<ExpenseListList />} />
+                  <Route path="expense-lists/add" element={<ExpenseListAdd />} />
+                  <Route path="expense-lists/edit/:id" element={<ExpenseListEdit />} />
+                  <Route path="expenses" element={<Navigate to="/dashboard/expense-lists" replace />} /> {/* Legacy fallback */}
 
                   {/* Hall Tables — full CRUD */}
-                  <Route path="/hall-tables" element={<HallTableList />} />
-                  <Route path="/hall-tables/add" element={<HallTableAdd />} />
-                  <Route path="/hall-tables/edit/:id" element={<HallTableEdit />} />
+                  <Route path="hall-tables" element={<HallTableList />} />
+                  <Route path="hall-tables/add" element={<HallTableAdd />} />
+                  <Route path="hall-tables/edit/:id" element={<HallTableEdit />} />
 
-                  <Route path="/categories" element={<CategoryPage />} />
-                  <Route path="/discounts" element={<DiscountPage />} />
-                  <Route path="/financial" element={<FinancialAccountPage />} />
-                  <Route path="/halls" element={<HallPage />} />
+                  {/* Kitchens — full CRUD */}
+                  <Route path="kitchens" element={<KitchenList />} />
+                  <Route path="kitchens/add" element={<KitchenAdd />} />
+                  <Route path="kitchens/edit/:id" element={<KitchenEdit />} />
+
+                  {/* Manufacturing */}
+                  <Route path="manufacturing" element={<ManufacturingList />} />
+                  <Route path="manufacturing/add" element={<ManufacturingAdd />} />
+                  <Route path="manufacturing/edit/:id" element={<ManufacturingEdit />} />
+
+                  {/* Materials — full CRUD */}
+                  <Route path="materials" element={<MaterialList />} />
+                  <Route path="materials/add" element={<MaterialAdd />} />
+                  <Route path="materials/edit/:id" element={<MaterialEdit />} />
+
+                  {/* Payment Methods — full CRUD */}
+                  <Route path="payment-methods" element={<PaymentMethodList />} />
+                  <Route path="payment-methods/add" element={<PaymentMethodAdd />} />
+                  <Route path="payment-methods/edit/:id" element={<PaymentMethodEdit />} />
+
+                  {/* Products — full CRUD */}
+                  <Route path="products" element={<ProductList />} />
+                  <Route path="products/add" element={<ProductAdd />} />
+                  <Route path="products/edit/:id" element={<ProductEdit />} />
+
+                  {/* Product Recipes — full CRUD */}
+                  <Route path="product-recipes" element={<ProductRecipeList />} />
+                  <Route path="product-recipes/add" element={<ProductRecipeAdd />} />
+                  <Route path="product-recipes/edit/:id" element={<ProductRecipeEdit />} />
+
+                  {/* Suppliers — full CRUD */}
+                  <Route path="suppliers" element={<SupplierList />} />
+                  <Route path="suppliers/add" element={<SupplierAdd />} />
+                  <Route path="suppliers/edit/:id" element={<SupplierEdit />} />
+
+                  {/* Taxes — full CRUD */}
+                  <Route path="taxes" element={<TaxList />} />
+                  <Route path="taxes/add" element={<TaxAdd />} />
+                  <Route path="taxes/edit/:id" element={<TaxEdit />} />
+
+                  {/* Wastes — full CRUD */}
+                  <Route path="wastes" element={<WasteList />} />
+                  <Route path="wastes/add" element={<WasteAdd />} />
+                  <Route path="wastes/edit/:id" element={<WasteEdit />} />
+
+                  <Route path="categories" element={<CategoryPage />} />
+                  <Route path="discounts" element={<DiscountPage />} />
+                  <Route path="financial" element={<FinancialAccountPage />} />
+                  <Route path="halls" element={<HallPage />} />
                 </Route>
               </Route>
 

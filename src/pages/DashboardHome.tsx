@@ -74,7 +74,7 @@ const DashboardHome: React.FC = () => {
               {activeBranches} فرع نشط من أصل {total}
             </p>
           </div>
-          <Link to="/branches" className="flex items-center gap-1 text-sm text-primary font-medium hover:underline">
+          <Link to="/dashboard/branches" className="flex items-center gap-1 text-sm text-primary font-medium hover:underline">
             <span>عرض الكل</span>
             <MdArrowBack size={16} />
           </Link>

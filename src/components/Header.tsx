@@ -33,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       {/* Right: User Profile Link */}
       <div className="flex items-center gap-2">
         <Link 
-          to="/profile"
+          to="/dashboard/profile"
           className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 transition-colors rounded-xl px-3 py-1.5 border border-slate-100 dark:border-slate-700"
           title="الإعدادات والملف الشخصي"
         >

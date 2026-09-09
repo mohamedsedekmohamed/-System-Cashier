@@ -40,21 +40,21 @@ const DeliveryList: React.FC = () => {
   });
 
   // ── Client-side search filter ──────────
-  const filtered = search
+  const filtered = [...(search
     ? deliveries.filter(d =>
         d.name.toLowerCase().includes(search.toLowerCase()) ||
         String(d.id).includes(search) ||
         d.phone.includes(search) ||
         d.branch?.name.toLowerCase().includes(search.toLowerCase()))
-    : deliveries;
+    : deliveries)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
   const columns: ColumnDef<Delivery>[] = [
     {
       header: '#',
-      render: (row) => (
+      render: (_, __, globalIndex) => (
         <code className="text-xs font-mono bg-slate-100 dark:bg-slate-700 text-primary px-2 py-0.5 rounded-md">
-          {row.id}
+          {globalIndex}
         </code>
       )
     },
@@ -82,17 +82,17 @@ const DeliveryList: React.FC = () => {
     {
       header: 'الإجراءات',
       render: (row) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button onClick={() => setViewTarget(row)}
-            className="p-2 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200" title="عرض التفاصيل">
+            className="p-2 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50" title="عرض التفاصيل">
             <MdVisibility size={16} />
           </button>
-          <Link to={`/deliveries/edit/${row.id}`}
-            className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all duration-200" title="تعديل">
+          <Link to={`/dashboard/deliveries/edit/${row.id}`}
+            className="p-2 rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 transition-all shadow-sm border border-amber-100 dark:border-amber-800/50" title="تعديل">
             <MdEdit size={16} />
           </Link>
           <button onClick={() => setDeleteTarget(row)}
-            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200" title="حذف">
+            className="p-2 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 transition-all shadow-sm border border-rose-100 dark:border-rose-800/50" title="حذف">
             <MdDelete size={16} />
           </button>
         </div>
@@ -112,7 +112,7 @@ const DeliveryList: React.FC = () => {
         onSearchChange={setSearch}
         searchPlaceholder="ابحث باسم الطيار، رقم الهاتف، أو الفرع..."
         onRefresh={() => refetch()}
-        addLink="/deliveries/add"
+        addLink="/dashboard/deliveries/add"
         addText="إضافة طيار جديد"
       />
 
