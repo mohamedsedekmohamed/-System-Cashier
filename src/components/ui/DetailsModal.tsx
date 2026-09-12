@@ -1,6 +1,13 @@
 import React from 'react';
 import { MdClose } from 'react-icons/md';
 
+const renderSafe = (val: any) => {
+  if (val && typeof val === 'object' && !React.isValidElement(val)) {
+    return val.ar || val.en || String(val);
+  }
+  return val;
+};
+
 export interface DetailItem {
   label: string;
   value: React.ReactNode;
@@ -51,7 +58,7 @@ export const DetailsModal: React.FC<DetailsModalProps> = ({
                   {item.label}
                 </span>
                 <div className="text-slate-800 dark:text-slate-200 font-medium break-words">
-                  {item.value || <span className="text-slate-400 italic">غير متوفر</span>}
+                  {renderSafe(item.value) || <span className="text-slate-400 italic">غير متوفر</span>}
                 </div>
               </div>
             ))}

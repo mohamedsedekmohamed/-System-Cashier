@@ -11,6 +11,13 @@ import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdBadge, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
 
+const renderName = (name: any) => {
+  if (typeof name === 'object' && name !== null) {
+    return name.ar || name.en || '';
+  }
+  return name || '';
+};
+
 const CashierManList: React.FC = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -41,10 +48,11 @@ const CashierManList: React.FC = () => {
   // ── Client-side search filter ──────────
   const filtered = [...(search
     ? men.filter(m =>
-        m.name.toLowerCase().includes(search.toLowerCase()) ||
+        renderName(m.name).toLowerCase().includes(search.toLowerCase()) ||
         String(m.id).includes(search) ||
-        m.branch?.name.toLowerCase().includes(search.toLowerCase()) ||
-        m.cashier?.name.toLowerCase().includes(search.toLowerCase()))
+        renderName(m.branch?.name).toLowerCase().includes(search.toLowerCase()) ||
+        renderName(m.cashier?.name).toLowerCase().includes(search.toLowerCase()) ||
+        renderName(m.shift?.name).toLowerCase().includes(search.toLowerCase()))
     : men)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
@@ -59,13 +67,13 @@ const CashierManList: React.FC = () => {
     },
     {
       header: 'اسم الموظف',
-      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{row.name}</p>
+      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{renderName(row.name)}</p>
     },
     {
       header: 'الفرع',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-          {row.branch?.name || 'غير محدد'}
+          {renderName(row.branch?.name) || 'غير محدد'}
         </span>
       )
     },
@@ -73,7 +81,15 @@ const CashierManList: React.FC = () => {
       header: 'ماكينة الكاشير',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-          {row.cashier?.name || 'غير محدد'}
+          {renderName(row.cashier?.name) || 'غير محدد'}
+        </span>
+      )
+    },
+    {
+      header: 'الوردية',
+      render: (row) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+          {renderName(row.shift?.name) || 'غير محدد'}
         </span>
       )
     },
@@ -127,7 +143,7 @@ const CashierManList: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        itemName={deleteTarget?.name || ''}
+        itemName={renderName(deleteTarget?.name)}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
         onCancel={() => setDeleteTarget(null)}
@@ -140,9 +156,10 @@ const CashierManList: React.FC = () => {
         title="تفاصيل الموظف"
         details={[
           { label: 'الرقم التعريفي', value: viewTarget?.id },
-          { label: 'اسم الموظف', value: viewTarget?.name },
-          { label: 'الفرع', value: viewTarget?.branch?.name || '—' },
-          { label: 'الماكينة (الكاشير)', value: viewTarget?.cashier?.name || '—' },
+          { label: 'اسم الموظف', value: renderName(viewTarget?.name) },
+          { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
+          { label: 'الماكينة (الكاشير)', value: renderName(viewTarget?.cashier?.name) || '—' },
+          { label: 'الوردية', value: renderName(viewTarget?.shift?.name) || '—' },
           { label: 'الدور (Role)', value: viewTarget?.role },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }

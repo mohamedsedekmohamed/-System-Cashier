@@ -79,7 +79,7 @@ const CashierAdd: React.FC = () => {
                 اسم الكاشير <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
-                value={formData.name} onChange={handleChange}
+                value={typeof formData.name === 'object' && formData.name !== null ? (formData.name?.ar || formData.name?.en || '') : (formData.name || '')} onChange={handleChange}
                 placeholder="مثال: كاشير 1، كاشير الصالة..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
@@ -96,7 +96,7 @@ const CashierAdd: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? (branch.name?.ar || branch.name?.en || '') : (branch.name || '')}</option>
                 ))}
               </select>
             </div>
@@ -112,7 +112,7 @@ const CashierAdd: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الموظف --</option>
                 {cashierMen.map(man => (
-                  <option key={man.id} value={man.id}>{man.name}</option>
+                  <option key={man.id} value={man.id}>{typeof man.name === 'object' && man.name !== null ? (man.name?.ar || man.name?.en || '') : (man.name || '')}</option>
                 ))}
               </select>
             </div>

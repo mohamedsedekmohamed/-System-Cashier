@@ -58,7 +58,7 @@ const AdminList: React.FC = () => {
     },
     {
       header: 'اسم المدير',
-      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{row.name}</p>
+      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? (row.name?.ar || row.name?.en || '') : (row.name || '')}</p>
     },
     {
       header: 'الصلاحية',

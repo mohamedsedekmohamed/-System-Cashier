@@ -60,7 +60,7 @@ const SupplierList: React.FC = () => {
     {
       header: 'اسم المورد',
       render: (row) => (
-        <span className="font-bold text-slate-800 dark:text-white">{row.name}</span>
+        <span className="font-bold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? (row.name?.ar || row.name?.en || '') : (row.name || '')}</span>
       )
     },
     {

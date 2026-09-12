@@ -111,7 +111,7 @@ export const SelectField: React.FC<{
     >
       <option value="" disabled>-- {field.placeholder || `اختر ${field.label}`} --</option>
       {(field.options || []).map(opt => (
-        <option key={opt.id} value={opt.id}>{opt.name}</option>
+        <option key={opt.id} value={opt.id}>{typeof opt.name === 'object' && opt.name !== null ? (opt.name?.ar || opt.name?.en || '') : (opt.name || '')}</option>
       ))}
     </select>
   </FieldWrapper>
@@ -265,7 +265,7 @@ export const FileUploader: React.FC<{
           ) : value instanceof File ? (
             <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               <MdCheckCircle size={14} className="text-emerald-500 shrink-0" />
-              <span className="truncate">{value.name}</span>
+              <span className="truncate">{typeof value.name === 'object' && value.name !== null ? (value.name?.ar || value.name?.en || '') : (value.name || '')}</span>
               <button type="button" onClick={(e) => { e.stopPropagation(); onChange(field.key, null); }}
                 className="p-0.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 hover:text-red-500 transition-colors">
                 <MdClose size={14} />

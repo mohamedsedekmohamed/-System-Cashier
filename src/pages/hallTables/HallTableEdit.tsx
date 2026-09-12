@@ -93,7 +93,7 @@ const HallTableEdit: React.FC = () => {
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات الطاولة</h1>
             </div>
             <p className="text-sm text-slate-500 mt-1">
-              تعديل بيانات {tableData?.name}
+              تعديل بيانات {typeof tableData?.name === 'object' && tableData?.name !== null ? (tableData?.name?.ar || tableData?.name?.en || '') : (tableData?.name || '')}
             </p>
           </div>
         </div>
@@ -110,7 +110,7 @@ const HallTableEdit: React.FC = () => {
                 اسم الطاولة <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
-                value={formData.name} onChange={handleChange}
+                value={typeof formData.name === 'object' && formData.name !== null ? (formData.name?.ar || formData.name?.en || '') : (formData.name || '')} onChange={handleChange}
                 placeholder="مثال: طاولة رقم 1"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
@@ -126,7 +126,7 @@ const HallTableEdit: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map((branch: any) => (
-                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? (branch.name?.ar || branch.name?.en || '') : (branch.name || '')}</option>
                 ))}
               </select>
             </div>

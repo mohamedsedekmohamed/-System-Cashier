@@ -23,7 +23,14 @@ interface DataTableProps<T> {
 
 // A helper to safely get nested values like 'name.ar'
 const getNestedValue = (obj: any, path: string) => {
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  
+  // Handle LocalizedString objects (with 'ar' and 'en' keys)
+  if (value && typeof value === 'object' && 'ar' in value && 'en' in value) {
+    return value.ar || value.en || '';
+  }
+  
+  return value;
 };
 
 export function DataTable<T>({

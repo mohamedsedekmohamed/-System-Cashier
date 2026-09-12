@@ -47,7 +47,7 @@ const ProfilePage: React.FC = () => {
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 border-4 border-primary/20">
               <MdPerson size={48} className="text-primary" />
             </div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{user?.name}</h2>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{typeof user?.name === 'object' && user?.name !== null ? (user?.name?.ar || user?.name?.en || '') : (user?.name || '')}</h2>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full inline-block">
               {user?.role ?? 'مستخدم'}
             </p>

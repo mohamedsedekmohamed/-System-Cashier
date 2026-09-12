@@ -85,7 +85,7 @@ const ProductRecipeList: React.FC = () => {
     },
     {
       header: 'الحالة',
-      render: (row) => <StatusBadge status={row.status} />
+      render: (row) => <StatusBadge active={row.status} />
     },
     {
       header: 'الإجراءات',

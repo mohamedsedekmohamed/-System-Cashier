@@ -11,6 +11,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdPointOfSale, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { renderName } from '../../utils/helpers';
 
 const CashierList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -59,7 +60,7 @@ const CashierList: React.FC = () => {
     ? cashiers.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         String(c.id).includes(search) ||
-        c.branch?.name.toLowerCase().includes(search.toLowerCase()))
+        renderName(c.branch?.name).toLowerCase().includes(search.toLowerCase()))
     : cashiers)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
@@ -74,13 +75,13 @@ const CashierList: React.FC = () => {
     },
     {
       header: 'اسم ماكينة الكاشير',
-      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{row.name}</p>
+      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? (row.name?.ar || row.name?.en || '') : (row.name || '')}</p>
     },
     {
       header: 'الفرع',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-          {row.branch?.name || 'غير محدد'}
+          {renderName(row.branch?.name) || 'غير محدد'}
         </span>
       )
     },
@@ -161,7 +162,7 @@ const CashierList: React.FC = () => {
         details={[
           { label: 'الرقم التعريفي', value: viewTarget?.id },
           { label: 'اسم الماكينة', value: viewTarget?.name },
-          { label: 'الفرع', value: viewTarget?.branch?.name || '—' },
+          { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
           { label: 'رقم الموظف المرتبط', value: viewTarget?.cashier_man_id || '—' },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },

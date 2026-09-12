@@ -10,15 +10,14 @@ import DashboardLayout from './components/DashboardLayout';
 // Pages
 import LoginPage from './pages/LoginPage';
 import DashboardHome from './pages/DashboardHome';
-import AdminPage from './pages/admin/AdminPage';
-import AuthPage from './pages/auth/AuthPage';
+
+import ShiftList from './pages/shifts/ShiftList';
+import ShiftAdd from './pages/shifts/ShiftAdd';
+import ShiftEdit from './pages/shifts/ShiftEdit';
+
 import BranchList from './pages/branches/BranchList';
 import BranchAdd from './pages/branches/BranchAdd';
 import BranchEdit from './pages/branches/BranchEdit';
-import CategoryPage from './pages/category/CategoryPage';
-import DiscountPage from './pages/discount/DiscountPage';
-import FinancialAccountPage from './pages/financialAccount/FinancialAccountPage';
-import HallPage from './pages/hall/HallPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import AdminList from './pages/admins/AdminList';
 import AdminAdd from './pages/admins/AdminAdd';
@@ -53,6 +52,10 @@ import HallTableEdit from './pages/hallTables/HallTableEdit';
 import KitchenList from './pages/kitchens/KitchenList';
 import KitchenAdd from './pages/kitchens/KitchenAdd';
 import KitchenEdit from './pages/kitchens/KitchenEdit';
+
+// Orders
+import OrderList from './pages/orders/OrderList';
+import OrderAdd from './pages/orders/OrderAdd';
 
 // Manufacturing
 import ManufacturingList from './pages/manufacturing/ManufacturingList';
@@ -109,8 +112,6 @@ function App() {
                 <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<DashboardHome />} />
                   <Route path="profile" element={<ProfilePage />} />
-                  <Route path="admin" element={<AdminPage />} />
-                  <Route path="auth" element={<AuthPage />} />
 
                   {/* Branches — full CRUD */}
                   <Route path="branches" element={<BranchList />} />
@@ -156,6 +157,10 @@ function App() {
                   <Route path="kitchens/add" element={<KitchenAdd />} />
                   <Route path="kitchens/edit/:id" element={<KitchenEdit />} />
 
+                  {/* Orders */}
+                  <Route path="orders" element={<OrderList />} />
+                  <Route path="orders/add" element={<OrderAdd />} />
+
                   {/* Manufacturing */}
                   <Route path="manufacturing" element={<ManufacturingList />} />
                   <Route path="manufacturing/add" element={<ManufacturingAdd />} />
@@ -196,10 +201,10 @@ function App() {
                   <Route path="wastes/add" element={<WasteAdd />} />
                   <Route path="wastes/edit/:id" element={<WasteEdit />} />
 
-                  <Route path="categories" element={<CategoryPage />} />
-                  <Route path="discounts" element={<DiscountPage />} />
-                  <Route path="financial" element={<FinancialAccountPage />} />
-                  <Route path="halls" element={<HallPage />} />
+                  {/* Shifts — full CRUD */}
+                  <Route path="shifts" element={<ShiftList />} />
+                  <Route path="shifts/add" element={<ShiftAdd />} />
+                  <Route path="shifts/edit/:id" element={<ShiftEdit />} />
                 </Route>
               </Route>
 

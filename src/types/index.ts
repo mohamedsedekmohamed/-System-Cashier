@@ -17,3 +17,5 @@ export * from './manufacturing';
 export * from './material';
 export * from './paymentMethod';
 export * from './product';
+export * from './shift';
+export * from './order';

@@ -26,9 +26,18 @@ export interface CashierMan {
   name: string;
   cashier_id: number;
   branch_id: number;
+  shift_id?: number;
   role: string;
   branch: CashierManBranch;
   cashier: CashierMachine;
+  shift?: {
+    id: number;
+    name: { ar: string; en: string };
+    start_time: string;
+    end_time: string;
+    branch_id: number;
+    is_tomorrow: boolean;
+  } | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,11 +47,13 @@ export interface CashierManFormData {
   password?: string;
   cashier_id: number;
   branch_id: number;
+  shift_id: number;
 }
 
 export interface CashierManSelectOptions {
   branches: SelectOption[];
   cashiers: SelectOption[];
+  shifts?: { id: number; name: { ar: string; en: string }; branch_id: number; start_time: string; end_time: string; is_tomorrow: boolean }[];
 }
 
 export interface CashierManListResponse {

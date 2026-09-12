@@ -6,6 +6,13 @@ import type { CashierManFormData } from '../../types';
 import { MdArrowForward, MdSave, MdPersonOutline } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
+const renderName = (name: any) => {
+  if (typeof name === 'object' && name !== null) {
+    return name.ar || name.en || '';
+  }
+  return name || '';
+};
+
 const CashierManAdd: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -16,6 +23,7 @@ const CashierManAdd: React.FC = () => {
     password: '',
     cashier_id: 0,
     branch_id: 0,
+    shift_id: 0,
   });
 
   // ── Fetch Select Options ───────────────
@@ -26,6 +34,7 @@ const CashierManAdd: React.FC = () => {
 
   const branches = optionsData?.data?.branches ?? [];
   const cashiers = optionsData?.data?.cashiers ?? [];
+  const shifts = optionsData?.data?.shifts ?? [];
 
   // ── Create Mutation ────────────────────
   const mutation = useMutation({
@@ -41,13 +50,13 @@ const CashierManAdd: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: (name === 'cashier_id' || name === 'branch_id') ? Number(value) : value,
+      [name]: (name === 'cashier_id' || name === 'branch_id' || name === 'shift_id') ? Number(value) : value,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.password || !formData.cashier_id || !formData.branch_id) return;
+    if (!formData.name || !formData.password || !formData.cashier_id || !formData.branch_id || !formData.shift_id) return;
     mutation.mutate(formData);
   };
 
@@ -80,7 +89,7 @@ const CashierManAdd: React.FC = () => {
                 الاسم <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
-                value={formData.name} onChange={handleChange}
+                value={typeof formData.name === 'object' && formData.name !== null ? (formData.name?.ar || formData.name?.en || '') : (formData.name || '')} onChange={handleChange}
                 placeholder="اسم الموظف..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
@@ -108,8 +117,8 @@ const CashierManAdd: React.FC = () => {
                 disabled={isLoadingOptions}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الفرع --</option>
-                {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                {branches.map((branch: any) => (
+                  <option key={branch.id} value={branch.id}>{renderName(branch.name)}</option>
                 ))}
               </select>
             </div>
@@ -124,8 +133,24 @@ const CashierManAdd: React.FC = () => {
                 disabled={isLoadingOptions}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر ماكينة الكاشير --</option>
-                {cashiers.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                {cashiers.map((c: any) => (
+                  <option key={c.id} value={c.id}>{renderName(c.name)}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Shift */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                الوردية <span className="text-red-500">*</span>
+              </label>
+              <select name="shift_id" required
+                value={formData.shift_id || ''} onChange={handleChange}
+                disabled={isLoadingOptions}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
+                <option value="" disabled>-- اختر الوردية --</option>
+                {shifts.map((s: any) => (
+                  <option key={s.id} value={s.id}>{renderName(s.name)} - {s.start_time} إلى {s.end_time}</option>
                 ))}
               </select>
             </div>
@@ -145,7 +170,7 @@ const CashierManAdd: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.password || !formData.cashier_id || !formData.branch_id}
+          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.password || !formData.cashier_id || !formData.branch_id || !formData.shift_id}
             className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>

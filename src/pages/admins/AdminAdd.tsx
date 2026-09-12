@@ -78,7 +78,7 @@ const AdminAdd: React.FC = () => {
                 الاسم <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
-                value={formData.name} onChange={handleChange}
+                value={typeof formData.name === 'object' && formData.name !== null ? (formData.name?.ar || formData.name?.en || '') : (formData.name || '')} onChange={handleChange}
                 placeholder="اسم المدير..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
@@ -107,7 +107,7 @@ const AdminAdd: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الدور --</option>
                 {roles.map(role => (
-                  <option key={role.id} value={role.id}>{role.name}</option>
+                  <option key={role.id} value={role.id}>{typeof role.name === 'object' && role.name !== null ? (role.name?.ar || role.name?.en || '') : (role.name || '')}</option>
                 ))}
               </select>
             </div>

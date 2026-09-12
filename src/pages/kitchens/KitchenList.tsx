@@ -11,6 +11,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdSoupKitchen, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { renderName } from '../../utils/helpers';
 
 const KitchenList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -87,7 +88,7 @@ const KitchenList: React.FC = () => {
       header: 'الفرع',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-          {row.branch?.name || 'غير محدد'}
+          {renderName(row.branch?.name) || 'غير محدد'}
         </span>
       )
     },
@@ -170,7 +171,7 @@ const KitchenList: React.FC = () => {
           { label: 'اسم المطبخ (عربي)', value: viewTarget?.name?.ar },
           { label: 'اسم المطبخ (إنجليزي)', value: viewTarget?.name?.en },
           { label: 'اسم المستخدم', value: viewTarget?.user_name || '—' },
-          { label: 'الفرع', value: viewTarget?.branch?.name || '—' },
+          { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }

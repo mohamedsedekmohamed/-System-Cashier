@@ -41,7 +41,7 @@ const DashboardHome: React.FC = () => {
         }} />
         <div className="relative z-10">
           <p className="text-white/80 text-sm font-medium mb-1">أهلاً وسهلاً،</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">{user?.name} 👋</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">{typeof user?.name === 'object' && user?.name !== null ? (user?.name?.ar || user?.name?.en || '') : (user?.name || '')} 👋</h1>
           <p className="text-white/70 text-sm">{user?.role ?? 'مستخدم'} — لوحة التحكم الإدارية</p>
         </div>
         <div className="absolute -left-10 -bottom-10 w-40 h-40 rounded-full bg-white/10" />
@@ -104,7 +104,7 @@ const DashboardHome: React.FC = () => {
                 {branches.map(branch => (
                   <tr key={branch.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-800 dark:text-white">{branch.name}</p>
+                      <p className="font-semibold text-slate-800 dark:text-white">{typeof branch.name === 'object' && branch.name !== null ? (branch.name?.ar || branch.name?.en || '') : (branch.name || '')}</p>
                       <p className="text-xs text-slate-400">#{branch.id}</p>
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-[180px] truncate">{branch.address || '—'}</td>

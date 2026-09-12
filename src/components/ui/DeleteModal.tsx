@@ -2,6 +2,13 @@ import React from 'react';
 import { MdDelete } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
+const renderSafe = (val: any) => {
+  if (val && typeof val === 'object' && !React.isValidElement(val)) {
+    return val.ar || val.en || String(val);
+  }
+  return val;
+};
+
 interface DeleteModalProps {
   isOpen: boolean;
   itemName: string;
@@ -33,7 +40,7 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{title}</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
             {descriptionPrefix}{' '}
-            <strong className="text-slate-700 dark:text-slate-200">{itemName}</strong>؟
+            <strong className="text-slate-700 dark:text-slate-200">{renderSafe(itemName)}</strong>؟
             <br />لا يمكن التراجع عن هذا الإجراء.
           </p>
           <div className="flex gap-3 w-full">
