@@ -60,7 +60,7 @@ const DeliveryList: React.FC = () => {
     },
     {
       header: 'اسم الطيار',
-      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? (row.name?.ar || row.name?.en || '') : (row.name || '')}</p>
+      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? ((row.name as any)?.ar || (row.name as any)?.en || '') : (row.name || '')}</p>
     },
     {
       header: 'رقم الهاتف',

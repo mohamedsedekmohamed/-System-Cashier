@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { manufacturingApi, MANUFACTURING_KEY } from '../../services/manufacturingService';
 import type { ManufacturingList } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
@@ -12,6 +12,7 @@ import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdPrecisionManufacturing, MdVisibility, MdEdit, MdDelete } from 'react-icons/md';
 
 const ManufacturingListPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [viewTarget, setViewTarget] = useState<ManufacturingList | null>(null);

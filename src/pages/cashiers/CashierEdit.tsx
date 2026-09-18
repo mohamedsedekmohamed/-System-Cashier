@@ -85,7 +85,7 @@ const CashierEdit: React.FC = () => {
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات الكاشير</h1>
             </div>
             <p className="text-sm text-slate-500 mt-1">
-              تعديل بيانات {typeof cashier?.name === 'object' && cashier?.name !== null ? (cashier?.name?.ar || cashier?.name?.en || '') : (cashier?.name || '')}
+              تعديل بيانات {typeof cashier?.name === 'object' && cashier?.name !== null ? ((cashier?.name as any)?.ar || (cashier?.name as any)?.en || '') : (cashier?.name || '')}
             </p>
           </div>
         </div>
@@ -101,7 +101,7 @@ const CashierEdit: React.FC = () => {
                 اسم الكاشير <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
-                value={typeof formData.name === 'object' && formData.name !== null ? (formData.name?.ar || formData.name?.en || '') : (formData.name || '')} onChange={handleChange}
+                value={typeof formData.name === 'object' && formData.name !== null ? ((formData.name as any)?.ar || (formData.name as any)?.en || '') : (formData.name || '')} onChange={handleChange}
                 placeholder="مثال: كاشير 1..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
@@ -117,7 +117,7 @@ const CashierEdit: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? (branch.name?.ar || branch.name?.en || '') : (branch.name || '')}</option>
+                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || '')}</option>
                 ))}
               </select>
             </div>
@@ -132,7 +132,7 @@ const CashierEdit: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
                 <option value="" disabled>-- اختر الموظف --</option>
                 {cashierMen.map(man => (
-                  <option key={man.id} value={man.id}>{typeof man.name === 'object' && man.name !== null ? (man.name?.ar || man.name?.en || '') : (man.name || '')}</option>
+                  <option key={man.id} value={man.id}>{typeof man.name === 'object' && man.name !== null ? ((man.name as any)?.ar || (man.name as any)?.en || '') : (man.name || '')}</option>
                 ))}
               </select>
             </div>

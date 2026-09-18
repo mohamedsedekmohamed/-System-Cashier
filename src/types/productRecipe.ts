@@ -1,4 +1,10 @@
-import { Category } from './index';
+export interface Category {
+  id: number;
+  name: {
+    ar: string;
+    en: string;
+  };
+}
 
 export interface ProductRecipe {
   id: number;

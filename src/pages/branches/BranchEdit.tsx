@@ -128,7 +128,7 @@ const BranchEdit: React.FC = () => {
           </div>
           {branch && (
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              تعديل بيانات: <span className="font-semibold text-slate-700 dark:text-slate-300">{typeof branch.name === 'object' && branch.name !== null ? (branch.name?.ar || branch.name?.en || '') : (branch.name || '')}</span>
+              تعديل بيانات: <span className="font-semibold text-slate-700 dark:text-slate-300">{typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || '')}</span>
               <code className="mr-2 text-xs text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded">#{branch.id}</code>
             </p>
           )}
@@ -180,8 +180,8 @@ const BranchEdit: React.FC = () => {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Name */}
             <div className="md:col-span-2">
-              <Field id="edit-name" label="اسم الفرع" required error={typeof errors.name === 'object' && errors.name !== null ? (errors.name?.ar || errors.name?.en || '') : (errors.name || '')}>
-                <input id="edit-name" name="name" type="text" value={typeof form.name === 'object' && form.name !== null ? (form.name?.ar || form.name?.en || '') : (form.name || '')} onChange={handleChange}
+              <Field id="edit-name" label="اسم الفرع" required error={typeof errors.name === 'object' && errors.name !== null ? ((errors.name as any)?.ar || (errors.name as any)?.en || '') : (errors.name || '')}>
+                <input id="edit-name" name="name" type="text" value={typeof form.name === 'object' && form.name !== null ? ((form.name as any)?.ar || (form.name as any)?.en || '') : (form.name || '')} onChange={handleChange}
                   placeholder="اسم الفرع" disabled={isPending} className={inputClass(!!errors.name)} />
               </Field>
             </div>

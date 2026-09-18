@@ -177,7 +177,7 @@ const ShiftAdd: React.FC = () => {
                 <select id="branch_id" name="branch_id" value={form.branch_id} onChange={handleChange}
                   disabled={isPending || isLoadingOptions} className={inputClass(!!errors.branch_id)}>
                   <option value={0} disabled>اختر الفرع...</option>
-                  {branches.map(b => (
+                  {branches.map((b: any) => (
                     <option key={b.id} value={b.id}>{b.name?.ar || b.name?.en || b.name || `فرع ${b.id}`}</option>
                   ))}
                 </select>

@@ -18,6 +18,7 @@ export interface Cashier {
   cashier_man_id: number;
   branch_id: number;
   branch: CashierBranch;
+  status?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +27,7 @@ export interface CashierFormData {
   name: string;
   cashier_man_id: number;
   branch_id: number;
+  status?: boolean;
 }
 
 export interface CashierSelectOptions {

@@ -1,4 +1,4 @@
-import type { PaginatedMeta, SelectOption } from './common';
+import type { PaginatedMeta } from './common';
 
 export interface MaterialName {
   ar: string;

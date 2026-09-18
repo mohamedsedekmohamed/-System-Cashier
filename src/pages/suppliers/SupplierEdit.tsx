@@ -77,7 +77,7 @@ const SupplierEdit: React.FC = () => {
               <MdEdit size={24} className="text-primary" />
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات المورد</h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">تعديل {typeof supplier?.name === 'object' && supplier?.name !== null ? (supplier?.name?.ar || supplier?.name?.en || '') : (supplier?.name || '')}</p>
+            <p className="text-sm text-slate-500 mt-1">تعديل {typeof supplier?.name === 'object' && supplier?.name !== null ? ((supplier?.name as any)?.ar || (supplier?.name as any)?.en || '') : (supplier?.name || '')}</p>
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@ const SupplierEdit: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اسم المورد *</label>
-              <input type="text" name="name" required value={typeof formData.name === 'object' && formData.name !== null ? (formData.name?.ar || formData.name?.en || '') : (formData.name || '')} onChange={handleChange}
+              <input type="text" name="name" required value={typeof formData.name === 'object' && formData.name !== null ? ((formData.name as any)?.ar || (formData.name as any)?.en || '') : (formData.name || '')} onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:ring-primary" />
             </div>
             

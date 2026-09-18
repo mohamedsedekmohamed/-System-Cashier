@@ -1,14 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  MdAdminPanelSettings,
-  MdSecurity,
   MdStorefront,
   MdPointOfSale,
   MdPeople,
   MdDeliveryDining,
   MdReceiptLong,
-  MdTableBar,
   MdClose,
   MdDashboard,
   MdSoupKitchen,

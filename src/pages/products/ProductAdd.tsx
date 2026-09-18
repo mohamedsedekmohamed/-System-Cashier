@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productApi, PRODUCTS_KEY, PRODUCTS_SELECT_OPTIONS_KEY } from '../../services/productService';
-import type { ProductFormData, ProductVariation } from '../../types';
+import type { ProductFormData } from '../../types';
 import { MdArrowForward, MdSave, MdFastfood, MdAdd, MdDelete } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 

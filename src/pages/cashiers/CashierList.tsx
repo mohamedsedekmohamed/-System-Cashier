@@ -45,6 +45,7 @@ const CashierList: React.FC = () => {
     mutationFn: (cashier: Cashier) => {
       const payload = {
         name: cashier.name,
+        cashier_man_id: cashier.cashier_man_id,
         branch_id: cashier.branch_id,
         status: !cashier.status,
       };
@@ -75,7 +76,7 @@ const CashierList: React.FC = () => {
     },
     {
       header: 'اسم ماكينة الكاشير',
-      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? (row.name?.ar || row.name?.en || '') : (row.name || '')}</p>
+      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? ((row.name as any)?.ar || (row.name as any)?.en || '') : (row.name || '')}</p>
     },
     {
       header: 'الفرع',
@@ -94,7 +95,7 @@ const CashierList: React.FC = () => {
           className="hover:opacity-80 transition-opacity disabled:opacity-50"
           title="تغيير الحالة"
         >
-          <StatusBadge active={row.status} />
+          <StatusBadge active={!!row.status} />
         </button>
       )
     },
@@ -164,7 +165,7 @@ const CashierList: React.FC = () => {
           { label: 'اسم الماكينة', value: viewTarget?.name },
           { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
           { label: 'رقم الموظف المرتبط', value: viewTarget?.cashier_man_id || '—' },
-          { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
+          { label: 'الحالة', value: viewTarget ? <StatusBadge active={!!viewTarget.status} /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }
         ]}

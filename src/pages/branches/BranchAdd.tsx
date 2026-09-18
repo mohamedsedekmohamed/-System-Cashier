@@ -129,8 +129,8 @@ const BranchAdd: React.FC = () => {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Name */}
             <div className="md:col-span-2">
-              <Field id="name" label="اسم الفرع" required error={typeof errors.name === 'object' && errors.name !== null ? (errors.name?.ar || errors.name?.en || '') : (errors.name || '')}>
-                <input id="name" name="name" type="text" value={typeof form.name === 'object' && form.name !== null ? (form.name?.ar || form.name?.en || '') : (form.name || '')} onChange={handleChange}
+              <Field id="name" label="اسم الفرع" required error={typeof errors.name === 'object' && errors.name !== null ? ((errors.name as any)?.ar || (errors.name as any)?.en || '') : (errors.name || '')}>
+                <input id="name" name="name" type="text" value={typeof form.name === 'object' && form.name !== null ? ((form.name as any)?.ar || (form.name as any)?.en || '') : (form.name || '')} onChange={handleChange}
                   placeholder="مثال: فرع الرياض الرئيسي" disabled={isPending} className={inputClass(!!errors.name)} />
               </Field>
             </div>
