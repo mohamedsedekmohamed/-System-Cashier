@@ -50,7 +50,7 @@ const OrderAdd: React.FC = () => {
     formData.products.forEach(p => {
       subtotal += p.price; // price includes variations and addons in this logic
     });
-    
+
     // Simplistic calculation, can be adjusted based on real business rules
     const tax = subtotal * 0.15; // Assuming 15% tax
     const discount = formData.total_discount || 0;
@@ -75,7 +75,7 @@ const OrderAdd: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     const isNumber = ['shift_id', 'cashier_id', 'cashier_man_id', 'hall_table_id', 'total_discount'].includes(name);
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : (isNumber ? Number(value) : value),
@@ -84,13 +84,13 @@ const OrderAdd: React.FC = () => {
 
   const handleAddProduct = () => {
     if (!selectedProductId || !options?.products) return;
-    
+
     const productDef = options.products.find(p => p.id === selectedProductId);
     if (!productDef) return;
 
     let itemPrice = Number(productDef.price);
     const variationsArr: any[] = [];
-    
+
     // Process selected variations
     Object.entries(selectedVariations).forEach(([varIdStr, optId]) => {
       const varId = Number(varIdStr);
@@ -176,10 +176,10 @@ const OrderAdd: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
+
         {/* Left/Main Column: Order Info & Product Selection */}
         <div className="xl:col-span-2 space-y-6">
-          
+
           {/* General Information */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
@@ -242,12 +242,12 @@ const OrderAdd: React.FC = () => {
             <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
               إضافة منتج للطلب
             </h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">المنتج</label>
-                <select 
-                  value={selectedProductId} 
+                <select
+                  value={selectedProductId}
                   onChange={(e) => {
                     setSelectedProductId(Number(e.target.value));
                     setSelectedVariations({});
@@ -294,7 +294,7 @@ const OrderAdd: React.FC = () => {
                   <div className="flex flex-wrap gap-3">
                     {options.addons.map((addon: any) => (
                       <label key={addon.id} className="flex items-center gap-2 cursor-pointer bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-primary transition-colors">
-                        <input type="checkbox" 
+                        <input type="checkbox"
                           checked={selectedAddons.includes(addon.id)}
                           onChange={(e) => {
                             if (e.target.checked) setSelectedAddons(prev => [...prev, addon.id]);
@@ -329,12 +329,12 @@ const OrderAdd: React.FC = () => {
 
         {/* Right Column: Cart & Totals */}
         <div className="space-y-6">
-          
+
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 sticky top-6">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
               سلة المنتجات
             </h2>
-            
+
             <div className="space-y-3 min-h-[150px] max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
               {formData.products.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400 py-8">
@@ -350,7 +350,7 @@ const OrderAdd: React.FC = () => {
                         <p className="font-semibold text-slate-800 dark:text-white text-sm">{renderName(pDef?.name)}</p>
                         <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{prod.price} ج.م</p>
                       </div>
-                      
+
                       {prod.variations.map((v, i) => (
                         <p key={i} className="text-xs text-slate-500">
                           - خيار إضافي: +{v.options[0]?.price} ج.م
@@ -362,7 +362,7 @@ const OrderAdd: React.FC = () => {
                         </p>
                       ))}
                       {prod.note && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 italic">"{prod.note}"</p>}
-                      
+
                       <button type="button" onClick={() => handleRemoveProduct(idx)}
                         className="absolute -top-2 -right-2 bg-red-100 text-red-600 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200">
                         <MdDelete size={14} />
@@ -387,7 +387,7 @@ const OrderAdd: React.FC = () => {
                 <input type="number" name="total_discount" value={formData.total_discount || ''} onChange={handleChange}
                   className="w-24 px-2 py-1 text-right rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm" placeholder="0" />
               </div>
-              
+
               <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
                 <span className="font-bold text-slate-800 dark:text-white">الإجمالي النهائي:</span>
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formData.final_price.toFixed(2)} ج.م</span>
@@ -429,7 +429,7 @@ const OrderAdd: React.FC = () => {
               </button>
             </div>
           </div>
-          
+
         </div>
       </form>
     </div>

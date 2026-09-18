@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orderService, ORDERS_KEY } from '../../services/orderService';
@@ -18,17 +18,26 @@ const OrderList: React.FC = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
   const [viewTarget, setViewTarget] = useState<Order | null>(null);
   const perPage = 15;
 
+  // Debounce search input - البحث بعد توقف الكتابة بـ 400ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // رجوع للصفحة الأولى عند البحث
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: [ORDERS_KEY, activeTab, page, perPage],
+    queryKey: [ORDERS_KEY, activeTab, page, perPage, debouncedSearch],
     queryFn: () => {
-      if (activeTab === 'pos') return orderService.listPos(page, perPage);
-      if (activeTab === 'online') return orderService.listOnline(page, perPage);
-      return orderService.list(page, perPage);
+      const isPos = activeTab === 'pos' ? true : activeTab === 'online' ? false : undefined;
+      return orderService.list(page, perPage, isPos, debouncedSearch || undefined);
     },
     placeholderData: (prev) => prev,
     retry: 2, // محاولة مرتين فقط
@@ -45,12 +54,7 @@ const OrderList: React.FC = () => {
     },
   });
 
-  const filtered = [...(search
-    ? orders.filter(o =>
-        String(o.id).includes(search) ||
-        (o.name && renderName(o.name).toLowerCase().includes(search.toLowerCase())) ||
-        (o.phone && o.phone.includes(search)))
-    : orders)].sort((a, b) => b.id - a.id);
+  const filtered = [...orders].sort((a, b) => b.id - a.id);
 
   const columns: ColumnDef<Order>[] = [
     {

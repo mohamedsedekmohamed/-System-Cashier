@@ -14,46 +14,37 @@ export interface OrdersListResponse {
 }
 
 export const orderService = {
-  list: async (page: number = 1, perPage: number = 15, isPos?: boolean, moduleStr?: string, shiftId?: number): Promise<OrdersListResponse> => {
+  list: async (page: number = 1, perPage: number = 15, isPos?: boolean, search?: string, moduleStr?: string, shiftId?: number): Promise<OrdersListResponse> => {
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString(),
     });
     if (isPos !== undefined) params.append('is_pos', isPos ? '1' : '0');
+    if (search) params.append('search', search);
     if (moduleStr) params.append('module', moduleStr);
     if (shiftId) params.append('shift_id', shiftId.toString());
 
-    const { data } = await api.get(`/admin/orders?${params.toString()}`);
-    return data;
-  },
-
-  listPos: async (page: number = 1, perPage: number = 15): Promise<OrdersListResponse> => {
-    const { data } = await api.get(`/admin/orders/pos?page=${page}&per_page=${perPage}`);
-    return data;
-  },
-
-  listOnline: async (page: number = 1, perPage: number = 15): Promise<OrdersListResponse> => {
-    const { data } = await api.get(`/admin/orders/online?page=${page}&per_page=${perPage}`);
+    const { data } = await api.get(`/api/admin/orders?${params.toString()}`);
     return data;
   },
 
   getSelectOptions: async (): Promise<{ status: boolean; data: OrderSelectOptions }> => {
-    const { data } = await api.get('/admin/orders/select-options');
+    const { data } = await api.get('/api/admin/orders/select-options');
     return data;
   },
 
   get: async (id: string | number): Promise<{ data: Order }> => {
-    const { data } = await api.get(`/admin/orders/${id}`);
+    const { data } = await api.get(`/api/admin/orders/${id}`);
     return data;
   },
 
   create: async (payload: OrderFormData): Promise<{ data: Order; message: string }> => {
-    const { data } = await api.post('/admin/orders', payload);
+    const { data } = await api.post('/api/admin/orders', payload);
     return data;
   },
 
   delete: async (id: string | number): Promise<{ message: string }> => {
-    const { data } = await api.delete(`/admin/orders/${id}`);
+    const { data } = await api.delete(`/api/admin/orders/${id}`);
     return data;
   }
 };
