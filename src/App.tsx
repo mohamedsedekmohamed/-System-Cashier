@@ -56,6 +56,7 @@ import KitchenEdit from './pages/kitchens/KitchenEdit';
 // Orders
 import OrderList from './pages/orders/OrderList';
 import OrderAdd from './pages/orders/OrderAdd';
+import OrderEdit from './pages/orders/OrderEdit';
 
 // Manufacturing
 import ManufacturingList from './pages/manufacturing/ManufacturingList';
@@ -160,6 +161,7 @@ function App() {
                   {/* Orders */}
                   <Route path="orders" element={<OrderList />} />
                   <Route path="orders/add" element={<OrderAdd />} />
+                  <Route path="orders/edit/:id" element={<OrderEdit />} />
 
                   {/* Manufacturing */}
                   <Route path="manufacturing" element={<ManufacturingList />} />

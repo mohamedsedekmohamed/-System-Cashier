@@ -1,7 +1,13 @@
+export interface BranchLocationPoint {
+  lat: number;
+  lng: number;
+}
+
 export interface Branch {
   id: number;
   name: string;
   address: string;
+  location?: BranchLocationPoint[] | string;
   watts: string;
   facebook: string;
   status: boolean;
@@ -13,6 +19,7 @@ export interface Branch {
 export interface BranchFormData {
   name: string;
   address: string;
+  location: BranchLocationPoint[];
   watts: string;
   facebook: string;
   status: boolean;

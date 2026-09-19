@@ -102,11 +102,10 @@ const OrderList: React.FC = () => {
     {
       header: 'النوع',
       render: (row) => (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-          row.is_pos 
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${row.is_pos
             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
             : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-        }`}>
+          }`}>
           {row.is_pos ? <MdStore size={14} /> : <MdLanguage size={14} />}
           {row.is_pos ? 'نقطة بيع' : 'أونلاين'}
         </span>
@@ -185,11 +184,10 @@ const OrderList: React.FC = () => {
       <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-fit">
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => { setActiveTab(tab.id as TabType); setPage(1); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === tab.id 
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === tab.id
                 ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-            }`}>
+              }`}>
             {tab.icon}
             {tab.label}
           </button>

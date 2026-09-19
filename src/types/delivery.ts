@@ -1,8 +1,8 @@
-import type { PaginatedMeta, SelectOption } from './common';
+import type { PaginatedMeta, SelectOption, LocalizedString } from './common';
 
 export interface DeliveryBranch {
   id: number;
-  name: string;
+  name: string | LocalizedString;
   address: string;
   watts: string;
   facebook: string;
@@ -14,7 +14,7 @@ export interface DeliveryBranch {
 
 export interface Delivery {
   id: number;
-  name: string;
+  name: string | LocalizedString;
   phone: string;
   id_images: string[];
   branch_id: number;
@@ -28,6 +28,8 @@ export interface DeliveryFormData {
   phone: string;
   branch_id: number;
   id_images?: File[]; // For client-side form state
+  existing_images?: string[];
+  deleted_images?: string[];
 }
 
 export interface DeliverySelectOptions {

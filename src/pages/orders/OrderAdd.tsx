@@ -17,7 +17,7 @@ const OrderAdd: React.FC = () => {
     shift_id: 0,
     cashier_id: 0,
     cashier_man_id: 0,
-    hall_table_id: 0,
+    hall_table_id: null,
     module: 'takeaway',
     address: '',
     note: '',
@@ -31,12 +31,86 @@ const OrderAdd: React.FC = () => {
     products: []
   });
 
+  const [selectedBranchId, setSelectedBranchId] = useState<number>(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const { data: optionsData, isLoading: isLoadingOptions, isError, error, refetch } = useQuery({
     queryKey: ['orderSelectOptions'],
     queryFn: () => orderService.getSelectOptions(),
   });
 
   const options = optionsData?.data;
+  const branches = options?.branches ?? [];
+  const cashiers = options?.cashiers ?? [];
+  const shifts = options?.shifts ?? [];
+  const cashierMen = options?.cashier_men ?? [];
+  const hallTables = options?.hall_tables ?? [];
+
+  const filteredCashiers = selectedBranchId 
+    ? cashiers.filter((c: any) => c.branch_id === selectedBranchId)
+    : cashiers;
+
+  const filteredShifts = selectedBranchId 
+    ? shifts.filter((s: any) => s.branch_id === selectedBranchId)
+    : shifts;
+
+  const filteredCashierMen = selectedBranchId 
+    ? cashierMen.filter((m: any) => m.branch_id === selectedBranchId)
+    : cashierMen;
+
+  const filteredHallTables = selectedBranchId 
+    ? hallTables.filter((t: any) => t.branch_id === selectedBranchId)
+    : hallTables;
+
+  // Auto-select initial options when data loads
+  useEffect(() => {
+    if (options) {
+      if (cashiers.length > 0 && formData.cashier_id === 0) {
+        const firstCashier = cashiers[0];
+        const bId = firstCashier.branch_id || 0;
+        setSelectedBranchId(bId);
+        
+        const matchingShift = shifts.find((s: any) => s.branch_id === bId) || shifts[0];
+        const matchingMan = cashierMen.find((m: any) => m.branch_id === bId) || cashierMen[0];
+        
+        setFormData(prev => ({
+          ...prev,
+          cashier_id: firstCashier.id,
+          shift_id: matchingShift ? matchingShift.id : prev.shift_id,
+          cashier_man_id: matchingMan ? matchingMan.id : prev.cashier_man_id,
+        }));
+      }
+    }
+  }, [options]);
+
+  const handleBranchChange = (newBranchId: number) => {
+    setSelectedBranchId(newBranchId);
+    setValidationError(null);
+
+    setFormData(prev => {
+      const next = { ...prev };
+      if (newBranchId > 0) {
+        const bCashiers = cashiers.filter((c: any) => c.branch_id === newBranchId);
+        const bShifts = shifts.filter((s: any) => s.branch_id === newBranchId);
+        const bMen = cashierMen.filter((m: any) => m.branch_id === newBranchId);
+        const bTables = hallTables.filter((t: any) => t.branch_id === newBranchId);
+
+        if (!bCashiers.some((c: any) => c.id === next.cashier_id)) {
+          next.cashier_id = bCashiers.length > 0 ? bCashiers[0].id : 0;
+        }
+        if (!bShifts.some((s: any) => s.id === next.shift_id)) {
+          next.shift_id = bShifts.length > 0 ? bShifts[0].id : 0;
+        }
+        if (!bMen.some((m: any) => m.id === next.cashier_man_id)) {
+          next.cashier_man_id = bMen.length > 0 ? bMen[0].id : 0;
+        }
+        if (next.hall_table_id && !bTables.some((t: any) => t.id === next.hall_table_id)) {
+          next.hall_table_id = null;
+        }
+      }
+      return next;
+    });
+  };
 
   // Selected product state for the "add to cart" form
   const [selectedProductId, setSelectedProductId] = useState<number>(0);
@@ -74,7 +148,37 @@ const OrderAdd: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
-    const isNumber = ['shift_id', 'cashier_id', 'cashier_man_id', 'hall_table_id', 'total_discount'].includes(name);
+    setValidationError(null);
+
+    if (name === 'module') {
+      setFormData(prev => ({
+        ...prev,
+        module: value,
+        hall_table_id: value === 'dine_in' ? prev.hall_table_id : null,
+      }));
+      return;
+    }
+
+    if (name === 'hall_table_id') {
+      const valNum = Number(value);
+      setFormData(prev => ({
+        ...prev,
+        hall_table_id: valNum > 0 ? valNum : null,
+      }));
+      return;
+    }
+
+    if (name === 'cashier_id') {
+      const cashierId = Number(value);
+      const chosen = cashiers.find((c: any) => c.id === cashierId);
+      if (chosen?.branch_id && selectedBranchId !== chosen.branch_id) {
+        setSelectedBranchId(chosen.branch_id);
+      }
+      setFormData(prev => ({ ...prev, cashier_id: cashierId }));
+      return;
+    }
+
+    const isNumber = ['shift_id', 'cashier_man_id', 'total_discount'].includes(name);
 
     setFormData(prev => ({
       ...prev,
@@ -148,7 +252,42 @@ const OrderAdd: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(formData);
+    setValidationError(null);
+
+    if (formData.products.length === 0) {
+      setValidationError('يرجى إضافة منتج واحد على الأقل للطلب قبل التأكيد.');
+      return;
+    }
+
+    if (!formData.cashier_id || formData.cashier_id === 0) {
+      setValidationError('يرجى اختيار ماكينة الكاشير.');
+      return;
+    }
+
+    if (!formData.shift_id || formData.shift_id === 0) {
+      setValidationError('يرجى اختيار الوردية.');
+      return;
+    }
+
+    if (!formData.cashier_man_id || formData.cashier_man_id === 0) {
+      setValidationError('يرجى اختيار موظف الكاشير.');
+      return;
+    }
+
+    if (formData.module === 'dine_in' && (!formData.hall_table_id || formData.hall_table_id === 0)) {
+      setValidationError('يرجى اختيار الطاولة عند تحديد طريقة الطلب كـ صالة (Dine-in).');
+      return;
+    }
+
+    const payload: OrderFormData = {
+      ...formData,
+      cashier_id: Number(formData.cashier_id),
+      shift_id: Number(formData.shift_id),
+      cashier_man_id: Number(formData.cashier_man_id),
+      hall_table_id: formData.module === 'dine_in' && formData.hall_table_id ? Number(formData.hall_table_id) : null,
+    };
+
+    mutation.mutate(payload);
   };
 
   if (isLoadingOptions) return <LoadingSpinner text="جاري تحميل الخيارات..." />;
@@ -218,14 +357,24 @@ const OrderAdd: React.FC = () => {
 
               {formData.module === 'dine_in' && (
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الطاولة</label>
-                  <select name="hall_table_id" value={formData.hall_table_id} onChange={handleChange} required
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary">
-                    <option value={0} disabled>-- اختر الطاولة --</option>
-                    {options?.hall_tables?.map((ht: any) => (
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                    الطاولة <span className="text-red-500">*</span>
+                  </label>
+                  <select 
+                    name="hall_table_id" 
+                    value={formData.hall_table_id || ''} 
+                    onChange={handleChange} 
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  >
+                    <option value="" disabled>-- اختر الطاولة --</option>
+                    {filteredHallTables.map((ht: any) => (
                       <option key={ht.id} value={ht.id}>{renderName(ht.name)}</option>
                     ))}
                   </select>
+                  {filteredHallTables.length === 0 && (
+                    <p className="text-xs text-amber-500 mt-1">لا توجد طاولات متاحة لهذا الفرع</p>
+                  )}
                 </div>
               )}
             </div>
@@ -396,27 +545,122 @@ const OrderAdd: React.FC = () => {
 
             {/* Submission metadata */}
             <div className="mt-6 space-y-4">
+              {/* Branch Filter */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">الوردية</label>
-                <select name="shift_id" value={formData.shift_id} onChange={handleChange} required
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm">
-                  <option value={0} disabled>-- الوردية --</option>
-                  {options?.shifts?.map((s: any) => (
-                    <option key={s.id} value={s.id}>{renderName(s.name)}</option>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  الفرع
+                </label>
+                <select 
+                  value={selectedBranchId} 
+                  onChange={(e) => handleBranchChange(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  <option value={0}>-- كل الفروع --</option>
+                  {branches.map((b: any) => (
+                    <option key={b.id} value={b.id}>
+                      {renderName(b.name) || `فرع #${b.id}`}
+                    </option>
                   ))}
                 </select>
               </div>
+
+              {/* Cashier Machine */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">موظف الكاشير</label>
-                <select name="cashier_man_id" value={formData.cashier_man_id} onChange={handleChange} required
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm">
-                  <option value={0} disabled>-- الموظف --</option>
-                  {options?.cashier_men?.map((m: any) => (
-                    <option key={m.id} value={m.id}>{renderName(m.name)}</option>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  ماكينة الكاشير <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  name="cashier_id" 
+                  value={formData.cashier_id || 0} 
+                  onChange={handleChange} 
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  <option value={0} disabled>-- اختر ماكينة الكاشير --</option>
+                  {filteredCashiers.map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      {renderName(c.name)}
+                    </option>
                   ))}
                 </select>
+                {filteredCashiers.length === 0 && (
+                  <p className="text-xs text-amber-500 mt-1">لا توجد ماكينات كاشير متاحة</p>
+                )}
+              </div>
+
+              {/* Shift */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  الوردية <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  name="shift_id" 
+                  value={formData.shift_id || 0} 
+                  onChange={handleChange} 
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  <option value={0} disabled>-- الوردية --</option>
+                  {filteredShifts.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {renderName(s.name)} {s.start_time ? `(${s.start_time} - ${s.end_time})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {filteredShifts.length === 0 && (
+                  <p className="text-xs text-amber-500 mt-1">لا توجد ورديات متاحة لهذا الفرع</p>
+                )}
+              </div>
+
+              {/* Cashier Man */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  موظف الكاشير <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  name="cashier_man_id" 
+                  value={formData.cashier_man_id || 0} 
+                  onChange={handleChange} 
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  <option value={0} disabled>-- الموظف --</option>
+                  {filteredCashierMen.map((m: any) => (
+                    <option key={m.id} value={m.id}>
+                      {renderName(m.name)}
+                    </option>
+                  ))}
+                </select>
+                {filteredCashierMen.length === 0 && (
+                  <p className="text-xs text-amber-500 mt-1">لا يوجد موظفو كاشير لهذا الفرع</p>
+                )}
               </div>
             </div>
+
+            {/* Validation & Server Error Alerts */}
+            {validationError && (
+              <div className="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs">
+                {validationError}
+              </div>
+            )}
+
+            {mutation.isError && (
+              <div className="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs">
+                <p className="font-bold mb-1">تعذر إنشاء الطلب:</p>
+                <p>{(mutation.error as any)?.response?.data?.message || 'حدث خطأ أثناء حفظ الطلب، تأكد من ملء جميع الحقول المطلوبة.'}</p>
+                {(() => {
+                  const errs = (mutation.error as any)?.response?.data?.errors;
+                  if (!errs) return null;
+                  return (
+                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                      {Object.entries(errs).map(([k, msgs]: [string, any]) => (
+                        <li key={k}>{Array.isArray(msgs) ? msgs.join(', ') : String(msgs)}</li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </div>
+            )}
 
             <div className="mt-6">
               <button type="submit" disabled={mutation.isPending || formData.products.length === 0}

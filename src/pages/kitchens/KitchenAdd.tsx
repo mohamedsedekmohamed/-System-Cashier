@@ -5,6 +5,7 @@ import { kitchenApi, KITCHENS_KEY, KITCHENS_SELECT_OPTIONS_KEY } from '../../ser
 import type { KitchenFormData } from '../../types';
 import { MdArrowForward, MdSave, MdSoupKitchen } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
 
 const KitchenAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -148,7 +149,7 @@ const KitchenAdd: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{branch.name || `فرع ${branch.id}`}</option>
+                  <option key={branch.id} value={branch.id}>{renderName(branch.name) || `فرع #${branch.id}`}</option>
                 ))}
               </select>
             </div>

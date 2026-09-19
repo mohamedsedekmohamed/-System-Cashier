@@ -1,15 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deliveryApi, DELIVERIES_KEY, DELIVERIES_SELECT_OPTIONS_KEY } from '../../services/deliveryService';
 import type { DeliveryFormData } from '../../types';
-import { MdArrowForward, MdSave, MdDeliveryDining, MdUploadFile } from 'react-icons/md';
+import ImageUploadPreview from '../../components/ui/ImageUploadPreview';
+import { renderName } from '../../utils/helpers';
+import { MdArrowForward, MdSave, MdDeliveryDining } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 const DeliveryAdd: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<DeliveryFormData>({
@@ -39,19 +40,13 @@ const DeliveryAdd: React.FC = () => {
   // ── Handlers ───────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    let finalVal: any = value;
+    if (name === 'branch_id') finalVal = Number(value);
+    if (name === 'phone') finalVal = value.replace(/\D/g, '');
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'branch_id' ? Number(value) : value,
+      [name]: finalVal,
     }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFormData(prev => ({
-        ...prev,
-        id_images: Array.from(e.target.files as FileList),
-      }));
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -89,7 +84,7 @@ const DeliveryAdd: React.FC = () => {
                 الاسم <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
-                value={typeof formData.name === 'object' && formData.name !== null ? ((formData.name as any)?.ar || (formData.name as any)?.en || '') : (formData.name || '')} onChange={handleChange}
+                value={renderName(formData.name)} onChange={handleChange}
                 placeholder="اسم الطيار..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
@@ -100,10 +95,17 @@ const DeliveryAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 رقم الهاتف <span className="text-red-500">*</span>
               </label>
-              <input type="text" name="phone" required
-                value={formData.phone} onChange={handleChange}
+              <input 
+                type="tel" 
+                inputMode="numeric"
+                pattern="[0-9]*"
+                name="phone" 
+                required
+                value={formData.phone} 
+                onChange={handleChange}
                 placeholder="01xxxxxxxxx"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-mono text-left"
               />
             </div>
 
@@ -118,48 +120,20 @@ const DeliveryAdd: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || '')}</option>
+                  <option key={branch.id} value={branch.id}>{renderName(branch.name)}</option>
                 ))}
               </select>
             </div>
 
-            {/* Images Upload */}
+            {/* Images Upload with Live Preview */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                صور الهوية / الرخصة <span className="text-slate-400 font-normal text-xs">(اختياري)</span>
-              </label>
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl border-slate-300 dark:border-slate-600 hover:border-primary dark:hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-all">
-                <MdUploadFile size={32} className="text-slate-400 mb-2" />
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  اضغط هنا لاختيار الصور
-                </p>
-                <p className="text-xs text-slate-400 mt-1">يمكنك اختيار أكثر من صورة (JPG, PNG)</p>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden" 
-                />
-              </div>
-              
-              {/* Preview selected files */}
-              {formData.id_images && formData.id_images.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-xs font-semibold text-slate-500 mb-2">الملفات المحددة ({formData.id_images.length}):</h4>
-                  <ul className="space-y-1">
-                    {formData.id_images.map((file, idx) => (
-                      <li key={idx} className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                        {file.name}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <ImageUploadPreview
+                files={formData.id_images ?? []}
+                onChange={(files) => setFormData(prev => ({ ...prev, id_images: files }))}
+                label="صور الهوية / الرخصة"
+                hint="اضغط لاختيار الصور أو اسحبها هنا (JPG, PNG, WEBP)"
+                disabled={mutation.isPending}
+              />
             </div>
           </div>
         </div>

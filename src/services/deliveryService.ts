@@ -25,6 +25,18 @@ const buildFormData = (payload: DeliveryFormData, method: 'POST' | 'PUT' = 'POST
     });
   }
 
+  if (payload.existing_images !== undefined) {
+    payload.existing_images.forEach(img => {
+      formData.append('existing_images[]', img);
+    });
+  }
+
+  if (payload.deleted_images !== undefined && payload.deleted_images.length > 0) {
+    payload.deleted_images.forEach(img => {
+      formData.append('deleted_images[]', img);
+    });
+  }
+
   if (method === 'PUT') {
     formData.append('_method', 'PUT');
   }

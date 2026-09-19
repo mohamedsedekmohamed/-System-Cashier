@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { branchApi, BRANCHES_KEY } from '../../services/branchService';
 import type { BranchFormData } from '../../types';
+import MapLocationPicker, { type LocationPoint } from '../../components/ui/MapLocationPicker';
 import { MdArrowForward, MdStorefront, MdCheck } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
@@ -30,11 +31,7 @@ const Field: React.FC<{
   </div>
 );
 
-type FormErrors = Partial<Record<keyof BranchFormData, string>>;
-
-const INITIAL: BranchFormData = {
-  name: '', address: '', watts: '', facebook: '', status: true, password: '',
-};
+type FormErrors = Partial<Record<keyof BranchFormData | 'location', string>>;
 
 /* ══════════════════════════════════════════
    Main Component
@@ -43,7 +40,10 @@ const BranchAdd: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [form, setForm] = useState<BranchFormData>(INITIAL);
+  const [form, setForm] = useState<Omit<BranchFormData, 'location'>>({
+    name: '', address: '', watts: '', facebook: '', status: true, password: '',
+  });
+  const [locationPoints, setLocationPoints] = useState<LocationPoint[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -54,8 +54,22 @@ const BranchAdd: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [BRANCHES_KEY] });
       setTimeout(() => navigate('/dashboard/branches'), 1200);
     },
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+    onError: (err: any) => {
+      const resData = err?.response?.data;
+      if (resData?.errors) {
+        const fieldErrors: FormErrors = {};
+        for (const [key, msgs] of Object.entries(resData.errors)) {
+          if (Array.isArray(msgs) && msgs.length > 0) {
+            if (key.startsWith('location')) {
+              fieldErrors.location = msgs[0] as string;
+            } else {
+              fieldErrors[key as keyof BranchFormData] = msgs[0] as string;
+            }
+          }
+        }
+        setErrors(prev => ({ ...prev, ...fieldErrors }));
+      }
+      const msg = resData?.message;
       setApiError(msg || 'حدث خطأ أثناء إضافة الفرع.');
     },
   });
@@ -65,7 +79,19 @@ const BranchAdd: React.FC = () => {
     const e: FormErrors = {};
     if (!form.name.trim()) e.name = 'اسم الفرع مطلوب';
     if (!form.address.trim()) e.address = 'العنوان مطلوب';
-    if (!form.watts.trim()) e.watts = 'رقم الواتساب مطلوب';
+    
+    if (!form.watts.trim()) {
+      e.watts = 'رقم الواتساب مطلوب';
+    } else if (!/^\d+$/.test(form.watts.trim())) {
+      e.watts = 'رقم الواتساب يجب أن يحتوي على أرقام فقط بدون أحرف أو مسافات';
+    } else if (form.watts.trim().length < 8) {
+      e.watts = 'رقم الواتساب يجب ألا يقل عن 8 أرقام';
+    }
+
+    if (locationPoints.length === 0 || !locationPoints.some(p => p.lat && p.lng)) {
+      e.location = 'يرجى تحديد موقع الفرع على الخريطة بالضغط على المكان المطلوب';
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -74,7 +100,12 @@ const BranchAdd: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    let finalValue = value;
+    if (name === 'watts') {
+      // إجبار الإدخال على أرقام فقط
+      finalValue = value.replace(/\D/g, '');
+    }
+    setForm(prev => ({ ...prev, [name]: finalValue }));
     if (errors[name as keyof BranchFormData]) setErrors(prev => ({ ...prev, [name]: undefined }));
     setApiError(null);
   };
@@ -82,7 +113,11 @@ const BranchAdd: React.FC = () => {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    createMutation.mutate(form);
+
+    createMutation.mutate({
+      ...form,
+      location: locationPoints
+    });
   };
 
   const isPending = createMutation.isPending;
@@ -100,7 +135,7 @@ const BranchAdd: React.FC = () => {
             <MdStorefront size={22} className="text-primary" />
             <h1 className="text-xl font-bold text-slate-800 dark:text-white">إضافة فرع جديد</h1>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">أدخل بيانات الفرع الجديد</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">أدخل بيانات الفرع الجديد وحدد موقعه على الخريطة</p>
         </div>
       </div>
 
@@ -123,7 +158,7 @@ const BranchAdd: React.FC = () => {
       <form onSubmit={handleSubmit} noValidate>
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30">
-            <h2 className="font-bold text-slate-700 dark:text-slate-200 text-sm">بيانات الفرع</h2>
+            <h2 className="font-bold text-slate-700 dark:text-slate-200 text-sm">بيانات الفرع الأساسية والموقع</h2>
           </div>
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -137,16 +172,45 @@ const BranchAdd: React.FC = () => {
 
             {/* Address */}
             <div className="md:col-span-2">
-              <Field id="address" label="العنوان" required error={errors.address}>
+              <Field id="address" label="العنوان التفصيلي" required error={errors.address}>
                 <textarea id="address" name="address" rows={2} value={form.address} onChange={handleChange}
-                  placeholder="العنوان التفصيلي للفرع" disabled={isPending} className={`${inputClass(!!errors.address)} resize-none`} />
+                  placeholder="العنوان التفصيلي للفرع (المدينة، الحي، الشارع)" disabled={isPending} className={`${inputClass(!!errors.address)} resize-none`} />
               </Field>
             </div>
 
+            {/* Interactive Map Location Picker */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                تحديد موقع الفرع على الخريطة (Location) <span className="text-red-400">*</span>
+              </label>
+              <p className="text-xs text-slate-400 mb-3">اضغط على الخريطة لوضع علامة الفرع، أو اسحب العلامة، أو استخدم البحث وزر "موقعي الحالي"</p>
+              
+              <MapLocationPicker
+                points={locationPoints}
+                onChange={(pts) => {
+                  setLocationPoints(pts);
+                  if (errors.location) setErrors(prev => ({ ...prev, location: undefined }));
+                }}
+                error={errors.location}
+                allowMultiple={true}
+              />
+            </div>
+
             {/* WhatsApp */}
-            <Field id="watts" label="رقم الواتساب" required error={errors.watts} hint="رقم الواتساب الخاص بالفرع">
-              <input id="watts" name="watts" type="text" value={form.watts} onChange={handleChange}
-                placeholder="مثال: 966501234567" dir="ltr" disabled={isPending} className={`${inputClass(!!errors.watts)} text-left`} />
+            <Field id="watts" label="رقم الواتساب" required error={errors.watts} hint="أرقام فقط (مثال: 966501234567)">
+              <input 
+                id="watts" 
+                name="watts" 
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.watts} 
+                onChange={handleChange}
+                placeholder="أرقام فقط (مثال: 966501234567)" 
+                dir="ltr" 
+                disabled={isPending} 
+                className={`${inputClass(!!errors.watts)} text-left font-mono`} 
+              />
             </Field>
 
             {/* Facebook */}

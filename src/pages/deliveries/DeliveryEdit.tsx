@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deliveryApi, DELIVERIES_KEY } from '../../services/deliveryService';
 import type { DeliveryFormData } from '../../types';
+import ImageUploadPreview from '../../components/ui/ImageUploadPreview';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
-import { MdArrowForward, MdSave, MdEdit, MdUploadFile } from 'react-icons/md';
+import { renderName } from '../../utils/helpers';
+import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 const DeliveryEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<DeliveryFormData>({
@@ -31,17 +32,20 @@ const DeliveryEdit: React.FC = () => {
 
   const delivery = data?.data;
   const branches = data?.select_options?.branches ?? [];
-  const existingImages = delivery?.id_images ?? [];
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [deletedImages, setDeletedImages] = useState<string[]>([]);
 
   // Populate form when data arrives
   useEffect(() => {
     if (delivery) {
       setFormData({
-        name: delivery.name,
+        name: renderName(delivery.name),
         phone: delivery.phone,
         branch_id: delivery.branch_id,
         id_images: [], // we don't prepopulate with files, just keep empty for new uploads
       });
+      setExistingImages(delivery.id_images ?? []);
+      setDeletedImages([]);
     }
   }, [delivery]);
 
@@ -57,27 +61,42 @@ const DeliveryEdit: React.FC = () => {
   // ── Handlers ───────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    let finalVal: any = value;
+    if (name === 'branch_id') finalVal = Number(value);
+    if (name === 'phone') finalVal = value.replace(/\D/g, '');
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'branch_id' ? Number(value) : value,
+      [name]: finalVal,
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFormData(prev => ({
-        ...prev,
-        id_images: Array.from(e.target.files as FileList),
-      }));
+  const handleRemoveExisting = (indexToRemove: number) => {
+    const target = existingImages[indexToRemove];
+    setExistingImages(prev => prev.filter((_, i) => i !== indexToRemove));
+    if (target) {
+      setDeletedImages(prev => [...prev, target]);
     }
+  };
+
+  const handleClearAllExisting = () => {
+    setDeletedImages(prev => [...prev, ...existingImages]);
+    setExistingImages([]);
+  };
+
+  const handleRestoreExisting = () => {
+    setExistingImages(delivery?.id_images ?? []);
+    setDeletedImages([]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.branch_id) return;
     
-    // id_images is optional on edit. If empty array, it won't be sent or we send what we have.
-    mutation.mutate(formData);
+    mutation.mutate({
+      ...formData,
+      existing_images: existingImages,
+      deleted_images: deletedImages,
+    });
   };
 
   // ── Render States ──────────────────────
@@ -99,7 +118,7 @@ const DeliveryEdit: React.FC = () => {
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات الطيار</h1>
             </div>
             <p className="text-sm text-slate-500 mt-1">
-              تعديل بيانات {typeof delivery?.name === 'object' && delivery?.name !== null ? ((delivery?.name as any)?.ar || (delivery?.name as any)?.en || '') : (delivery?.name || '')}
+              تعديل بيانات {renderName(delivery?.name)}
             </p>
           </div>
         </div>
@@ -115,7 +134,7 @@ const DeliveryEdit: React.FC = () => {
                 الاسم <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
-                value={typeof formData.name === 'object' && formData.name !== null ? ((formData.name as any)?.ar || (formData.name as any)?.en || '') : (formData.name || '')} onChange={handleChange}
+                value={renderName(formData.name)} onChange={handleChange}
                 placeholder="اسم الطيار..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
@@ -126,10 +145,17 @@ const DeliveryEdit: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 رقم الهاتف <span className="text-red-500">*</span>
               </label>
-              <input type="text" name="phone" required
-                value={formData.phone} onChange={handleChange}
+              <input 
+                type="tel" 
+                inputMode="numeric"
+                pattern="[0-9]*"
+                name="phone" 
+                required
+                value={formData.phone} 
+                onChange={handleChange}
                 placeholder="01xxxxxxxxx"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-mono text-left"
               />
             </div>
 
@@ -143,62 +169,37 @@ const DeliveryEdit: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map((branch: any) => (
-                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || '')}</option>
+                  <option key={branch.id} value={branch.id}>{renderName(branch.name)}</option>
                 ))}
               </select>
             </div>
 
-            {/* Existing Images */}
-            {existingImages.length > 0 && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                  الصور الحالية
-                </label>
-                <div className="flex flex-wrap gap-4">
-                  {existingImages.map((imgUrl, idx) => (
-                    <a key={idx} href={imgUrl} target="_blank" rel="noopener noreferrer" className="block relative group">
-                      <img src={imgUrl} alt={`صورة هوية ${idx+1}`} className="w-24 h-24 object-cover rounded-xl border border-slate-200 shadow-sm" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Images Upload & Existing Preview */}
+            <div className="md:col-span-2 space-y-3">
+              <ImageUploadPreview
+                files={formData.id_images ?? []}
+                existingImages={existingImages}
+                onChange={(files) => setFormData(prev => ({ ...prev, id_images: files }))}
+                onRemoveExisting={handleRemoveExisting}
+                onClearAllExisting={handleClearAllExisting}
+                label="صور الهوية / الرخصة"
+                hint="اضغط لاختيار صور جديدة أو اسحبها هنا (JPG, PNG, WEBP)"
+                disabled={mutation.isPending}
+              />
 
-            {/* Images Upload */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                استبدال الصور <span className="text-slate-400 font-normal text-xs">(اختياري - اتركها فارغة للاحتفاظ بالصور القديمة)</span>
-              </label>
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl border-slate-300 dark:border-slate-600 hover:border-primary dark:hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-all">
-                <MdUploadFile size={32} className="text-slate-400 mb-2" />
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  اضغط هنا لاختيار صور جديدة
-                </p>
-                <p className="text-xs text-slate-400 mt-1">يمكنك اختيار أكثر من صورة (JPG, PNG)</p>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden" 
-                />
-              </div>
-              
-              {/* Preview selected files */}
-              {formData.id_images && formData.id_images.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-xs font-semibold text-slate-500 mb-2">الملفات الجديدة المحددة ({formData.id_images.length}):</h4>
-                  <ul className="space-y-1">
-                    {formData.id_images.map((file, idx) => (
-                      <li key={idx} className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                        {file.name}
-                      </li>
-                    ))}
-                  </ul>
+              {deletedImages.length > 0 && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-300 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">تنبيه:</span>
+                    <span>تم تحديد {deletedImages.length} {deletedImages.length === 1 ? 'صورة' : 'صور'} للحذف. اضغط على "حفظ التعديلات" بالأسفل لتأكيد الحذف نهائياً.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRestoreExisting}
+                    className="font-bold underline hover:text-amber-800 dark:hover:text-amber-200 cursor-pointer"
+                  >
+                    تراجع
+                  </button>
                 </div>
               )}
             </div>

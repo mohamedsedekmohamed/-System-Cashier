@@ -7,6 +7,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
 
 const KitchenEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,8 +38,8 @@ const KitchenEdit: React.FC = () => {
     if (kitchen) {
       setFormData({
         name: {
-          ar: kitchen.name?.ar || '',
-          en: kitchen.name?.en || '',
+          ar: typeof kitchen.name === 'object' && kitchen.name !== null ? (kitchen.name.ar || '') : (typeof kitchen.name === 'string' ? kitchen.name : ''),
+          en: typeof kitchen.name === 'object' && kitchen.name !== null ? (kitchen.name.en || '') : '',
         },
         user_name: kitchen.user_name || '',
         password: '', // Do not populate password
@@ -110,7 +111,7 @@ const KitchenEdit: React.FC = () => {
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات المطبخ</h1>
             </div>
             <p className="text-sm text-slate-500 mt-1">
-              تعديل بيانات {kitchen?.name?.ar}
+              تعديل بيانات {renderName(kitchen?.name)}
             </p>
           </div>
         </div>
@@ -181,7 +182,7 @@ const KitchenEdit: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{branch.name || `فرع ${branch.id}`}</option>
+                  <option key={branch.id} value={branch.id}>{renderName(branch.name) || `فرع #${branch.id}`}</option>
                 ))}
               </select>
             </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { branchApi, BRANCHES_KEY } from '../../services/branchService';
-import type { Branch } from '../../types';
+import type { Branch, BranchFormData, BranchLocationPoint } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
@@ -11,7 +11,7 @@ import { CopyButton } from '../../components/ui/CopyButton';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
-import { MdStorefront, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { MdStorefront, MdEdit, MdDelete, MdVisibility, MdOpenInNew } from 'react-icons/md';
 
 const BranchList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -43,10 +43,28 @@ const BranchList: React.FC = () => {
   // ── Toggle Status mutation ─────────────
   const toggleStatusMutation = useMutation({
     mutationFn: (branch: Branch) => {
-      const payload = {
-        name: branch.name,
+      let locArray: BranchLocationPoint[] = [];
+      if (Array.isArray(branch.location) && branch.location.length > 0) {
+        locArray = branch.location.map(p => ({ lat: Number(p.lat) || 0, lng: Number(p.lng) || 0 }));
+      } else if (typeof branch.location === 'string') {
+        try {
+          const parsed = JSON.parse(branch.location);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            locArray = parsed.map((p: any) => ({ lat: Number(p.lat) || 0, lng: Number(p.lng) || 0 }));
+          }
+        } catch {
+          // ignore
+        }
+      }
+      if (locArray.length === 0) {
+        locArray = [{ lat: 0, lng: 0 }];
+      }
+
+      const payload: BranchFormData = {
+        name: typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || ''),
         address: branch.address,
-        watts: branch.watts,
+        location: locArray,
+        watts: branch.watts ? String(branch.watts).replace(/\D/g, '') : '',
         facebook: branch.facebook,
         status: !branch.status,
       };
@@ -168,8 +186,33 @@ const BranchList: React.FC = () => {
         title="تفاصيل الفرع"
         details={[
           { label: 'الرقم التعريفي', value: viewTarget?.id },
-          { label: 'اسم الفرع', value: viewTarget?.name },
+          { label: 'اسم الفرع', value: typeof viewTarget?.name === 'object' && viewTarget?.name !== null ? ((viewTarget?.name as any)?.ar || (viewTarget?.name as any)?.en || '') : (viewTarget?.name || '') },
           { label: 'العنوان', value: viewTarget?.address },
+          { 
+            label: 'الموقع الجغرافي (Location)', 
+            value: Array.isArray(viewTarget?.location) && viewTarget.location.length > 0 ? (
+              <div className="space-y-1">
+                {viewTarget.location.map((p, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs">
+                    <span className="font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
+                      lat: {p.lat}, lng: {p.lng}
+                    </span>
+                    <a 
+                      href={`https://www.google.com/maps?q=${p.lat},${p.lng}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="text-primary hover:underline font-medium inline-flex items-center gap-0.5"
+                    >
+                      <MdOpenInNew size={14} />
+                      فتح الخريطة
+                    </a>
+                  </div>
+                ))}
+              </div>
+            ) : typeof viewTarget?.location === 'string' && viewTarget.location ? (
+              <a href={viewTarget.location} target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium">عرض الموقع على الخريطة ↗</a>
+            ) : '—' 
+          },
           { label: 'رقم الواتساب', value: viewTarget?.watts },
           { label: 'رابط فيسبوك', value: viewTarget?.facebook ? <a href={viewTarget.facebook} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">رابط الصفحة</a> : '—' },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },

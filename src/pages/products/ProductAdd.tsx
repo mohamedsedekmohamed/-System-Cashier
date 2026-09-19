@@ -3,8 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productApi, PRODUCTS_KEY, PRODUCTS_SELECT_OPTIONS_KEY } from '../../services/productService';
 import type { ProductFormData } from '../../types';
-import { MdArrowForward, MdSave, MdFastfood, MdAdd, MdDelete } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdFastfood } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { ProductVariationsSection } from '../../components/products/ProductVariationsSection';
 
 const ProductAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -69,62 +70,7 @@ const ProductAdd: React.FC = () => {
     }
   };
 
-  // ── Variations Builders ────────────────
-  const addVariation = () => {
-    setFormData(prev => ({
-      ...prev,
-      variations: [
-        ...prev.variations,
-        {
-          name: { ar: '', en: '' },
-          status: true,
-          required: true,
-          options: [{ name: { ar: '', en: '' }, price: 0, status: true }]
-        }
-      ]
-    }));
-  };
 
-  const updateVariation = (vIndex: number, field: string, val: any) => {
-    const newVars = [...formData.variations];
-    if (field.startsWith('name.')) {
-      const lang = field.split('.')[1] as 'ar' | 'en';
-      newVars[vIndex].name[lang] = val;
-    } else {
-      (newVars[vIndex] as any)[field] = val;
-    }
-    setFormData(prev => ({ ...prev, variations: newVars }));
-  };
-
-  const removeVariation = (vIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      variations: prev.variations.filter((_, i) => i !== vIndex)
-    }));
-  };
-
-  const addOption = (vIndex: number) => {
-    const newVars = [...formData.variations];
-    newVars[vIndex].options.push({ name: { ar: '', en: '' }, price: 0, status: true });
-    setFormData(prev => ({ ...prev, variations: newVars }));
-  };
-
-  const updateOption = (vIndex: number, oIndex: number, field: string, val: any) => {
-    const newVars = [...formData.variations];
-    if (field.startsWith('name.')) {
-      const lang = field.split('.')[1] as 'ar' | 'en';
-      newVars[vIndex].options[oIndex].name[lang] = val;
-    } else {
-      (newVars[vIndex].options[oIndex] as any)[field] = val;
-    }
-    setFormData(prev => ({ ...prev, variations: newVars }));
-  };
-
-  const removeOption = (vIndex: number, oIndex: number) => {
-    const newVars = [...formData.variations];
-    newVars[vIndex].options = newVars[vIndex].options.filter((_, i) => i !== oIndex);
-    setFormData(prev => ({ ...prev, variations: newVars }));
-  };
 
   // ── Submit ─────────────────────────────
   const handleSubmit = (e: React.FormEvent) => {
@@ -253,98 +199,11 @@ const ProductAdd: React.FC = () => {
           </div>
         </div>
 
-        {/* Variations Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">الإضافات والمتغيرات (Variations)</h2>
-            <button type="button" onClick={addVariation}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-sm">
-              <MdAdd size={18} />
-              إضافة مجموعة خيارات
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {formData.variations.map((variation, vIndex) => (
-              <div key={vIndex} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 relative">
-                <div className="absolute top-4 left-4">
-                  <button type="button" onClick={() => removeVariation(vIndex)}
-                    className="p-2 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg transition-colors" title="حذف المجموعة">
-                    <MdDelete size={20} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-12 md:pr-0">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">اسم المجموعة (عربي)</label>
-                    <input type="text" required value={variation.name.ar} onChange={(e) => updateVariation(vIndex, 'name.ar', e.target.value)}
-                      placeholder="مثال: الحجم، الإضافات..."
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary/50" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">اسم المجموعة (إنجليزي)</label>
-                    <input type="text" required value={variation.name.en} onChange={(e) => updateVariation(vIndex, 'name.en', e.target.value)}
-                      placeholder="Example: Size, Extras..." dir="ltr"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary/50 text-left" />
-                  </div>
-                </div>
-                
-                <div className="flex gap-6 mb-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={variation.required} onChange={(e) => updateVariation(vIndex, 'required', e.target.checked)}
-                      className="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300" />
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">إجباري (Required)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={variation.status} onChange={(e) => updateVariation(vIndex, 'status', e.target.checked)}
-                      className="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300" />
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">نشط (Active)</span>
-                  </label>
-                </div>
-
-                {/* Options */}
-                <div className="pl-4 border-r-2 border-slate-200 dark:border-slate-700 space-y-3">
-                  <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400">الخيارات المتاحة:</h4>
-                  {variation.options.map((option, oIndex) => (
-                    <div key={oIndex} className="flex flex-col md:flex-row gap-3 items-end bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                      <div className="flex-1 w-full">
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">خيار (عربي)</label>
-                        <input type="text" required value={option.name.ar} onChange={(e) => updateOption(vIndex, oIndex, 'name.ar', e.target.value)}
-                          className="w-full px-2 py-1.5 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-1 focus:ring-primary/50" />
-                      </div>
-                      <div className="flex-1 w-full">
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">خيار (إنجليزي)</label>
-                        <input type="text" required value={option.name.en} onChange={(e) => updateOption(vIndex, oIndex, 'name.en', e.target.value)} dir="ltr"
-                          className="w-full px-2 py-1.5 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-1 focus:ring-primary/50 text-left" />
-                      </div>
-                      <div className="w-full md:w-32">
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">السعر الإضافي</label>
-                        <input type="number" min="0" step="0.01" required value={option.price} onChange={(e) => updateOption(vIndex, oIndex, 'price', Number(e.target.value))}
-                          className="w-full px-2 py-1.5 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-1 focus:ring-primary/50" />
-                      </div>
-                      <div className="w-auto flex items-center justify-center pb-1.5">
-                        <button type="button" onClick={() => removeOption(vIndex, oIndex)} disabled={variation.options.length <= 1}
-                          className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded disabled:opacity-50" title="حذف الخيار">
-                          <MdDelete size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => addOption(vIndex)}
-                    className="text-xs font-semibold text-primary hover:text-primary-dark mt-2 flex items-center gap-1">
-                    <MdAdd size={14} /> إضافة خيار آخر
-                  </button>
-                </div>
-              </div>
-            ))}
-            
-            {formData.variations.length === 0 && (
-              <div className="text-center p-8 text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                لا توجد متغيرات مضافة لهذا المنتج. المنتجات التي تأتي بأحجام أو إضافات تحتاج إلى متغيرات.
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Variations & Addons Section */}
+        <ProductVariationsSection
+          variations={formData.variations}
+          onChange={(newVariations) => setFormData(prev => ({ ...prev, variations: newVariations }))}
+        />
 
         {/* Error message */}
         {mutation.isError && (

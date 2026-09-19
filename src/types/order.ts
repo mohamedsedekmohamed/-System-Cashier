@@ -46,7 +46,7 @@ export interface OrderFormData {
   shift_id: number;
   cashier_id: number;
   cashier_man_id: number;
-  hall_table_id: number;
+  hall_table_id: number | null;
   module: string;
   address: string;
   note: string;

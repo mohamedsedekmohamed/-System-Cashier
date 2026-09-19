@@ -10,6 +10,7 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { CopyButton } from '../../components/ui/CopyButton';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
+import { renderName } from '../../utils/helpers';
 import { MdDeliveryDining, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
 
 const DeliveryList: React.FC = () => {
@@ -42,10 +43,10 @@ const DeliveryList: React.FC = () => {
   // ── Client-side search filter ──────────
   const filtered = [...(search
     ? deliveries.filter(d =>
-        d.name.toLowerCase().includes(search.toLowerCase()) ||
+        renderName(d.name).toLowerCase().includes(search.toLowerCase()) ||
         String(d.id).includes(search) ||
-        d.phone.includes(search) ||
-        d.branch?.name.toLowerCase().includes(search.toLowerCase()))
+        (d.phone && d.phone.includes(search)) ||
+        renderName(d.branch?.name).toLowerCase().includes(search.toLowerCase()))
     : deliveries)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
@@ -60,7 +61,7 @@ const DeliveryList: React.FC = () => {
     },
     {
       header: 'اسم الطيار',
-      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? ((row.name as any)?.ar || (row.name as any)?.en || '') : (row.name || '')}</p>
+      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{renderName(row.name)}</p>
     },
     {
       header: 'رقم الهاتف',
@@ -75,7 +76,7 @@ const DeliveryList: React.FC = () => {
       header: 'الفرع',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-          {row.branch?.name || 'غير محدد'}
+          {renderName(row.branch?.name) || 'غير محدد'}
         </span>
       )
     },
@@ -129,7 +130,7 @@ const DeliveryList: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        itemName={deleteTarget?.name || ''}
+        itemName={renderName(deleteTarget?.name)}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
         onCancel={() => setDeleteTarget(null)}
@@ -142,9 +143,9 @@ const DeliveryList: React.FC = () => {
         title="تفاصيل الطيار"
         details={[
           { label: 'الرقم التعريفي', value: viewTarget?.id },
-          { label: 'اسم الطيار', value: viewTarget?.name },
+          { label: 'اسم الطيار', value: renderName(viewTarget?.name) },
           { label: 'رقم الهاتف', value: viewTarget?.phone },
-          { label: 'الفرع', value: viewTarget?.branch?.name || '—' },
+          { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' },
           { 

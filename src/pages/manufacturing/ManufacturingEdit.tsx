@@ -164,13 +164,13 @@ const ManufacturingEdit: React.FC = () => {
             <div className="md:col-span-2 flex gap-4">
               <button type="button" onClick={() => handleTargetTypeChange('product')}
                 className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex-1 border ${
-                  targetType === 'product' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  targetType === 'product' ? 'bg-primary/10 border-primary/40 text-primary shadow-2xs' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}>
                 تصنيع منتج جاهز
               </button>
               <button type="button" onClick={() => handleTargetTypeChange('recipe')}
                 className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex-1 border ${
-                  targetType === 'recipe' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  targetType === 'recipe' ? 'bg-primary/10 border-primary/40 text-primary shadow-2xs' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}>
                 تحضير وصفة (شبه مصنع)
               </button>
@@ -180,7 +180,7 @@ const ManufacturingEdit: React.FC = () => {
               <div className="md:col-span-1">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اختر المنتج *</label>
                 <select name="product_id" required value={formData.product_id || ''} onChange={handleMainChange} disabled={isLoadingOptions}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:ring-primary">
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
                   <option value="" disabled>-- اختر المنتج --</option>
                   {products.map(p => <option key={p.id} value={p.id}>{p.name?.ar}</option>)}
                 </select>
@@ -189,7 +189,7 @@ const ManufacturingEdit: React.FC = () => {
               <div className="md:col-span-1">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اختر الوصفة *</label>
                 <select name="product_recipe_id" required value={formData.product_recipe_id || ''} onChange={handleMainChange} disabled={isLoadingOptions}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:ring-primary">
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
                   <option value="" disabled>-- اختر الوصفة --</option>
                   {productRecipes.map(p => <option key={p.id} value={p.id}>{p.name?.ar}</option>)}
                 </select>
@@ -199,7 +199,7 @@ const ManufacturingEdit: React.FC = () => {
             <div className="md:col-span-1">
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الكمية المنتجة *</label>
               <input type="number" name="count" required min="1" value={formData.count} onChange={handleMainChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:ring-primary" />
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" />
             </div>
           </div>
         </div>
@@ -209,16 +209,16 @@ const ManufacturingEdit: React.FC = () => {
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white">المواد المستهلكة (الخامات)</h2>
             <button type="button" onClick={handleAddRecipeItem}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-semibold text-sm">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-sm">
               <MdAdd size={18} /> إضافة مادة
             </button>
           </div>
 
           <div className="space-y-4">
             {formData.recipes.map((item, index) => (
-              <div key={index} className="flex flex-col md:flex-row items-end gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <div key={index} className="flex flex-col md:flex-row items-end gap-4 p-4 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-2xs">
                 <div className="flex-1 w-full">
-                  <label className="block text-xs font-semibold mb-1.5">اختر مادة خام أو وصفة</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">اختر مادة خام أو وصفة *</label>
                   <select
                     value={item.material_id ? `m_${item.material_id}` : item.product_recipe_id ? `r_${item.product_recipe_id}` : ''}
                     onChange={(e) => {
@@ -227,28 +227,28 @@ const ManufacturingEdit: React.FC = () => {
                       else if (val.startsWith('r_')) handleRecipeChange(index, 'product_recipe_id', val.replace('r_', ''));
                     }}
                     required
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-primary text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary text-sm shadow-2xs transition-all"
                   >
-                    <option value="" disabled>-- اختر المادة --</option>
-                    <optgroup label="المواد الخام">
-                      {materials.map(m => <option key={`m_${m.id}`} value={`m_${m.id}`}>{m.name?.ar}</option>)}
+                    <option value="" disabled className="text-slate-400">-- اختر المادة --</option>
+                    <optgroup label="المواد الخام" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                      {materials.map(m => <option key={`m_${m.id}`} value={`m_${m.id}`} className="font-normal text-slate-800 dark:text-slate-100">{m.name?.ar}</option>)}
                     </optgroup>
-                    <optgroup label="وصفات شبه مصنعة">
-                      {productRecipes.map(r => <option key={`r_${r.id}`} value={`r_${r.id}`}>{r.name?.ar}</option>)}
+                    <optgroup label="وصفات شبه مصنعة" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                      {productRecipes.map(r => <option key={`r_${r.id}`} value={`r_${r.id}`} className="font-normal text-slate-800 dark:text-slate-100">{r.name?.ar}</option>)}
                     </optgroup>
                   </select>
                 </div>
 
-                <div className="w-full md:w-32">
-                  <label className="block text-xs font-semibold mb-1.5">الكمية</label>
+                <div className="w-full md:w-36">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">الكمية *</label>
                   <input type="number" min="1" step="0.01" required value={item.count}
                     onChange={(e) => handleRecipeChange(index, 'count', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-center text-sm" />
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-center font-bold text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary shadow-2xs transition-all" />
                 </div>
 
                 {formData.recipes.length > 1 && (
                   <button type="button" onClick={() => handleRemoveRecipeItem(index)}
-                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                    className="p-2.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors" title="حذف المادة">
                     <MdDelete size={20} />
                   </button>
                 )}

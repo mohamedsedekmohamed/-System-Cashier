@@ -43,6 +43,11 @@ export const orderService = {
     return data;
   },
 
+  update: async (id: string | number, payload: OrderFormData): Promise<{ data: Order; message: string }> => {
+    const { data } = await api.put(`/api/admin/orders/${id}`, payload);
+    return data;
+  },
+
   delete: async (id: string | number): Promise<{ message: string }> => {
     const { data } = await api.delete(`/api/admin/orders/${id}`);
     return data;
