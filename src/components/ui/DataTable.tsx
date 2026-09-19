@@ -98,20 +98,21 @@ export function DataTable<T>({
       )}
 
       {/* Pagination */}
-      {meta && meta.last_page > 1 && onPageChange && (
+      {meta && onPageChange && data.length > 0 && (
         <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between mt-auto">
           <p className="text-xs text-slate-400">
-            صفحة {meta.current_page} من {meta.last_page} — إجمالي {meta.total} عنصر
+            صفحة {meta.current_page} من {Math.max(1, meta.last_page)} — إجمالي {meta.total} عنصر
           </p>
           <div className="flex items-center gap-1">
             <button 
               onClick={() => onPageChange(Math.max(1, meta.current_page - 1))} 
-              disabled={meta.current_page === 1}
+              disabled={meta.current_page <= 1}
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="الصفحة السابقة"
             >
               <MdChevronRight size={18} />
             </button>
-            {Array.from({ length: meta.last_page }, (_, i) => i + 1)
+            {Array.from({ length: Math.max(1, meta.last_page) }, (_, i) => i + 1)
               .filter(p => p === 1 || p === meta.last_page || Math.abs(p - meta.current_page) <= 1)
               .reduce<(number | 'dots')[]>((acc, p, i, arr) => {
                 if (i > 0 && p - (arr[i - 1]) > 1) acc.push('dots');
@@ -125,10 +126,12 @@ export function DataTable<T>({
                   <button 
                     key={item} 
                     onClick={() => onPageChange(item as number)}
+                    disabled={meta.last_page <= 1}
                     className={`w-8 h-8 rounded-lg text-xs font-bold transition-all duration-200
                       ${meta.current_page === item
                         ? 'bg-primary text-white shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}
+                      ${meta.last_page <= 1 ? 'cursor-default' : ''}`}
                   >
                     {item}
                   </button>
@@ -136,8 +139,9 @@ export function DataTable<T>({
               )}
             <button 
               onClick={() => onPageChange(Math.min(meta.last_page, meta.current_page + 1))} 
-              disabled={meta.current_page === meta.last_page}
+              disabled={meta.current_page >= meta.last_page}
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="الصفحة التالية"
             >
               <MdChevronLeft size={18} />
             </button>
