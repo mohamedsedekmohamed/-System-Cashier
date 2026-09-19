@@ -78,14 +78,24 @@ const WasteEdit: React.FC = () => {
             بيانات الهالك
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800">
-            <div>
-              <span className="block text-xs font-semibold text-slate-500 mb-1">الوصفة / المنتج</span>
-              <p className="font-bold text-slate-800 dark:text-slate-200">{waste?.product_recipe?.name?.ar}</p>
-            </div>
-            <div>
-              <span className="block text-xs font-semibold text-slate-500 mb-1">المادة المهدرة</span>
-              <p className="font-bold text-slate-800 dark:text-slate-200">{waste?.material?.name?.ar}</p>
-            </div>
+            {waste?.product_recipe ? (
+              <div>
+                <span className="block text-xs font-semibold text-slate-500 mb-1">الوصفة / المنتج المهدر</span>
+                <p className="font-bold text-slate-800 dark:text-slate-200">{waste.product_recipe.name?.ar || waste.product_recipe.name?.en || '—'}</p>
+              </div>
+            ) : null}
+            {waste?.material ? (
+              <div>
+                <span className="block text-xs font-semibold text-slate-500 mb-1">المادة الخام المهدرة</span>
+                <p className="font-bold text-slate-800 dark:text-slate-200">{waste.material.name?.ar || waste.material.name?.en || '—'}</p>
+              </div>
+            ) : null}
+            {!waste?.product_recipe && !waste?.material ? (
+              <div>
+                <span className="block text-xs font-semibold text-slate-500 mb-1">العنصر المهدر</span>
+                <p className="font-bold text-slate-800 dark:text-slate-200">—</p>
+              </div>
+            ) : null}
           </div>
 
           <div className="md:w-1/2">

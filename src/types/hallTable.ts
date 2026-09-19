@@ -2,13 +2,14 @@ import type { PaginatedMeta, LocalizedString } from './common';
 
 export interface BranchOption {
   id: number;
-  name: string;
+  name: string | LocalizedString | null;
   role?: string;
 }
 
 export interface HallOption {
   id: number;
   name: LocalizedString;
+  branch_id?: number;
 }
 
 export interface HallTable {
@@ -17,7 +18,7 @@ export interface HallTable {
   branch_id: number;
   branch: {
     id: number;
-    name: string;
+    name: string | LocalizedString | null;
   };
   hall_id: number;
   hall: {
@@ -25,6 +26,7 @@ export interface HallTable {
     name: LocalizedString;
   };
   status: boolean;
+  qr?: string | null;
   created_at: string;
   updated_at: string;
 }

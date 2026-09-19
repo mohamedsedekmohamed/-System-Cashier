@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hallTableApi, HALL_TABLES_KEY, HALL_TABLES_SELECT_OPTIONS_KEY } from '../../services/hallTableService';
 import type { HallTablePayload } from '../../types';
 import { MdArrowForward, MdSave, MdTableRestaurant } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
 
 const HallTableAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +28,14 @@ const HallTableAdd: React.FC = () => {
   const branches = optionsData?.data?.branches ?? [];
   const halls = optionsData?.data?.halls ?? [];
 
+  // Filter halls based on chosen branch
+  const filteredHalls = useMemo(() => {
+    if (!formData.branch_id) return [];
+    const hallsHaveBranchId = halls.some((h: any) => h.branch_id !== undefined && h.branch_id !== null);
+    if (!hallsHaveBranchId) return halls;
+    return halls.filter(hall => Number(hall.branch_id) === Number(formData.branch_id));
+  }, [halls, formData.branch_id]);
+
   // ── Create Mutation ────────────────────
   const mutation = useMutation({
     mutationFn: hallTableApi.create,
@@ -43,6 +52,13 @@ const HallTableAdd: React.FC = () => {
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
+    } else if (name === 'branch_id') {
+      const selectedBranchId = Number(value);
+      setFormData(prev => ({
+        ...prev,
+        branch_id: selectedBranchId,
+        hall_id: 0, // Reset selected hall when branch changes
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -104,7 +120,9 @@ const HallTableAdd: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || '')}</option>
+                  <option key={branch.id} value={branch.id}>
+                    {renderName(branch.name) || `فرع #${branch.id}`}
+                  </option>
                 ))}
               </select>
             </div>
@@ -116,13 +134,27 @@ const HallTableAdd: React.FC = () => {
               </label>
               <select name="hall_id" required
                 value={formData.hall_id || ''} onChange={handleChange}
-                disabled={isLoadingOptions}
+                disabled={isLoadingOptions || !formData.branch_id || filteredHalls.length === 0}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
-                <option value="" disabled>-- اختر الصالة --</option>
-                {halls.map(hall => (
-                  <option key={hall.id} value={hall.id}>{hall.name.ar}</option>
+                <option value="" disabled>
+                  {!formData.branch_id 
+                    ? '-- اختر الفرع أولاً --' 
+                    : filteredHalls.length === 0 
+                      ? '-- لا توجد صالات لهذا الفرع --' 
+                      : '-- اختر الصالة --'}
+                </option>
+                {filteredHalls.map(hall => (
+                  <option key={hall.id} value={hall.id}>
+                    {renderName(hall.name) || `صالة #${hall.id}`}
+                  </option>
                 ))}
               </select>
+              {!formData.branch_id && (
+                <p className="text-xs text-slate-400 mt-1.5">اختر الفرع أولاً لتحديد الصالات المتاحة</p>
+              )}
+              {formData.branch_id > 0 && filteredHalls.length === 0 && (
+                <p className="text-xs text-amber-500 dark:text-amber-400 mt-1.5">لا توجد صالات تابعة لهذا الفرع حالياً</p>
+              )}
             </div>
 
             {/* Status */}

@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { hallTableApi, HALL_TABLES_KEY } from '../../services/hallTableService';
+import { hallTableApi, HALL_TABLES_KEY, HALL_TABLES_SELECT_OPTIONS_KEY } from '../../services/hallTableService';
 import type { HallTablePayload } from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
 
 const HallTableEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,18 +29,62 @@ const HallTableEdit: React.FC = () => {
     enabled: !!id,
   });
 
+  // ── Fetch Select Options (fallback / complete list) ─────
+  const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
+    queryKey: [HALL_TABLES_SELECT_OPTIONS_KEY],
+    queryFn: hallTableApi.getSelectOptions,
+  });
+
   const tableData = data?.data;
-  const branches = data?.select_options?.branches ?? [];
-  const halls = data?.select_options?.halls ?? [];
+
+  // Always prefer the rich select-options endpoint which contains branch_id for every hall
+  const branches = optionsData?.data?.branches?.length 
+    ? optionsData.data.branches 
+    : (data?.select_options?.branches ?? []);
+
+  const halls = optionsData?.data?.halls?.length 
+    ? optionsData.data.halls 
+    : (data?.select_options?.halls ?? []);
+
+  // Filter halls based on chosen branch
+  const filteredHalls = useMemo(() => {
+    if (!formData.branch_id) return [];
+
+    const hallsHaveBranchId = halls.some((h: any) => h.branch_id !== undefined && h.branch_id !== null);
+
+    let list = hallsHaveBranchId
+      ? halls.filter((hall: any) => Number(hall.branch_id) === Number(formData.branch_id))
+      : halls;
+
+    // Guarantee the table's current hall is present in the list if on the same branch
+    if (
+      tableData &&
+      tableData.hall_id &&
+      Number(formData.branch_id) === Number(tableData.branch_id)
+    ) {
+      const exists = list.some((h: any) => Number(h.id) === Number(tableData.hall_id));
+      if (!exists) {
+        const currentHallObj =
+          halls.find((h: any) => Number(h.id) === Number(tableData.hall_id)) ||
+          tableData.hall ||
+          { id: tableData.hall_id, name: { ar: `صالة #${tableData.hall_id}` }, branch_id: tableData.branch_id };
+        list = [currentHallObj, ...list];
+      }
+    }
+
+    return list;
+  }, [halls, formData.branch_id, tableData]);
 
   // Populate form when data arrives
   useEffect(() => {
     if (tableData) {
       setFormData({
-        name: tableData.name,
-        branch_id: tableData.branch_id,
-        hall_id: tableData.hall_id,
-        status: tableData.status,
+        name: typeof tableData.name === 'object' && tableData.name !== null 
+          ? ((tableData.name as any)?.ar || (tableData.name as any)?.en || '') 
+          : (tableData.name || ''),
+        branch_id: Number(tableData.branch_id) || 0,
+        hall_id: Number(tableData.hall_id) || 0,
+        status: Boolean(tableData.status),
       });
     }
   }, [tableData]);
@@ -60,6 +105,17 @@ const HallTableEdit: React.FC = () => {
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
+    } else if (name === 'branch_id') {
+      const selectedBranchId = Number(value);
+      setFormData(prev => {
+        const currentHall = halls.find((h: any) => Number(h.id) === Number(prev.hall_id));
+        const keepCurrentHall = currentHall && Number(currentHall.branch_id) === selectedBranchId;
+        return {
+          ...prev,
+          branch_id: selectedBranchId,
+          hall_id: keepCurrentHall ? prev.hall_id : 0,
+        };
+      });
     } else {
       setFormData(prev => ({
         ...prev,
@@ -75,7 +131,9 @@ const HallTableEdit: React.FC = () => {
   };
 
   // ── Render States ──────────────────────
-  if (isLoading) return <LoadingSpinner text="جاري تحميل بيانات الطاولة..." />;
+  if (isLoading || (isLoadingOptions && !data?.select_options?.halls?.length)) {
+    return <LoadingSpinner text="جاري تحميل بيانات الطاولة والصالات..." />;
+  }
   if (isError) return <ErrorFallback error={error} onRetry={refetch} />;
 
   return (
@@ -123,10 +181,13 @@ const HallTableEdit: React.FC = () => {
               </label>
               <select name="branch_id" required
                 value={formData.branch_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                disabled={branches.length === 0}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
                 <option value="" disabled>-- اختر الفرع --</option>
                 {branches.map((branch: any) => (
-                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || '')}</option>
+                  <option key={branch.id} value={branch.id}>
+                    {renderName(branch.name) || `فرع #${branch.id}`}
+                  </option>
                 ))}
               </select>
             </div>
@@ -138,12 +199,27 @@ const HallTableEdit: React.FC = () => {
               </label>
               <select name="hall_id" required
                 value={formData.hall_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
-                <option value="" disabled>-- اختر الصالة --</option>
-                {halls.map((hall: any) => (
-                  <option key={hall.id} value={hall.id}>{hall.name.ar}</option>
+                disabled={!formData.branch_id || filteredHalls.length === 0}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
+                <option value="" disabled>
+                  {!formData.branch_id 
+                    ? '-- اختر الفرع أولاً --' 
+                    : filteredHalls.length === 0 
+                      ? '-- لا توجد صالات لهذا الفرع --' 
+                      : '-- اختر الصالة --'}
+                </option>
+                {filteredHalls.map((hall: any) => (
+                  <option key={hall.id} value={hall.id}>
+                    {renderName(hall.name) || `صالة #${hall.id}`}
+                  </option>
                 ))}
               </select>
+              {!formData.branch_id && (
+                <p className="text-xs text-slate-400 mt-1.5">اختر الفرع أولاً لتحديد الصالات المتاحة</p>
+              )}
+              {formData.branch_id > 0 && filteredHalls.length === 0 && (
+                <p className="text-xs text-amber-500 dark:text-amber-400 mt-1.5">لا توجد صالات تابعة لهذا الفرع حالياً</p>
+              )}
             </div>
 
             {/* Status */}

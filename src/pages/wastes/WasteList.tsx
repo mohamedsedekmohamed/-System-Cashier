@@ -132,7 +132,7 @@ const WasteList: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        itemName={`هالك (${deleteTarget?.material?.name?.ar}) من (${deleteTarget?.product_recipe?.name?.ar})`}
+        itemName={`هالك (${deleteTarget?.material?.name?.ar || deleteTarget?.product_recipe?.name?.ar || 'عنصر'})`}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
         onCancel={() => setDeleteTarget(null)}
@@ -145,8 +145,8 @@ const WasteList: React.FC = () => {
         title="تفاصيل الهالك"
         details={[
           { label: 'الرقم التعريفي', value: viewTarget?.id },
-          { label: 'الوصفة / المنتج', value: viewTarget?.product_recipe?.name?.ar },
-          { label: 'المادة المهدرة', value: viewTarget?.material?.name?.ar },
+          { label: 'الوصفة / المنتج', value: viewTarget?.product_recipe?.name?.ar || '—' },
+          { label: 'المادة المهدرة', value: viewTarget?.material?.name?.ar || '—' },
           { label: 'الكمية المهدرة', value: viewTarget?.count },
           { label: 'تاريخ التسجيل', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
         ]}

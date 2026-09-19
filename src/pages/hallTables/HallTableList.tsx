@@ -10,7 +10,18 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
-import { MdTableRestaurant, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { 
+  MdTableRestaurant, 
+  MdEdit, 
+  MdDelete, 
+  MdVisibility, 
+  MdQrCode2, 
+  MdZoomIn, 
+  MdOpenInNew, 
+  MdDownload,
+  MdPrint,
+  MdClose,
+} from 'react-icons/md';
 import { renderName } from '../../utils/helpers';
 
 const HallTableList: React.FC = () => {
@@ -19,6 +30,7 @@ const HallTableList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<HallTable | null>(null);
   const [viewTarget, setViewTarget] = useState<HallTable | null>(null);
+  const [qrPreviewTarget, setQrPreviewTarget] = useState<HallTable | null>(null);
   const perPage = 10;
 
   // ── Fetch (paginated) ──────────────────
@@ -56,6 +68,63 @@ const HallTableList: React.FC = () => {
     },
   });
 
+  // ── Download & Print QR ────────────────
+  const handleDownloadQr = async (url: string, tableName: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `table-${tableName}-qr.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, '_blank');
+    }
+  };
+
+  const handlePrintQr = (url: string, tableName: string) => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`
+      <html dir="rtl">
+        <head>
+          <title>رمز QR - ${tableName}</title>
+          <style>
+            body { 
+              display: flex; 
+              flex-direction: column; 
+              align-items: center; 
+              justify-content: center; 
+              min-height: 100vh; 
+              margin: 0; 
+              font-family: system-ui, -apple-system, sans-serif;
+            }
+            .card {
+              border: 2px solid #e2e8f0;
+              border-radius: 16px;
+              padding: 24px;
+              text-align: center;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }
+            h2 { margin: 0 0 12px 0; color: #1e293b; }
+            img { width: 280px; height: 280px; object-fit: contain; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h2>طاولة: ${tableName}</h2>
+            <img src="${url}" onload="window.print(); window.close();" />
+          </div>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  };
+
   // ── Client-side search filter ──────────
   const filtered = [...(search
     ? tables.filter(t =>
@@ -79,6 +148,53 @@ const HallTableList: React.FC = () => {
     {
       header: 'اسم الطاولة',
       render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? ((row.name as any)?.ar || (row.name as any)?.en || '') : (row.name || '')}</p>
+    },
+    {
+      header: 'رمز الـ QR',
+      render: (row) => {
+        if (!row.qr) {
+          return (
+            <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 font-medium">
+              <MdQrCode2 size={16} className="text-slate-300 dark:text-slate-600" />
+              لا يوجد
+            </span>
+          );
+        }
+
+        const tableName = typeof row.name === 'object' && row.name !== null 
+          ? ((row.name as any)?.ar || (row.name as any)?.en || '') 
+          : (row.name || '');
+
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setQrPreviewTarget(row)}
+              className="group relative block p-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary/50 transition-all cursor-pointer"
+              title="انقر لتكبير رمز الـ QR"
+            >
+              <img
+                src={row.qr}
+                alt={`QR ${tableName}`}
+                className="w-10 h-10 object-contain rounded-lg transition-transform duration-200 group-hover:scale-105"
+                loading="lazy"
+              />
+              <span className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/20 dark:group-hover:bg-white/10 transition-colors flex items-center justify-center">
+                <MdZoomIn size={18} className="text-white drop-shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+              </span>
+            </button>
+            <a
+              href={row.qr}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="فتح الرابط في صفحة جديدة"
+            >
+              <MdOpenInNew size={15} />
+            </a>
+          </div>
+        );
+      }
     },
     {
       header: 'الفرع',
@@ -176,10 +292,124 @@ const HallTableList: React.FC = () => {
           { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
           { label: 'الصالة', value: viewTarget?.hall?.name?.ar || '—' },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
+          { 
+            label: 'رمز الـ QR', 
+            value: viewTarget?.qr ? (
+              <div className="flex items-center gap-3">
+                <img 
+                  src={viewTarget.qr} 
+                  alt={`QR ${viewTarget.name}`} 
+                  className="w-20 h-20 rounded-xl border border-slate-200 dark:border-slate-700 bg-white p-1 shadow-sm object-contain"
+                />
+                <div className="space-y-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const t = viewTarget;
+                      setViewTarget(null);
+                      setQrPreviewTarget(t);
+                    }}
+                    className="text-xs text-primary hover:underline font-semibold block"
+                  >
+                    عرض وتكبير الرمز
+                  </button>
+                  <a
+                    href={viewTarget.qr}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary flex items-center gap-1"
+                  >
+                    فتح الرابط المباشر <MdOpenInNew size={12} />
+                  </a>
+                </div>
+              </div>
+            ) : 'غير متوفر',
+            fullWidth: true
+          },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }
         ]}
       />
+
+      {/* QR Code Preview & Download Modal */}
+      {qrPreviewTarget && qrPreviewTarget.qr && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setQrPreviewTarget(null)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-200 dark:border-slate-700 p-6 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-700">
+              <div className="flex items-center gap-2 text-primary">
+                <MdQrCode2 size={22} />
+                <h3 className="font-bold text-slate-800 dark:text-white text-base">
+                  رمز QR للطاولة
+                </h3>
+              </div>
+              <button
+                onClick={() => setQrPreviewTarget(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                title="إغلاق"
+              >
+                <MdClose size={20} />
+              </button>
+            </div>
+
+            {/* Table title info */}
+            <div className="mb-4">
+              <h4 className="text-lg font-bold text-slate-800 dark:text-white">
+                {typeof qrPreviewTarget.name === 'object' && qrPreviewTarget.name !== null
+                  ? ((qrPreviewTarget.name as any)?.ar || (qrPreviewTarget.name as any)?.en || '')
+                  : qrPreviewTarget.name}
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {qrPreviewTarget.hall?.name?.ar ? `${qrPreviewTarget.hall.name.ar} • ` : ''}
+                {renderName(qrPreviewTarget.branch?.name) || 'فرع غير محدد'}
+              </p>
+            </div>
+
+            {/* QR Image */}
+            <div className="p-4 bg-white rounded-2xl border-2 border-slate-100 dark:border-slate-700 shadow-inner mb-6">
+              <img
+                src={qrPreviewTarget.qr}
+                alt="QR Code"
+                className="w-56 h-56 object-contain"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="grid grid-cols-3 gap-2 w-full">
+              <button
+                type="button"
+                onClick={() => handleDownloadQr(qrPreviewTarget.qr!, String(qrPreviewTarget.name))}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-primary text-white text-xs font-semibold shadow-md hover:shadow-lg hover:bg-primary-dark transition-all"
+                title="تحميل رمز الـ QR"
+              >
+                <MdDownload size={16} /> تحميل
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePrintQr(qrPreviewTarget.qr!, String(qrPreviewTarget.name))}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all"
+                title="طباعة رمز الـ QR"
+              >
+                <MdPrint size={16} /> طباعة
+              </button>
+              <a
+                href={qrPreviewTarget.qr}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all"
+                title="فتح الرابط في علامة تبويب جديدة"
+              >
+                <MdOpenInNew size={16} /> فتح
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

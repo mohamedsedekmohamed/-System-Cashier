@@ -3,19 +3,20 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wasteApi, WASTES_KEY, WASTES_SELECT_OPTIONS_KEY } from '../../services/wasteService';
 import type { WasteFormData } from '../../types';
-import { MdArrowForward, MdSave, MdDeleteOutline } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdDeleteOutline, MdLayers, MdFastfood } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+
+type WasteType = 'material' | 'recipe';
 
 const WasteAdd: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // ── Form State ─────────────────────────
-  const [formData, setFormData] = useState<WasteFormData>({
-    product_recipe_id: 0,
-    material_id: 0,
-    count: 1,
-  });
+  const [wasteType, setWasteType] = useState<WasteType>('material');
+  const [selectedMaterialId, setSelectedMaterialId] = useState<number>(0);
+  const [selectedRecipeId, setSelectedRecipeId] = useState<number>(0);
+  const [count, setCount] = useState<number>(1);
 
   // ── Fetch Select Options ───────────────
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
@@ -26,6 +27,9 @@ const WasteAdd: React.FC = () => {
   const materials = optionsData?.data?.materials ?? [];
   const recipes = optionsData?.data?.product_recipes ?? [];
 
+  const selectedMaterial = materials.find(m => m.id === selectedMaterialId);
+  const selectedRecipe = recipes.find(r => r.id === selectedRecipeId);
+
   // ── Create Mutation ────────────────────
   const mutation = useMutation({
     mutationFn: wasteApi.create,
@@ -35,19 +39,21 @@ const WasteAdd: React.FC = () => {
     },
   });
 
-  // ── Handlers ───────────────────────────
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: Number(value)
-    }));
-  };
+  const isFormValid =
+    (wasteType === 'material' ? selectedMaterialId > 0 : selectedRecipeId > 0) &&
+    count >= 1;
 
+  // ── Handlers ───────────────────────────
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.product_recipe_id || !formData.material_id || formData.count < 1) return;
-    mutation.mutate(formData);
+    if (!isFormValid) return;
+
+    const payload: WasteFormData =
+      wasteType === 'material'
+        ? { material_id: selectedMaterialId, count }
+        : { product_recipe_id: selectedRecipeId, count };
+
+    mutation.mutate(payload);
   };
 
   return (
@@ -64,7 +70,7 @@ const WasteAdd: React.FC = () => {
               <MdDeleteOutline size={24} className="text-primary" />
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">تسجيل هالك جديد</h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">تحديد الوصفة والمادة والكمية المهدرة</p>
+            <p className="text-sm text-slate-500 mt-1">اختر المادة المهدرة أو الوصفة / المنتج وحدد الكمية</p>
           </div>
         </div>
       </div>
@@ -76,30 +82,123 @@ const WasteAdd: React.FC = () => {
           <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
             بيانات الهالك
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Waste Type Choice */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+              نوع العنصر المهدر <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+              <button
+                type="button"
+                onClick={() => setWasteType('material')}
+                className={`flex items-center gap-3 p-4 rounded-2xl border-2 text-right transition-all cursor-pointer ${
+                  wasteType === 'material'
+                    ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                }`}
+              >
+                <div className={`p-2.5 rounded-xl ${wasteType === 'material' ? 'bg-primary text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>
+                  <MdLayers size={22} />
+                </div>
+                <div>
+                  <p className="font-bold text-sm">مادة خام</p>
+                  <p className="text-xs text-slate-400 mt-0.5">إهدار من مخزون المواد الخام</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setWasteType('recipe')}
+                className={`flex items-center gap-3 p-4 rounded-2xl border-2 text-right transition-all cursor-pointer ${
+                  wasteType === 'recipe'
+                    ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                }`}
+              >
+                <div className={`p-2.5 rounded-xl ${wasteType === 'recipe' ? 'bg-primary text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>
+                  <MdFastfood size={22} />
+                </div>
+                <div>
+                  <p className="font-bold text-sm">وصفة / منتج</p>
+                  <p className="text-xs text-slate-400 mt-0.5">إهدار من مخزون الوصفات والمنتجات</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-700">
             
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الوصفة / المنتج *</label>
-              <select name="product_recipe_id" required disabled={isLoadingOptions} value={formData.product_recipe_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="" disabled>-- اختر الوصفة --</option>
-                {recipes.map(r => <option key={r.id} value={r.id}>{r.name?.ar} (المخزون: {r.stock})</option>)}
-              </select>
-            </div>
+            {/* Material selector */}
+            {wasteType === 'material' && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  المادة المهدرة <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  disabled={isLoadingOptions}
+                  value={selectedMaterialId || ''}
+                  onChange={(e) => setSelectedMaterialId(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="" disabled>-- اختر المادة الخام --</option>
+                  {materials.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.name?.ar || m.name?.en || `مادة #${m.id}`} (المخزون: {m.stock ?? 0})
+                    </option>
+                  ))}
+                </select>
+                {selectedMaterial && (
+                  <p className="text-xs text-slate-500 mt-1.5">
+                    المخزون المتوفر حالياً: <span className="font-semibold text-primary">{selectedMaterial.stock ?? 0}</span>
+                  </p>
+                )}
+              </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">المادة المهدرة *</label>
-              <select name="material_id" required disabled={isLoadingOptions} value={formData.material_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="" disabled>-- اختر المادة --</option>
-                {materials.map(m => <option key={m.id} value={m.id}>{m.name?.ar} (المخزون: {m.stock})</option>)}
-              </select>
-            </div>
+            {/* Recipe selector */}
+            {wasteType === 'recipe' && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  الوصفة / المنتج المهدر <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  disabled={isLoadingOptions}
+                  value={selectedRecipeId || ''}
+                  onChange={(e) => setSelectedRecipeId(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="" disabled>-- اختر الوصفة / المنتج --</option>
+                  {recipes.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.name?.ar || r.name?.en || `وصفة #${r.id}`} (المخزون: {r.stock ?? 0})
+                    </option>
+                  ))}
+                </select>
+                {selectedRecipe && (
+                  <p className="text-xs text-slate-500 mt-1.5">
+                    المخزون المتوفر حالياً: <span className="font-semibold text-primary">{selectedRecipe.stock ?? 0}</span>
+                  </p>
+                )}
+              </div>
+            )}
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الكمية المهدرة *</label>
-              <input type="number" name="count" required min="1" value={formData.count} onChange={handleChange}
-                className="w-full md:w-1/2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            {/* Quantity */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                الكمية المهدرة <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                value={count}
+                onChange={(e) => setCount(Math.max(1, Number(e.target.value)))}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder="أدخل الكمية المهدرة"
+              />
             </div>
 
           </div>
@@ -118,8 +217,11 @@ const WasteAdd: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || !formData.product_recipe_id || !formData.material_id || formData.count < 1}
-            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          <button
+            type="submit"
+            disabled={mutation.isPending || !isFormValid}
+            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+          >
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>
             ) : (

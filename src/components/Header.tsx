@@ -18,7 +18,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       border-b border-slate-200 dark:border-slate-700
       flex items-center justify-between px-4 gap-3
     ">
-      {/* Left: Menu toggle (mobile) */}
       <div className="flex items-center gap-3">
         <button
           id="sidebar-toggle"

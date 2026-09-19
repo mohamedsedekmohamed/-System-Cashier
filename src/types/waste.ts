@@ -3,18 +3,18 @@ import type { Material } from './material';
 
 export interface Waste {
   id: number;
-  product_recipe_id: number;
-  product_recipe?: ProductRecipe;
-  material_id: number;
-  material?: Material;
+  product_recipe_id?: number | null;
+  product_recipe?: ProductRecipe | null;
+  material_id?: number | null;
+  material?: Material | null;
   count: number;
   created_at?: string;
   updated_at?: string;
 }
 
 export interface WasteFormData {
-  product_recipe_id: number;
-  material_id: number;
+  product_recipe_id?: number | null;
+  material_id?: number | null;
   count: number;
 }
 
