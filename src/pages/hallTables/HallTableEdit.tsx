@@ -20,6 +20,7 @@ const HallTableEdit: React.FC = () => {
     branch_id: 0,
     hall_id: 0,
     status: true,
+    base_url: '',
   });
 
   // ── Fetch Data ─────────────────────────
@@ -85,6 +86,7 @@ const HallTableEdit: React.FC = () => {
         branch_id: Number(tableData.branch_id) || 0,
         hall_id: Number(tableData.hall_id) || 0,
         status: Boolean(tableData.status),
+        base_url: tableData.base_url || '',
       });
     }
   }, [tableData]);
@@ -126,8 +128,11 @@ const HallTableEdit: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.branch_id || !formData.hall_id) return;
-    mutation.mutate(formData);
+    if (!formData.name || !formData.branch_id || !formData.hall_id || !formData.base_url?.trim()) return;
+    mutation.mutate({
+      ...formData,
+      base_url: formData.base_url.trim(),
+    });
   };
 
   // ── Render States ──────────────────────
@@ -172,6 +177,27 @@ const HallTableEdit: React.FC = () => {
                 placeholder="مثال: طاولة رقم 1"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
+            </div>
+
+            {/* Base URL */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                الرابط الأساسي (Base URL) <span className="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                name="base_url" 
+                required
+                maxLength={255}
+                value={formData.base_url} 
+                onChange={handleChange}
+                placeholder="https://ecommerce.mazoom.online"
+                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-left"
+              />
+              <p className="text-xs text-slate-400 mt-1.5">
+                الرابط الأساسي المعتمد لإنشاء رمز الـ QR وتوجيه العملاء لقائمة الطلبات (أقل من أو يساوي 255 حرف)
+              </p>
             </div>
 
             {/* Branch */}
@@ -244,7 +270,7 @@ const HallTableEdit: React.FC = () => {
         {/* Error message */}
         {mutation.isError && (
           <div className="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-            حدث خطأ أثناء التحديث. تأكد من صحة البيانات وحاول مرة أخرى.
+            {(mutation.error as any)?.response?.data?.message || 'حدث خطأ أثناء التحديث. تأكد من صحة البيانات وحاول مرة أخرى.'}
           </div>
         )}
 
@@ -254,7 +280,7 @@ const HallTableEdit: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.branch_id || !formData.hall_id}
+          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.branch_id || !formData.hall_id || !formData.base_url?.trim()}
             className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>

@@ -98,6 +98,16 @@ import WasteList from './pages/wastes/WasteList';
 import WasteAdd from './pages/wastes/WasteAdd';
 import WasteEdit from './pages/wastes/WasteEdit';
 
+// Purchases
+import PurchaseList from './pages/purchases/PurchaseList';
+import PurchaseAdd from './pages/purchases/PurchaseAdd';
+
+// Reports
+import StartShiftReportPage from './pages/reports/StartShiftReportPage';
+
+// Settings / Business Setup
+import BusinessSetupPage from './pages/settings/BusinessSetupPage';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -188,6 +198,10 @@ function App() {
                   <Route path="product-recipes/add" element={<ProductRecipeAdd />} />
                   <Route path="product-recipes/edit/:id" element={<ProductRecipeEdit />} />
 
+                  {/* Purchases */}
+                  <Route path="purchases" element={<PurchaseList />} />
+                  <Route path="purchases/add" element={<PurchaseAdd />} />
+
                   {/* Suppliers — full CRUD */}
                   <Route path="suppliers" element={<SupplierList />} />
                   <Route path="suppliers/add" element={<SupplierAdd />} />
@@ -207,6 +221,13 @@ function App() {
                   <Route path="shifts" element={<ShiftList />} />
                   <Route path="shifts/add" element={<ShiftAdd />} />
                   <Route path="shifts/edit/:id" element={<ShiftEdit />} />
+
+                  {/* Reports */}
+                  <Route path="reports/start-shifts" element={<StartShiftReportPage />} />
+
+                  {/* Settings / Business Setup */}
+                  <Route path="settings" element={<BusinessSetupPage />} />
+                  <Route path="business-setup" element={<Navigate to="/dashboard/settings" replace />} />
                 </Route>
               </Route>
 

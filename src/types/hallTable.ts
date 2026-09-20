@@ -27,6 +27,7 @@ export interface HallTable {
   };
   status: boolean;
   qr?: string | null;
+  base_url?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +54,7 @@ export interface HallTablePayload {
   branch_id: number;
   hall_id: number;
   status: boolean;
+  base_url: string;
 }
 
 export interface HallTableSelectOptionsResponse {

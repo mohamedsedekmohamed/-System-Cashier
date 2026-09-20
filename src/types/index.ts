@@ -19,3 +19,6 @@ export * from './paymentMethod';
 export * from './product';
 export * from './shift';
 export * from './order';
+export * from './businessSetup';
+export * from './purchase';
+export * from './report';

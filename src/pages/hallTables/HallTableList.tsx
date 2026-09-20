@@ -56,10 +56,11 @@ const HallTableList: React.FC = () => {
   const toggleStatusMutation = useMutation({
     mutationFn: (table: HallTable) => {
       const payload = {
-        name: table.name,
+        name: typeof table.name === 'object' && table.name !== null ? ((table.name as any)?.ar || (table.name as any)?.en || '') : (table.name || ''),
         branch_id: table.branch_id,
         hall_id: table.hall_id,
         status: !table.status,
+        base_url: table.base_url || '',
       };
       return hallTableApi.update(table.id, payload);
     },
@@ -130,6 +131,7 @@ const HallTableList: React.FC = () => {
     ? tables.filter(t =>
         renderName(t.name).toLowerCase().includes(search.toLowerCase()) ||
         String(t.id).includes(search) ||
+        (t.base_url && t.base_url.toLowerCase().includes(search.toLowerCase())) ||
         renderName(t.branch?.name).toLowerCase().includes(search.toLowerCase()) ||
         t.hall?.name?.ar?.toLowerCase().includes(search.toLowerCase()) ||
         t.hall?.name?.en?.toLowerCase().includes(search.toLowerCase()))
@@ -195,6 +197,24 @@ const HallTableList: React.FC = () => {
           </div>
         );
       }
+    },
+    {
+      header: 'الرابط الأساسي',
+      render: (row) => row.base_url ? (
+        <a
+          href={row.base_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-primary hover:underline flex items-center gap-1 max-w-[140px] truncate"
+          dir="ltr"
+          title={row.base_url}
+        >
+          <span className="truncate">{row.base_url}</span>
+          <MdOpenInNew size={12} className="shrink-0" />
+        </a>
+      ) : (
+        <span className="text-xs text-slate-400">—</span>
+      )
     },
     {
       header: 'الفرع',
@@ -292,6 +312,21 @@ const HallTableList: React.FC = () => {
           { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
           { label: 'الصالة', value: viewTarget?.hall?.name?.ar || '—' },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
+          { 
+            label: 'الرابط الأساسي (Base URL)', 
+            value: viewTarget?.base_url ? (
+              <a 
+                href={viewTarget.base_url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-xs text-primary hover:underline flex items-center gap-1 font-mono break-all"
+                dir="ltr"
+              >
+                {viewTarget.base_url} <MdOpenInNew size={12} className="shrink-0" />
+              </a>
+            ) : 'غير متوفر',
+            fullWidth: true
+          },
           { 
             label: 'رمز الـ QR', 
             value: viewTarget?.qr ? (

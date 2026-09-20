@@ -22,6 +22,9 @@ import {
   MdSearch,
   MdSearchOff,
   MdAdminPanelSettings,
+  MdSettings,
+  MdShoppingBag,
+  MdAssessment,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -42,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'الكاشير', path: '/dashboard/cashiers', icon: <MdPointOfSale size={20} /> },
   { label: 'موظفي الكاشير', path: '/dashboard/cashier-men', icon: <MdPeople size={20} /> },
   { label: 'الورديات', path: '/dashboard/shifts', icon: <MdSchedule size={20} /> },
+  { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} /> },
   { label: 'التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} /> },
   { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} /> },
   { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableRestaurant size={20} /> },
@@ -51,10 +55,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'وصفات المنتجات', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} /> },
   { label: 'قوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} /> },
   { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} /> },
+  { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} /> },
   { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} /> },
   { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} /> },
   { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} /> },
   { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} /> },
+  { label: 'الإعدادات', path: '/dashboard/settings', icon: <MdSettings size={20} /> },
 ];
 
 const normalizeArabic = (str: string) =>
