@@ -25,6 +25,7 @@ import {
   MdSettings,
   MdShoppingBag,
   MdAssessment,
+  MdFactCheck,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -55,6 +56,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'وصفات المنتجات', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} /> },
   { label: 'قوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} /> },
   { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} /> },
+  { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} /> },
   { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} /> },
   { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} /> },
   { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} /> },

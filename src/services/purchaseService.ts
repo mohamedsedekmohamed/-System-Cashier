@@ -14,6 +14,10 @@ export const PURCHASES_SELECT_OPTIONS_KEY = 'purchases_select_options';
 const buildPurchaseFormData = (payload: PurchaseFormData): FormData => {
   const formData = new FormData();
 
+  if (payload.branch_id) {
+    formData.append('branch_id', String(payload.branch_id));
+  }
+
   if (payload.receipt) {
     formData.append('receipt', payload.receipt);
   }
@@ -38,15 +42,18 @@ const buildPurchaseFormData = (payload: PurchaseFormData): FormData => {
 
 export const purchaseApi = {
   /** GET /api/admin/purchases/select-options */
-  getSelectOptions: async (): Promise<PurchaseSelectOptionsResponse> => {
-    const { data } = await api.get<PurchaseSelectOptionsResponse>('/api/admin/purchases/select-options');
+  getSelectOptions: async (branch_id?: number): Promise<PurchaseSelectOptionsResponse> => {
+    const params: Record<string, any> = {};
+    if (branch_id) params.branch_id = branch_id;
+    const { data } = await api.get<PurchaseSelectOptionsResponse>('/api/admin/purchases/select-options', { params });
     return data;
   },
 
   /** GET /api/admin/purchases?page=&per_page=&lang= */
-  list: async (page = 1, perPage = 15, lang?: string): Promise<PurchaseListResponse> => {
+  list: async (page = 1, perPage = 15, lang?: string, branch_id?: number): Promise<PurchaseListResponse> => {
     const params: Record<string, any> = { page, per_page: perPage };
     if (lang) params.lang = lang;
+    if (branch_id) params.branch_id = branch_id;
 
     const { data } = await api.get<PurchaseListResponse>('/api/admin/purchases', { params });
     return data;

@@ -17,7 +17,6 @@ const ProductAdd: React.FC = () => {
     description: { ar: '', en: '' },
     price: 0,
     image: '',
-    stock: 0,
     tax_id: 0,
     discount_id: 0,
     category_id: 0,
@@ -62,7 +61,7 @@ const ProductAdd: React.FC = () => {
         description: { ...prev.description, [lang]: value }
       }));
     } else {
-      const isNum = ['price', 'stock', 'tax_id', 'discount_id', 'category_id', 'sub_category_id'].includes(name);
+      const isNum = ['price', 'tax_id', 'discount_id', 'category_id', 'sub_category_id'].includes(name);
       setFormData(prev => ({
         ...prev,
         [name]: isNum ? Number(value) : value,
@@ -153,11 +152,6 @@ const ProductAdd: React.FC = () => {
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">السعر الأساسي (ج.م) *</label>
               <input type="number" name="price" required min="0" step="0.01" value={formData.price} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">المخزون (Stock)</label>
-              <input type="number" name="stock" min="0" value={formData.stock} onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
             </div>
             

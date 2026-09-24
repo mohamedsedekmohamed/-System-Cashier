@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MdMenu, MdPerson } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
+import NavigationProgressBar from './NavigationProgressBar';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -12,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
 
   return (
     <header className="
-      fixed top-0 left-0 right-64 z-20 h-16
+      fixed top-0 left-0 right-0 lg:right-64 z-20 h-16
       bg-white/80 dark:bg-slate-900/80
       backdrop-blur-md
       border-b border-slate-200 dark:border-slate-700
@@ -47,6 +48,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           </div>
         </Link>
       </div>
+
+      {/* Page Navigation & Loading Progress Bar */}
+      <NavigationProgressBar />
     </header>
   );
 };

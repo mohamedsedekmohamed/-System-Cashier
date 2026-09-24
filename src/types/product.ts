@@ -53,7 +53,6 @@ export interface Product {
   description: LocalizedName;
   image: string;
   price: number;
-  stock: number;
   tax_id: number | null;
   tax: ProductTax | null;
   discount_id: number | null;
@@ -72,7 +71,6 @@ export interface ProductFormData {
   description: LocalizedName;
   price: number;
   image: string;
-  stock: number;
   tax_id: number | null;
   discount_id: number | null;
   category_id: number;

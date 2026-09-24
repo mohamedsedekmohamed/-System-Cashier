@@ -48,14 +48,24 @@ export const PurchaseAdd: React.FC = () => {
     },
   ]);
 
-  // ── Fetch Select Options ───────────────
+  const [selectedBranchId, setSelectedBranchId] = useState<number>(0);
+
+  // ── Fetch Select Options (Guarded by Purchase permissions) ───────────────
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
-    queryKey: [PURCHASES_SELECT_OPTIONS_KEY],
-    queryFn: purchaseApi.getSelectOptions,
+    queryKey: [PURCHASES_SELECT_OPTIONS_KEY, selectedBranchId],
+    queryFn: () => purchaseApi.getSelectOptions(selectedBranchId || undefined),
   });
 
+  const branches = optionsData?.data?.branches ?? [];
   const materials = optionsData?.data?.materials ?? [];
   const productRecipes = optionsData?.data?.product_recipes ?? [];
+
+  // Auto-select first branch when branches are loaded
+  React.useEffect(() => {
+    if (!selectedBranchId && branches.length > 0) {
+      setSelectedBranchId(branches[0].id);
+    }
+  }, [branches, selectedBranchId]);
 
   // ── Create Mutation ────────────────────
   const mutation = useMutation({
@@ -218,7 +228,13 @@ export const PurchaseAdd: React.FC = () => {
       cost: Number(item.cost),
     }));
 
+    if (!selectedBranchId) {
+      setErrorMessage('يرجى اختيار الفرع المستلم للمشتريات.');
+      return;
+    }
+
     const payload: PurchaseFormData = {
+      branch_id: selectedBranchId,
       receipt: receiptFile,
       notes: notes.trim() || undefined,
       items: payloadItems,
@@ -283,6 +299,29 @@ export const PurchaseAdd: React.FC = () => {
               <MdReceipt size={20} className="text-primary" />
               بيانات وملاحظات الفاتورة
             </h3>
+
+            {/* Branch Selection (Required) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+                الفرع المستلم للبضاعة (المخزن) <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  required
+                  value={selectedBranchId || ''}
+                  onChange={(e) => setSelectedBranchId(Number(e.target.value))}
+                  disabled={isLoadingOptions}
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none focus:ring-2 ring-primary/20 text-slate-800 dark:text-slate-100 text-sm font-medium transition-all"
+                >
+                  <option value="" disabled>-- اختر الفرع --</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {typeof b.name === 'object' && b.name ? (b.name.ar || b.name.en) : (b.name || '')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">

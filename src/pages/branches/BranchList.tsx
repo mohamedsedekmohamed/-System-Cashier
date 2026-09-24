@@ -75,12 +75,15 @@ const BranchList: React.FC = () => {
     },
   });
 
+  const getBranchDisplayName = (name: any) =>
+    typeof name === 'object' && name !== null ? (name.ar || name.en || '') : (name || '');
+
   // ── Client-side search filter ──────────
   const filtered = [...(search
     ? branches.filter(b =>
-        b.name.toLowerCase().includes(search.toLowerCase()) ||
+        getBranchDisplayName(b.name).toLowerCase().includes(search.toLowerCase()) ||
         String(b.id).includes(search) ||
-        b.address.toLowerCase().includes(search.toLowerCase()))
+        (b.address || '').toLowerCase().includes(search.toLowerCase()))
     : branches)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
@@ -173,7 +176,7 @@ const BranchList: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        itemName={deleteTarget?.name || ''}
+        itemName={getBranchDisplayName(deleteTarget?.name)}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
         onCancel={() => setDeleteTarget(null)}

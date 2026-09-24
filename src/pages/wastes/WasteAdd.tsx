@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wasteApi, WASTES_KEY, WASTES_SELECT_OPTIONS_KEY } from '../../services/wasteService';
 import type { WasteFormData } from '../../types';
-import { MdArrowForward, MdSave, MdDeleteOutline, MdLayers, MdFastfood } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdDeleteOutline, MdLayers, MdFastfood, MdInfoOutline } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 type WasteType = 'material' | 'recipe';
@@ -13,19 +13,29 @@ const WasteAdd: React.FC = () => {
   const queryClient = useQueryClient();
 
   // ── Form State ─────────────────────────
+  const [selectedBranchId, setSelectedBranchId] = useState<number>(0);
   const [wasteType, setWasteType] = useState<WasteType>('material');
   const [selectedMaterialId, setSelectedMaterialId] = useState<number>(0);
   const [selectedRecipeId, setSelectedRecipeId] = useState<number>(0);
   const [count, setCount] = useState<number>(1);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // ── Fetch Select Options ───────────────
+  // ── Fetch Select Options (Guarded by Waste permissions) ───
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
-    queryKey: [WASTES_SELECT_OPTIONS_KEY],
-    queryFn: wasteApi.getSelectOptions,
+    queryKey: [WASTES_SELECT_OPTIONS_KEY, selectedBranchId],
+    queryFn: () => wasteApi.getSelectOptions(selectedBranchId || undefined),
   });
 
+  const branches = optionsData?.data?.branches ?? [];
   const materials = optionsData?.data?.materials ?? [];
   const recipes = optionsData?.data?.product_recipes ?? [];
+
+  // Auto-select first branch when branches are loaded
+  React.useEffect(() => {
+    if (!selectedBranchId && branches.length > 0) {
+      setSelectedBranchId(branches[0].id);
+    }
+  }, [branches, selectedBranchId]);
 
   const selectedMaterial = materials.find(m => m.id === selectedMaterialId);
   const selectedRecipe = recipes.find(r => r.id === selectedRecipeId);
@@ -37,21 +47,35 @@ const WasteAdd: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [WASTES_KEY] });
       navigate('/dashboard/wastes');
     },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        'المخزون المتوفر غير كافٍ أو حدث خطأ أثناء تسجيل الهالك.';
+      setErrorMessage(msg);
+    }
   });
 
   const isFormValid =
+    selectedBranchId > 0 &&
     (wasteType === 'material' ? selectedMaterialId > 0 : selectedRecipeId > 0) &&
     count >= 1;
 
   // ── Handlers ───────────────────────────
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedBranchId) {
+      setErrorMessage('يرجى تحديد الفرع أولاً.');
+      return;
+    }
     if (!isFormValid) return;
+
+    setErrorMessage(null);
 
     const payload: WasteFormData =
       wasteType === 'material'
-        ? { material_id: selectedMaterialId, count }
-        : { product_recipe_id: selectedRecipeId, count };
+        ? { branch_id: selectedBranchId, material_id: selectedMaterialId, count }
+        : { branch_id: selectedBranchId, product_recipe_id: selectedRecipeId, count };
 
     mutation.mutate(payload);
   };
@@ -75,6 +99,14 @@ const WasteAdd: React.FC = () => {
         </div>
       </div>
 
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 flex items-start gap-3 text-rose-700 dark:text-rose-400">
+          <MdInfoOutline size={22} className="shrink-0 mt-0.5" />
+          <p className="text-sm font-medium">{errorMessage}</p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* Basic Info Section */}
@@ -82,6 +114,33 @@ const WasteAdd: React.FC = () => {
           <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
             بيانات الهالك
           </h2>
+
+          {/* Step 1: Required Branch Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              الفرع المطلوب تسجيل الهالك فيه <span className="text-red-500">*</span>
+            </label>
+            <div className="relative max-w-lg">
+              <select
+                required
+                value={selectedBranchId || ''}
+                onChange={(e) => {
+                  setSelectedBranchId(Number(e.target.value));
+                  setSelectedMaterialId(0);
+                  setSelectedRecipeId(0);
+                }}
+                disabled={isLoadingOptions}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:border-primary focus:outline-none focus:ring-2 ring-primary/20 transition-all"
+              >
+                <option value="" disabled>-- اختر الفرع أولاً --</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {typeof b.name === 'object' && b.name ? (b.name.ar || b.name.en) : (b.name || '')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           {/* Waste Type Choice */}
           <div className="mb-6">
@@ -150,8 +209,9 @@ const WasteAdd: React.FC = () => {
                   ))}
                 </select>
                 {selectedMaterial && (
-                  <p className="text-xs text-slate-500 mt-1.5">
-                    المخزون المتوفر حالياً: <span className="font-semibold text-primary">{selectedMaterial.stock ?? 0}</span>
+                  <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                    المتوفر في الفرع المحدد: <span className="font-bold text-primary">{selectedMaterial.stock ?? 0}</span>
                   </p>
                 )}
               </div>
@@ -178,8 +238,9 @@ const WasteAdd: React.FC = () => {
                   ))}
                 </select>
                 {selectedRecipe && (
-                  <p className="text-xs text-slate-500 mt-1.5">
-                    المخزون المتوفر حالياً: <span className="font-semibold text-primary">{selectedRecipe.stock ?? 0}</span>
+                  <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                    المتوفر في الفرع المحدد: <span className="font-bold text-primary">{selectedRecipe.stock ?? 0}</span>
                   </p>
                 )}
               </div>

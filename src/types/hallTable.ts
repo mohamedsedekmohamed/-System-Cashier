@@ -1,10 +1,5 @@
 import type { PaginatedMeta, LocalizedString } from './common';
-
-export interface BranchOption {
-  id: number;
-  name: string | LocalizedString | null;
-  role?: string;
-}
+import type { BranchOption } from './branch';
 
 export interface HallOption {
   id: number;

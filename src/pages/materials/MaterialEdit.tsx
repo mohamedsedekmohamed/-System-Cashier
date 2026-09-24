@@ -16,12 +16,10 @@ const MaterialEdit: React.FC = () => {
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<{
     name: { ar: string; en: string };
-    stock: number | string;
     status: boolean;
     category_id: number | '';
   }>({
     name: { ar: '', en: '' },
-    stock: 0,
     status: true,
     category_id: 0,
   });
@@ -44,7 +42,6 @@ const MaterialEdit: React.FC = () => {
           ar: material.name?.ar || '',
           en: material.name?.en || '',
         },
-        stock: material.stock ?? 0,
         status: material.status,
         category_id: material.category_id || 0,
       });
@@ -73,8 +70,6 @@ const MaterialEdit: React.FC = () => {
     } else if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
-    } else if (name === 'stock') {
-      setFormData(prev => ({ ...prev, stock: value }));
     } else if (name === 'category_id') {
       setFormData(prev => ({ ...prev, category_id: value ? Number(value) : '' }));
     } else {
@@ -88,10 +83,8 @@ const MaterialEdit: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.ar || !formData.name.en || !formData.category_id) return;
-    const parsedStock = parseFloat(String(formData.stock));
     const payload: MaterialFormData = {
       name: formData.name,
-      stock: isNaN(parsedStock) ? 0 : parsedStock,
       status: formData.status,
       category_id: Number(formData.category_id),
     };
@@ -167,16 +160,6 @@ const MaterialEdit: React.FC = () => {
               </select>
             </div>
 
-            {/* Stock */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                الكمية (المخزون)
-              </label>
-              <input type="number" name="stock" required min="0" step="any" placeholder="0.00"
-                value={formData.stock} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-              />
-            </div>
 
             {/* Status */}
             <div className="flex items-center gap-3 mt-8 md:col-span-2">

@@ -1,8 +1,11 @@
 import type { ProductRecipe } from './productRecipe';
 import type { Material } from './material';
+import type { Branch, BranchOption } from './branch';
 
 export interface Waste {
   id: number;
+  branch_id?: number;
+  branch?: Branch | null;
   product_recipe_id?: number | null;
   product_recipe?: ProductRecipe | null;
   material_id?: number | null;
@@ -13,6 +16,7 @@ export interface Waste {
 }
 
 export interface WasteFormData {
+  branch_id: number;
   product_recipe_id?: number | null;
   material_id?: number | null;
   count: number;
@@ -20,6 +24,12 @@ export interface WasteFormData {
 
 export interface WasteUpdateData {
   count: number;
+}
+
+export interface WasteSelectOptions {
+  branches: BranchOption[];
+  materials: Pick<Material, 'id' | 'name' | 'stock'>[];
+  product_recipes: Pick<ProductRecipe, 'id' | 'name' | 'stock'>[];
 }
 
 export interface WasteListResponse {
@@ -30,25 +40,16 @@ export interface WasteListResponse {
     per_page: number;
     total: number;
   };
-  select_options: {
-    materials: Pick<Material, 'id' | 'name' | 'stock'>[];
-    product_recipes: Pick<ProductRecipe, 'id' | 'name' | 'stock'>[];
-  };
+  select_options: WasteSelectOptions;
 }
 
 export interface SingleWasteResponse {
   status: boolean;
   data: Waste;
-  select_options: {
-    materials: Pick<Material, 'id' | 'name' | 'stock'>[];
-    product_recipes: Pick<ProductRecipe, 'id' | 'name' | 'stock'>[];
-  };
+  select_options: WasteSelectOptions;
 }
 
 export interface WasteSelectOptionsResponse {
   status: boolean;
-  data: {
-    materials: Pick<Material, 'id' | 'name' | 'stock'>[];
-    product_recipes: Pick<ProductRecipe, 'id' | 'name' | 'stock'>[];
-  };
+  data: WasteSelectOptions;
 }

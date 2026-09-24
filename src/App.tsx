@@ -102,6 +102,10 @@ import WasteEdit from './pages/wastes/WasteEdit';
 import PurchaseList from './pages/purchases/PurchaseList';
 import PurchaseAdd from './pages/purchases/PurchaseAdd';
 
+// Material Inventory
+import MaterialInventoryList from './pages/materialInventory/MaterialInventoryList';
+import MaterialInventoryDetail from './pages/materialInventory/MaterialInventoryDetail';
+
 // Reports
 import StartShiftReportPage from './pages/reports/StartShiftReportPage';
 
@@ -182,6 +186,11 @@ function App() {
                   <Route path="materials" element={<MaterialList />} />
                   <Route path="materials/add" element={<MaterialAdd />} />
                   <Route path="materials/edit/:id" element={<MaterialEdit />} />
+
+                  {/* Material Inventory — جرد المواد الخام */}
+                  <Route path="material-inventory" element={<MaterialInventoryList />} />
+                  <Route path="material-inventory/:id" element={<MaterialInventoryDetail />} />
+                  <Route path="inventory/materials" element={<Navigate to="/dashboard/material-inventory" replace />} />
 
                   {/* Payment Methods — full CRUD */}
                   <Route path="payment-methods" element={<PaymentMethodList />} />

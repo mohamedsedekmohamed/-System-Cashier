@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { manufacturingApi, MANUFACTURING_KEY, MANUFACTURING_SELECT_OPTIONS_KEY } from '../../services/manufacturingService';
-import type { ManufacturingFormData, ManufacturingRecipePayload } from '../../types';
+import type { 
+  ManufacturingFormData, 
+  ManufacturingRecipePayload,
+  ManufacturingSelectOptionsResponse,
+  BranchOption,
+  ManufacturingProduct,
+  ManufacturingProductRecipe,
+  ManufacturingMaterial
+} from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit, MdAdd, MdDelete } from 'react-icons/md';
@@ -15,6 +23,7 @@ const ManufacturingEdit: React.FC = () => {
 
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<ManufacturingFormData>({
+    branch_id: 0,
     product_id: 0,
     product_recipe_id: 0,
     count: 1,
@@ -30,15 +39,16 @@ const ManufacturingEdit: React.FC = () => {
     enabled: !!id,
   });
 
-  const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
+  const { data: optionsData, isLoading: isLoadingOptions } = useQuery<ManufacturingSelectOptionsResponse>({
     queryKey: [MANUFACTURING_SELECT_OPTIONS_KEY],
-    queryFn: manufacturingApi.getSelectOptions,
+    queryFn: () => manufacturingApi.getSelectOptions(),
   });
 
   const item = itemData?.data;
-  const products = optionsData?.data?.products ?? [];
-  const productRecipes = optionsData?.data?.product_recipes ?? [];
-  const materials = optionsData?.data?.materials ?? [];
+  const branches: BranchOption[] = optionsData?.data?.branches ?? [];
+  const products: ManufacturingProduct[] = optionsData?.data?.products ?? [];
+  const productRecipes: ManufacturingProductRecipe[] = optionsData?.data?.product_recipes ?? [];
+  const materials: ManufacturingMaterial[] = optionsData?.data?.materials ?? [];
 
   // Populate form
   useEffect(() => {
@@ -46,6 +56,7 @@ const ManufacturingEdit: React.FC = () => {
       const type = item.product_id ? 'product' : 'recipe';
       setTargetType(type);
       setFormData({
+        branch_id: item.branch_id || (branches[0]?.id || 0),
         product_id: item.product_id || 0,
         product_recipe_id: item.product_recipe_id || 0,
         count: item.count || 1,
@@ -120,6 +131,7 @@ const ManufacturingEdit: React.FC = () => {
     
     const payload: ManufacturingFormData = {
       ...formData,
+      branch_id: formData.branch_id,
       product_id: formData.product_id || null,
       product_recipe_id: formData.product_recipe_id || null,
       recipes: formData.recipes.map(r => ({
@@ -161,6 +173,30 @@ const ManufacturingEdit: React.FC = () => {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Branch Selection */}
+            {branches.length > 0 && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  الفرع القائم بالتصنيع <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="branch_id"
+                  required
+                  value={formData.branch_id || ''}
+                  onChange={handleMainChange}
+                  disabled={isLoadingOptions}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-medium"
+                >
+                  <option value="" disabled>-- اختر الفرع القائم بعملية التصنيع --</option>
+                  {branches.map((b: BranchOption) => (
+                    <option key={b.id} value={b.id}>
+                      {typeof b.name === 'object' && b.name !== null ? (b.name.ar || b.name.en) : b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="md:col-span-2 flex gap-4">
               <button type="button" onClick={() => handleTargetTypeChange('product')}
                 className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex-1 border ${
@@ -182,7 +218,7 @@ const ManufacturingEdit: React.FC = () => {
                 <select name="product_id" required value={formData.product_id || ''} onChange={handleMainChange} disabled={isLoadingOptions}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
                   <option value="" disabled>-- اختر المنتج --</option>
-                  {products.map(p => <option key={p.id} value={p.id}>{p.name?.ar}</option>)}
+                  {products.map((p: ManufacturingProduct) => <option key={p.id} value={p.id}>{p.name?.ar}</option>)}
                 </select>
               </div>
             ) : (
@@ -191,7 +227,7 @@ const ManufacturingEdit: React.FC = () => {
                 <select name="product_recipe_id" required value={formData.product_recipe_id || ''} onChange={handleMainChange} disabled={isLoadingOptions}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
                   <option value="" disabled>-- اختر الوصفة --</option>
-                  {productRecipes.map(p => <option key={p.id} value={p.id}>{p.name?.ar}</option>)}
+                  {productRecipes.map((p: ManufacturingProductRecipe) => <option key={p.id} value={p.id}>{p.name?.ar}</option>)}
                 </select>
               </div>
             )}
@@ -231,10 +267,10 @@ const ManufacturingEdit: React.FC = () => {
                   >
                     <option value="" disabled className="text-slate-400">-- اختر المادة --</option>
                     <optgroup label="المواد الخام" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                      {materials.map(m => <option key={`m_${m.id}`} value={`m_${m.id}`} className="font-normal text-slate-800 dark:text-slate-100">{m.name?.ar}</option>)}
+                      {materials.map((m: ManufacturingMaterial) => <option key={`m_${m.id}`} value={`m_${m.id}`} className="font-normal text-slate-800 dark:text-slate-100">{m.name?.ar}</option>)}
                     </optgroup>
                     <optgroup label="وصفات شبه مصنعة" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                      {productRecipes.map(r => <option key={`r_${r.id}`} value={`r_${r.id}`} className="font-normal text-slate-800 dark:text-slate-100">{r.name?.ar}</option>)}
+                      {productRecipes.map((r: ManufacturingProductRecipe) => <option key={`r_${r.id}`} value={`r_${r.id}`} className="font-normal text-slate-800 dark:text-slate-100">{r.name?.ar}</option>)}
                     </optgroup>
                   </select>
                 </div>

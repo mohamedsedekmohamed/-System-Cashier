@@ -14,7 +14,6 @@ const ProductRecipeAdd: React.FC = () => {
   const [formData, setFormData] = useState<ProductRecipeFormData>({
     name: { ar: '', en: '' },
     status: true,
-    stock: 0,
     category_id: 0,
   });
 
@@ -49,7 +48,7 @@ const ProductRecipeAdd: React.FC = () => {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
-      const isNum = ['stock', 'category_id'].includes(name);
+      const isNum = ['category_id'].includes(name);
       setFormData(prev => ({ ...prev, [name]: isNum ? Number(value) : value }));
     }
   };
@@ -107,11 +106,7 @@ const ProductRecipeAdd: React.FC = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">المخزون المتوفر</label>
-              <input type="number" name="stock" min="0" value={formData.stock} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            </div>
+
 
             <div className="md:col-span-2 pt-4">
               <label className="flex items-center gap-3 cursor-pointer">

@@ -13,16 +13,20 @@ export const WASTES_SELECT_OPTIONS_KEY = 'wastes_select_options';
 
 export const wasteApi = {
   /** GET /api/admin/wastes/select-options */
-  getSelectOptions: async (): Promise<WasteSelectOptionsResponse> => {
-    const { data } = await api.get<WasteSelectOptionsResponse>('/api/admin/wastes/select-options');
+  getSelectOptions: async (branch_id?: number): Promise<WasteSelectOptionsResponse> => {
+    const params: Record<string, any> = {};
+    if (branch_id) params.branch_id = branch_id;
+    const { data } = await api.get<WasteSelectOptionsResponse>('/api/admin/wastes/select-options', { params });
     return data;
   },
 
   /** GET /api/admin/wastes?page=&per_page= */
-  list: async (page = 1, perPage = 15): Promise<WasteListResponse> => {
+  list: async (page = 1, perPage = 15, branch_id?: number): Promise<WasteListResponse> => {
+    const params: Record<string, any> = { page, per_page: perPage };
+    if (branch_id) params.branch_id = branch_id;
     const { data } = await api.get<WasteListResponse>(
       '/api/admin/wastes',
-      { params: { page, per_page: perPage } }
+      { params }
     );
     return data;
   },

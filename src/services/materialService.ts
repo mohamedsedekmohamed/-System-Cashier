@@ -17,11 +17,13 @@ export const materialApi = {
     return data;
   },
 
-  /** GET /api/admin/materials?page=&per_page= */
-  list: async (page = 1, perPage = 15): Promise<MaterialListResponse> => {
+  /** GET /api/admin/materials?page=&per_page=&branch_id= */
+  list: async (page = 1, perPage = 15, branch_id?: number): Promise<MaterialListResponse> => {
+    const params: Record<string, any> = { page, per_page: perPage };
+    if (branch_id) params.branch_id = branch_id;
     const { data } = await api.get<MaterialListResponse>(
       '/api/admin/materials',
-      { params: { page, per_page: perPage } }
+      { params }
     );
     return data;
   },

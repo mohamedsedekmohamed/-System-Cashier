@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { manufacturingApi, MANUFACTURING_KEY, MANUFACTURING_SELECT_OPTIONS_KEY } from '../../services/manufacturingService';
-import type { ManufacturingFormData, ManufacturingRecipePayload } from '../../types';
+import type { 
+  ManufacturingFormData, 
+  ManufacturingRecipePayload,
+  ManufacturingSelectOptionsResponse,
+  BranchOption,
+  ManufacturingProduct,
+  ManufacturingProductRecipe,
+  ManufacturingMaterial
+} from '../../types';
 import { MdArrowForward, MdSave, MdPrecisionManufacturing, MdAdd, MdDelete } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
@@ -12,6 +20,7 @@ const ManufacturingAdd: React.FC = () => {
 
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<ManufacturingFormData>({
+    branch_id: 0,
     product_id: 0,
     product_recipe_id: 0,
     count: 1,
@@ -21,16 +30,53 @@ const ManufacturingAdd: React.FC = () => {
   });
 
   const [targetType, setTargetType] = useState<'product' | 'recipe'>('product');
+  const [isLoadingSpecs, setIsLoadingSpecs] = useState(false);
 
   // ── Fetch Select Options ───────────────
-  const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
+  const { data: optionsData, isLoading: isLoadingOptions } = useQuery<ManufacturingSelectOptionsResponse>({
     queryKey: [MANUFACTURING_SELECT_OPTIONS_KEY],
-    queryFn: manufacturingApi.getSelectOptions,
+    queryFn: () => manufacturingApi.getSelectOptions(),
   });
 
-  const products = optionsData?.data?.products ?? [];
-  const productRecipes = optionsData?.data?.product_recipes ?? [];
-  const materials = optionsData?.data?.materials ?? [];
+  const branches: BranchOption[] = optionsData?.data?.branches ?? [];
+  const products: ManufacturingProduct[] = optionsData?.data?.products ?? [];
+  const productRecipes: ManufacturingProductRecipe[] = optionsData?.data?.product_recipes ?? [];
+  const materials: ManufacturingMaterial[] = optionsData?.data?.materials ?? [];
+
+  // Auto-select first branch
+  React.useEffect(() => {
+    if (!formData.branch_id && branches.length > 0) {
+      setFormData(prev => ({ ...prev, branch_id: branches[0].id }));
+    }
+  }, [branches, formData.branch_id]);
+
+  // Fetch recipe specifications when target product or recipe and branch change
+  const fetchSpecs = async (productId?: number, recipeId?: number, branchId?: number) => {
+    const targetBranch = branchId || formData.branch_id;
+    if ((!productId && !recipeId) || !targetBranch) return;
+    try {
+      setIsLoadingSpecs(true);
+      const res = await manufacturingApi.getSpecifications({
+        product_id: productId || undefined,
+        product_recipe_id: recipeId || undefined,
+        branch_id: targetBranch,
+      });
+      if (res?.data?.recipes && Array.isArray(res.data.recipes) && res.data.recipes.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          recipes: res.data.recipes.map((r: any) => ({
+            material_id: r.material_id || 0,
+            product_recipe_id: r.product_recipe_id || 0,
+            count: r.count || 1,
+          }))
+        }));
+      }
+    } catch (err) {
+      console.warn('Could not auto-fetch specifications:', err);
+    } finally {
+      setIsLoadingSpecs(false);
+    }
+  };
 
   // ── Create Mutation ────────────────────
   const mutation = useMutation({
@@ -44,10 +90,19 @@ const ManufacturingAdd: React.FC = () => {
   // ── Handlers ───────────────────────────
   const handleMainChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    const val = Number(value);
     setFormData(prev => ({
       ...prev,
-      [name]: Number(value),
+      [name]: val,
     }));
+
+    if (name === 'product_id') {
+      fetchSpecs(val, undefined, formData.branch_id);
+    } else if (name === 'product_recipe_id') {
+      fetchSpecs(undefined, val, formData.branch_id);
+    } else if (name === 'branch_id') {
+      fetchSpecs(formData.product_id || undefined, formData.product_recipe_id || undefined, val);
+    }
   };
 
   const handleTargetTypeChange = (type: 'product' | 'recipe') => {
@@ -93,11 +148,16 @@ const ManufacturingAdd: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.branch_id) {
+      alert('يرجى تحديد الفرع القائم بالتصنيع');
+      return;
+    }
     if ((!formData.product_id && !formData.product_recipe_id) || formData.count <= 0) return;
     
     // Clean up payloads
     const payload: ManufacturingFormData = {
       ...formData,
+      branch_id: formData.branch_id,
       product_id: formData.product_id || null,
       product_recipe_id: formData.product_recipe_id || null,
       recipes: formData.recipes.map(r => ({
@@ -137,6 +197,28 @@ const ManufacturingAdd: React.FC = () => {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Branch Selection (Required) */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                الفرع القائم بالتصنيع <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="branch_id"
+                required
+                value={formData.branch_id || ''}
+                onChange={handleMainChange}
+                disabled={isLoadingOptions}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-medium"
+              >
+                <option value="" disabled>-- اختر الفرع القائم بعملية التصنيع --</option>
+                {branches.map((b: BranchOption) => (
+                  <option key={b.id} value={b.id}>
+                    {typeof b.name === 'object' && b.name !== null ? (b.name.ar || b.name.en) : b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Target Type Selector */}
             <div className="md:col-span-2 flex gap-4">
               <button
@@ -174,7 +256,7 @@ const ManufacturingAdd: React.FC = () => {
                   disabled={isLoadingOptions}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
                   <option value="" disabled>-- اختر المنتج --</option>
-                  {products.map(p => (
+                  {products.map((p: ManufacturingProduct) => (
                     <option key={p.id} value={p.id}>{p.name?.ar}</option>
                   ))}
                 </select>
@@ -189,7 +271,7 @@ const ManufacturingAdd: React.FC = () => {
                   disabled={isLoadingOptions}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
                   <option value="" disabled>-- اختر الوصفة --</option>
-                  {productRecipes.map(p => (
+                  {productRecipes.map((p: ManufacturingProductRecipe) => (
                     <option key={p.id} value={p.id}>{p.name?.ar}</option>
                   ))}
                 </select>
@@ -212,9 +294,16 @@ const ManufacturingAdd: React.FC = () => {
         {/* Section 2: Consumed Materials */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-              المواد المستهلكة (الخامات)
-            </h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+                المواد المستهلكة (الخامات)
+              </h2>
+              {isLoadingSpecs && (
+                <span className="text-xs text-primary flex items-center gap-1 font-normal">
+                  <AiOutlineLoading3Quarters className="animate-spin text-xs" /> جاري تحميل المكونات...
+                </span>
+              )}
+            </div>
             <button type="button" onClick={handleAddRecipeItem}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-semibold">
               <MdAdd size={18} />
@@ -246,12 +335,12 @@ const ManufacturingAdd: React.FC = () => {
                   >
                     <option value="" disabled className="text-slate-400">-- اختر المادة --</option>
                     <optgroup label="المواد الخام" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                      {materials.map(m => (
+                      {materials.map((m: ManufacturingMaterial) => (
                         <option key={`m_${m.id}`} value={`m_${m.id}`} className="font-normal text-slate-800 dark:text-slate-100">{m.name?.ar}</option>
                       ))}
                     </optgroup>
                     <optgroup label="وصفات شبه مصنعة" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                      {productRecipes.map(r => (
+                      {productRecipes.map((r: ManufacturingProductRecipe) => (
                         <option key={`r_${r.id}`} value={`r_${r.id}`} className="font-normal text-slate-800 dark:text-slate-100">{r.name?.ar}</option>
                       ))}
                     </optgroup>

@@ -1,4 +1,5 @@
 import type { PaginatedMeta } from './common';
+import type { Branch, BranchOption } from './branch';
 
 export interface PurchaseSelectMaterial {
   id: number;
@@ -13,6 +14,7 @@ export interface PurchaseSelectRecipe {
 }
 
 export interface PurchaseSelectOptions {
+  branches: BranchOption[];
   materials: PurchaseSelectMaterial[];
   product_recipes: PurchaseSelectRecipe[];
 }
@@ -55,6 +57,8 @@ export interface PurchaseItemDetail {
 
 export interface Purchase {
   id: number;
+  branch_id?: number;
+  branch?: Branch;
   receipt?: string | null;
   receipt_url?: string | null;
   total_cost: number;
@@ -93,6 +97,7 @@ export interface PurchaseItemPayload {
 }
 
 export interface PurchaseFormData {
+  branch_id: number;
   receipt?: File | null;
   notes?: string;
   items: PurchaseItemPayload[];

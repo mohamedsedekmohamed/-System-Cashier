@@ -10,7 +10,7 @@ export interface DashboardProductItem {
   } | null;
   image?: string | null;
   price: number;
-  stock: number;
+  stock?: number;
   tax_id?: number | null;
   discount_id?: number | null;
   category_id?: number | null;

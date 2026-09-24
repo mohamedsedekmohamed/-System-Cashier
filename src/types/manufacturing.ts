@@ -1,4 +1,5 @@
 import type { PaginatedMeta } from './common';
+import type { Branch, BranchOption } from './branch';
 
 export interface ManufacturingName {
   ar: string;
@@ -37,6 +38,8 @@ export interface ManufacturingRecipeItem {
 
 export interface ManufacturingList {
   id: number;
+  branch_id?: number;
+  branch?: Branch | null;
   product_id: number | null;
   product: ManufacturingProduct | null;
   product_recipe_id: number | null;
@@ -54,6 +57,7 @@ export interface ManufacturingRecipePayload {
 }
 
 export interface ManufacturingFormData {
+  branch_id: number;
   product_id: number | null;
   product_recipe_id: number | null;
   count: number;
@@ -61,6 +65,7 @@ export interface ManufacturingFormData {
 }
 
 export interface ManufacturingSelectOptions {
+  branches: BranchOption[];
   products: ManufacturingProduct[];
   product_recipes: ManufacturingProductRecipe[];
   materials: ManufacturingMaterial[];

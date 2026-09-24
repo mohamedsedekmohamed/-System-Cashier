@@ -92,14 +92,6 @@ const ProductList: React.FC = () => {
       )
     },
     {
-      header: 'المخزون',
-      render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-          {row.stock}
-        </span>
-      )
-    },
-    {
       header: 'الضرائب / الخصومات',
       render: (row) => (
         <div className="flex flex-col gap-1 text-xs">
@@ -181,7 +173,6 @@ const ProductList: React.FC = () => {
           { label: 'الوصف (إنجليزي)', value: viewTarget?.description?.en || '—' },
           { label: 'القسم الرئيسي', value: viewTarget?.category?.name?.ar || '—' },
           { label: 'السعر الأساسي', value: `${viewTarget?.price} ج.م` },
-          { label: 'المخزون', value: viewTarget?.stock },
           { label: 'الضريبة المطبقة', value: viewTarget?.tax?.name?.ar || 'لا يوجد' },
           { label: 'الخصم المطبق', value: viewTarget?.discount?.name?.ar || 'لا يوجد' },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },

@@ -17,11 +17,13 @@ export const productRecipeApi = {
     return data;
   },
 
-  /** GET /api/admin/product-recipes?page=&per_page= */
-  list: async (page = 1, perPage = 15): Promise<ProductRecipeListResponse> => {
+  /** GET /api/admin/product-recipes?page=&per_page=&branch_id= */
+  list: async (page = 1, perPage = 15, branch_id?: number): Promise<ProductRecipeListResponse> => {
+    const params: Record<string, any> = { page, per_page: perPage };
+    if (branch_id) params.branch_id = branch_id;
     const { data } = await api.get<ProductRecipeListResponse>(
       '/api/admin/product-recipes',
-      { params: { page, per_page: perPage } }
+      { params }
     );
     return data;
   },

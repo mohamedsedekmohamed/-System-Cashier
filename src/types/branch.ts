@@ -3,9 +3,15 @@ export interface BranchLocationPoint {
   lng: number;
 }
 
+export interface BranchOption {
+  id: number;
+  name: { en?: string; ar?: string } | string | null;
+  role?: string;
+}
+
 export interface Branch {
   id: number;
-  name: string;
+  name: { en: string; ar: string } | string;
   address: string;
   location?: BranchLocationPoint[] | string;
   watts: string;

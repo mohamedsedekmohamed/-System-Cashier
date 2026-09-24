@@ -96,6 +96,14 @@ const PurchaseList: React.FC = () => {
       },
     },
     {
+      header: 'الفرع المستلم',
+      render: (row) => (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
+          {typeof row.branch?.name === 'object' ? (row.branch.name.ar || row.branch.name.en) : (row.branch?.name || (row.branch_id ? `فرع #${row.branch_id}` : '—'))}
+        </span>
+      ),
+    },
+    {
       header: 'عدد الأصناف',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200">

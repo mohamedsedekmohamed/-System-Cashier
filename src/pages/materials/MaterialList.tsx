@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { materialApi, MATERIALS_KEY } from '../../services/materialService';
-import type { Material } from '../../types';
+import { materialApi, MATERIALS_KEY, MATERIALS_SELECT_OPTIONS_KEY } from '../../services/materialService';
+import type { Material, MaterialFormData } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
@@ -10,20 +10,28 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
-import { MdCategory, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { MdCategory, MdEdit, MdDelete, MdVisibility, MdStorefront } from 'react-icons/md';
 
 const MaterialList: React.FC = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Material | null>(null);
   const [viewTarget, setViewTarget] = useState<Material | null>(null);
   const perPage = 15;
 
+  // ── Fetch Select Options (Guarded by Materials permissions) ──
+  const { data: optionsData } = useQuery({
+    queryKey: [MATERIALS_SELECT_OPTIONS_KEY],
+    queryFn: () => materialApi.getSelectOptions(),
+  });
+  const branches = optionsData?.data?.branches ?? [];
+
   // ── Fetch (paginated) ──────────────────
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: [MATERIALS_KEY, page, perPage],
-    queryFn: () => materialApi.list(page, perPage),
+    queryKey: [MATERIALS_KEY, page, perPage, selectedBranchId],
+    queryFn: () => materialApi.list(page, perPage, selectedBranchId),
     placeholderData: (prev) => prev,
   });
 
@@ -42,9 +50,8 @@ const MaterialList: React.FC = () => {
   // ── Toggle Status mutation ─────────────
   const toggleStatusMutation = useMutation({
     mutationFn: (material: Material) => {
-      const payload = {
+      const payload: MaterialFormData = {
         name: material.name,
-        stock: material.stock,
         category_id: material.category_id,
         status: !material.status,
       };
@@ -92,12 +99,15 @@ const MaterialList: React.FC = () => {
       )
     },
     {
-      header: 'الكمية (المخزون)',
-      render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
-          {row.stock}
-        </span>
-      )
+      header: selectedBranchId ? 'مخزون الفرع' : 'إجمالي المخزون',
+      render: (row) => {
+        const stockVal = selectedBranchId ? (row.stock ?? 0) : (row.total_stock ?? row.stock ?? 0);
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+            {stockVal}
+          </span>
+        );
+      }
     },
     {
       header: 'الحالة',
@@ -149,6 +159,31 @@ const MaterialList: React.FC = () => {
         addText="إضافة مادة خام"
       />
 
+      {branches.length > 0 && (
+        <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm font-semibold">
+            <MdStorefront size={18} className="text-primary" />
+            <span>عرض مخزون الفرع:</span>
+          </div>
+          <select
+            value={selectedBranchId ?? ''}
+            onChange={(e) => {
+              const val = e.target.value ? Number(e.target.value) : undefined;
+              setSelectedBranchId(val);
+              setPage(1);
+            }}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            <option value="">جميع الفروع (إجمالي المخزون)</option>
+            {branches.map(b => (
+              <option key={b.id} value={b.id}>
+                {typeof b.name === 'object' && b.name ? (b.name.ar || b.name.en) : (b.name || '')}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="flex-1">
         <DataTable
           data={filtered}
@@ -177,7 +212,7 @@ const MaterialList: React.FC = () => {
           { label: 'الرقم التعريفي', value: viewTarget?.id },
           { label: 'اسم المادة (عربي)', value: viewTarget?.name?.ar },
           { label: 'اسم المادة (إنجليزي)', value: viewTarget?.name?.en },
-          { label: 'الكمية (المخزون)', value: viewTarget?.stock },
+          { label: 'الكمية (المخزون)', value: selectedBranchId ? (viewTarget?.stock ?? 0) : (viewTarget?.total_stock ?? viewTarget?.stock ?? 0) },
           { label: 'القسم', value: viewTarget?.category?.name?.ar || '—' },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
