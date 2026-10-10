@@ -49,3 +49,34 @@ export const kitchenApi = {
     await api.delete(`/api/admin/kitchens/${id}`);
   },
 };
+
+export const KITCHEN_PRODUCTS_KEY = 'kitchen_products';
+export const UNASSIGNED_KITCHEN_PRODUCTS_KEY = 'unassigned_kitchen_products';
+
+export const kitchenProductApi = {
+  /** GET /api/admin/kitchen-products/unassigned?lang=ar */
+  getUnassigned: async (lang: string = 'ar'): Promise<any[]> => {
+    const { data } = await api.get('/api/admin/kitchen-products/unassigned', {
+      params: { lang },
+    });
+    return Array.isArray(data) ? data : (data?.data ?? []);
+  },
+
+  /** GET /api/admin/kitchen-products/:kitchenId */
+  getByKitchen: async (kitchenId: number | string, lang: string = 'ar'): Promise<any[]> => {
+    const { data } = await api.get(`/api/admin/kitchen-products/${kitchenId}`, {
+      params: { lang },
+    });
+    return Array.isArray(data) ? data : (data?.data ?? []);
+  },
+
+  /** PUT /api/admin/kitchen-products/assign */
+  assign: async (kitchenId: number | string, productIds: number[]): Promise<{ status: boolean; message?: string }> => {
+    const { data } = await api.put('/api/admin/kitchen-products/assign', {
+      kitchen_id: Number(kitchenId),
+      product_ids: productIds,
+    });
+    return data;
+  },
+};
+

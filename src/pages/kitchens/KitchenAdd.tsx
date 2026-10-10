@@ -5,7 +5,7 @@ import { kitchenApi, KITCHENS_KEY, KITCHENS_SELECT_OPTIONS_KEY } from '../../ser
 import type { KitchenFormData } from '../../types';
 import { MdArrowForward, MdSave, MdSoupKitchen } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
-import { renderName } from '../../utils/helpers';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const KitchenAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -143,15 +143,16 @@ const KitchenAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 الفرع <span className="text-red-500">*</span>
               </label>
-              <select name="branch_id" required
-                value={formData.branch_id || ''} onChange={handleChange}
+              <SearchableSelect
+                name="branch_id"
+                required
+                value={formData.branch_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, branch_id: val ? Number(val) : null }))}
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
-                <option value="" disabled>-- اختر الفرع --</option>
-                {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{renderName(branch.name) || `فرع #${branch.id}`}</option>
-                ))}
-              </select>
+                options={branches}
+                placeholder="-- اختر الفرع --"
+                searchPlaceholder="ابحث باسم الفرع..."
+              />
             </div>
 
             {/* Status */}

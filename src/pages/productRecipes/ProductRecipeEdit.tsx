@@ -7,6 +7,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const ProductRecipeEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -123,11 +124,16 @@ const ProductRecipeEdit: React.FC = () => {
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">القسم *</label>
-              <select name="category_id" required disabled={isLoadingOptions} value={formData.category_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="" disabled>-- اختر القسم --</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name?.ar}</option>)}
-              </select>
+              <SearchableSelect
+                name="category_id"
+                required
+                disabled={isLoadingOptions}
+                value={formData.category_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, category_id: Number(val) || 0 }))}
+                options={categories}
+                placeholder="اختر القسم..."
+                searchPlaceholder="ابحث في الأقسام..."
+              />
             </div>
 
 

@@ -16,6 +16,13 @@ export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 
   formData.append('whats', payload.whats || '');
   formData.append('description', payload.description || '');
 
+  if (payload.start_day) {
+    formData.append('start_day', payload.start_day);
+  }
+  if (payload.end_day) {
+    formData.append('end_day', payload.end_day);
+  }
+
   if (payload.logo instanceof File) {
     formData.append('logo', payload.logo);
   } else if (typeof payload.logo === 'string' && payload.logo.trim()) {

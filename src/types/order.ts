@@ -21,13 +21,28 @@ export interface OrderProduct {
   addons: OrderAddon[];
 }
 
+// أنواع الطلبات
+export type OrderModule = 'delivery' | 'takeaway' | 'dinein';
+
+// حالات الأوردر المتاحة
+export type OrderStatus =
+  | 'preparing'
+  | 'done'
+  | 'pickup'
+  | 'out_of_delivery'
+  | 'delivered'
+  | 'return'
+  | 'failed_to_delivered'
+  | 'faild_to_delivered';
+
 export interface Order {
   id: number;
   shift_id: number | null;
   cashier_id: number | null;
   cashier_man_id: number | null;
   hall_table_id: number | null;
-  module: string;
+  module: OrderModule | string;
+  status?: OrderStatus;
   address: string | null;
   note: string | null;
   phone: string | null;

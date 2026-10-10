@@ -21,6 +21,8 @@ import {
   MdCloudUpload,
   MdDeleteOutline,
   MdUploadFile,
+  MdAccessTime,
+  MdNightsStay,
 } from 'react-icons/md';
 import { FaFacebook, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
@@ -47,6 +49,8 @@ const BusinessSetupPage: React.FC = () => {
     description: '',
     logo: '',
     branch_cover: '',
+    start_day: '09:00',
+    end_day: '03:00',
   });
 
   // ── File Upload States ─────────────────
@@ -92,6 +96,8 @@ const BusinessSetupPage: React.FC = () => {
         description: setupData.description || '',
         logo: initialLogo,
         branch_cover: initialCover,
+        start_day: setupData.start_day ? setupData.start_day.substring(0, 5) : '09:00',
+        end_day: setupData.end_day ? setupData.end_day.substring(0, 5) : '03:00',
       });
 
       setLogoFile(null);
@@ -218,6 +224,8 @@ const BusinessSetupPage: React.FC = () => {
       description: formData.description.trim(),
       logo: finalLogo,
       branch_cover: finalCover,
+      start_day: formData.start_day || '09:00',
+      end_day: formData.end_day || '03:00',
     });
   };
 
@@ -235,6 +243,8 @@ const BusinessSetupPage: React.FC = () => {
         description: setupData.description || '',
         logo: initialLogo,
         branch_cover: initialCover,
+        start_day: setupData.start_day ? setupData.start_day.substring(0, 5) : '09:00',
+        end_day: setupData.end_day ? setupData.end_day.substring(0, 5) : '03:00',
       });
 
       setLogoFile(null);
@@ -251,6 +261,8 @@ const BusinessSetupPage: React.FC = () => {
         description: '',
         logo: '',
         branch_cover: '',
+        start_day: '09:00',
+        end_day: '03:00',
       });
       setLogoFile(null);
       setBranchCoverFile(null);
@@ -280,6 +292,12 @@ const BusinessSetupPage: React.FC = () => {
     Boolean(formData.whats.trim()) &&
     Boolean(formData.description.trim()) &&
     hasLogo;
+
+  const isOvernight = Boolean(
+    formData.start_day &&
+    formData.end_day &&
+    formData.start_day > formData.end_day
+  );
 
   return (
     <div className="w-full space-y-6 pb-12">
@@ -459,7 +477,115 @@ const BusinessSetupPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. Social & Communication Channels */}
+            {/* 2. Restaurant Working Hours & Overnight Shifts Section */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 text-slate-800 dark:text-white">
+                  <MdAccessTime size={22} className="text-primary" />
+                  <div>
+                    <h2 className="font-bold text-base">مواعيد وساعات العمل اليومية (فترات التشغيل)</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      تحديد وقت بدء وانتهاء يوم التشغيل للتحكم بالسلة والطلبات وفلترة الأوردرات
+                    </p>
+                  </div>
+                </div>
+
+                {setupData && setupData.is_open !== undefined && (
+                  <span
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shrink-0 ${
+                      setupData.is_open
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-300 dark:border-rose-800'
+                    }`}
+                  >
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        setupData.is_open ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                      }`}
+                    />
+                    <span>{setupData.is_open ? 'المطعم مفتوح الآن' : 'المطعم مغلق الآن'}</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Start Day */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      وقت بدء يوم العمل (start_day) <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] text-slate-400">صيغة 24 ساعة (HH:mm)</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="time"
+                      name="start_day"
+                      required
+                      value={formData.start_day || '09:00'}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-center font-mono text-base font-bold"
+                    />
+                  </div>
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    مثال: 09:00 (صباحاً)
+                  </span>
+                </div>
+
+                {/* End Day */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      وقت انتهاء يوم العمل (end_day) <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] text-slate-400">صيغة 24 ساعة (HH:mm)</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="time"
+                      name="end_day"
+                      required
+                      value={formData.end_day || '03:00'}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-center font-mono text-base font-bold"
+                    />
+                  </div>
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    مثال: 03:00 (فجراً)
+                  </span>
+                </div>
+              </div>
+
+              {/* Overnight Indicator Alert */}
+              {isOvernight && (
+                <div className="p-4 rounded-xl bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 text-indigo-900 dark:text-indigo-200 flex items-start gap-3 shadow-sm">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <MdNightsStay size={20} />
+                  </div>
+                  <div className="text-xs leading-relaxed space-y-1">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-indigo-950 dark:text-indigo-100 font-bold text-sm">
+                        ينتهي وقت العمل في اليوم التالي (فترة ليلية - Overnight) 🌙
+                      </strong>
+                    </div>
+                    <p className="text-indigo-700 dark:text-indigo-300 text-xs">
+                      نظراً لأن وقت الانتهاء ({formData.end_day}) يسبق وقت البدء ({formData.start_day})، تمتد ساعات التشغيل حتى فجر اليوم التالي، وتعتبر طلبات ما بعد منتصف الليل تابعة لنفس يوم العمل حتى الساعة {formData.end_day}.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {setupData?.working_hours_text && (
+                <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                  <span>صيغة مواعيد العمل المعروضة للعميل:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {setupData.working_hours_text}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Social & Communication Channels */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-700 text-slate-800 dark:text-white">
                 <MdLink size={20} className="text-primary" />

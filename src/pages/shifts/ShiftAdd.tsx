@@ -6,6 +6,7 @@ import { shiftApi, SHIFTS_KEY } from '../../services/shiftService';
 import type { ShiftFormData } from '../../types';
 import { MdArrowForward, MdSchedule, MdCheck } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 /* ── Shared helpers ──────────────────────── */
 const inputClass = (hasError: boolean) => `
@@ -174,13 +175,18 @@ const ShiftAdd: React.FC = () => {
             {/* Branch */}
             <div className="md:col-span-2">
               <Field id="branch_id" label="الفرع" required error={errors.branch_id}>
-                <select id="branch_id" name="branch_id" value={form.branch_id} onChange={handleChange}
-                  disabled={isPending || isLoadingOptions} className={inputClass(!!errors.branch_id)}>
-                  <option value={0} disabled>اختر الفرع...</option>
-                  {branches.map((b: any) => (
-                    <option key={b.id} value={b.id}>{b.name?.ar || b.name?.en || b.name || `فرع ${b.id}`}</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  id="branch_id"
+                  name="branch_id"
+                  value={form.branch_id || ''}
+                  onChange={(val) => setForm((prev) => ({ ...prev, branch_id: Number(val) }))}
+                  options={branches}
+                  placeholder="اختر الفرع..."
+                  searchPlaceholder="ابحث عن الفرع..."
+                  disabled={isPending || isLoadingOptions}
+                  required
+                  error={errors.branch_id}
+                />
               </Field>
             </div>
           </div>

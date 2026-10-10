@@ -5,6 +5,7 @@ import { wasteApi, WASTES_KEY, WASTES_SELECT_OPTIONS_KEY } from '../../services/
 import type { WasteFormData } from '../../types';
 import { MdArrowForward, MdSave, MdDeleteOutline, MdLayers, MdFastfood, MdInfoOutline } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 type WasteType = 'material' | 'recipe';
 
@@ -29,13 +30,6 @@ const WasteAdd: React.FC = () => {
   const branches = optionsData?.data?.branches ?? [];
   const materials = optionsData?.data?.materials ?? [];
   const recipes = optionsData?.data?.product_recipes ?? [];
-
-  // Auto-select first branch when branches are loaded
-  React.useEffect(() => {
-    if (!selectedBranchId && branches.length > 0) {
-      setSelectedBranchId(branches[0].id);
-    }
-  }, [branches, selectedBranchId]);
 
   const selectedMaterial = materials.find(m => m.id === selectedMaterialId);
   const selectedRecipe = recipes.find(r => r.id === selectedRecipeId);
@@ -121,24 +115,19 @@ const WasteAdd: React.FC = () => {
               الفرع المطلوب تسجيل الهالك فيه <span className="text-red-500">*</span>
             </label>
             <div className="relative max-w-lg">
-              <select
+              <SearchableSelect
                 required
                 value={selectedBranchId || ''}
-                onChange={(e) => {
-                  setSelectedBranchId(Number(e.target.value));
+                onChange={(val) => {
+                  setSelectedBranchId(Number(val) || 0);
                   setSelectedMaterialId(0);
                   setSelectedRecipeId(0);
                 }}
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:border-primary focus:outline-none focus:ring-2 ring-primary/20 transition-all"
-              >
-                <option value="" disabled>-- اختر الفرع أولاً --</option>
-                {branches.map(b => (
-                  <option key={b.id} value={b.id}>
-                    {typeof b.name === 'object' && b.name ? (b.name.ar || b.name.en) : (b.name || '')}
-                  </option>
-                ))}
-              </select>
+                options={branches}
+                placeholder="اختر الفرع أولاً..."
+                searchPlaceholder="ابحث عن الفرع..."
+              />
             </div>
           </div>
 
@@ -194,20 +183,19 @@ const WasteAdd: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   المادة المهدرة <span className="text-red-500">*</span>
                 </label>
-                <select
+                <SearchableSelect
                   required
                   disabled={isLoadingOptions}
                   value={selectedMaterialId || ''}
-                  onChange={(e) => setSelectedMaterialId(Number(e.target.value))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="" disabled>-- اختر المادة الخام --</option>
-                  {materials.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.name?.ar || m.name?.en || `مادة #${m.id}`} (المخزون: {m.stock ?? 0})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedMaterialId(Number(val) || 0)}
+                  options={materials.map((m) => ({
+                    id: m.id,
+                    name: m.name?.ar || m.name?.en || `مادة #${m.id}`,
+                    subtext: `المخزون المتوفر: ${m.stock ?? 0}`,
+                  }))}
+                  placeholder="اختر المادة الخام..."
+                  searchPlaceholder="ابحث عن المادة..."
+                />
                 {selectedMaterial && (
                   <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5">
                     <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
@@ -223,20 +211,19 @@ const WasteAdd: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   الوصفة / المنتج المهدر <span className="text-red-500">*</span>
                 </label>
-                <select
+                <SearchableSelect
                   required
                   disabled={isLoadingOptions}
                   value={selectedRecipeId || ''}
-                  onChange={(e) => setSelectedRecipeId(Number(e.target.value))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="" disabled>-- اختر الوصفة / المنتج --</option>
-                  {recipes.map(r => (
-                    <option key={r.id} value={r.id}>
-                      {r.name?.ar || r.name?.en || `وصفة #${r.id}`} (المخزون: {r.stock ?? 0})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedRecipeId(Number(val) || 0)}
+                  options={recipes.map((r) => ({
+                    id: r.id,
+                    name: r.name?.ar || r.name?.en || `وصفة #${r.id}`,
+                    subtext: `المخزون المتوفر: ${r.stock ?? 0}`,
+                  }))}
+                  placeholder="اختر الوصفة / المنتج..."
+                  searchPlaceholder="ابحث عن الوصفة..."
+                />
                 {selectedRecipe && (
                   <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5">
                     <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />

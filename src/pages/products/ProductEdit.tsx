@@ -8,6 +8,7 @@ import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { ProductVariationsSection } from '../../components/products/ProductVariationsSection';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const ProductEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -190,37 +191,57 @@ const ProductEdit: React.FC = () => {
             {/* Categories */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">القسم الرئيسي *</label>
-              <select name="category_id" required disabled={isLoadingOptions} value={formData.category_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="" disabled>-- اختر القسم --</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name?.ar}</option>)}
-              </select>
+              <SearchableSelect
+                name="category_id"
+                required
+                disabled={isLoadingOptions}
+                value={formData.category_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, category_id: Number(val) || 0 }))}
+                options={categories}
+                placeholder="اختر القسم الرئيسي..."
+                searchPlaceholder="ابحث في الأقسام..."
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">القسم الفرعي</label>
-              <select name="sub_category_id" disabled={isLoadingOptions} value={formData.sub_category_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="">-- بدون قسم فرعي --</option>
-                {subCategories.map(c => <option key={c.id} value={c.id}>{c.name?.ar}</option>)}
-              </select>
+              <SearchableSelect
+                name="sub_category_id"
+                disabled={isLoadingOptions}
+                value={formData.sub_category_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, sub_category_id: Number(val) || 0 }))}
+                options={subCategories}
+                placeholder="بدون قسم فرعي..."
+                searchPlaceholder="ابحث في الأقسام الفرعية..."
+                isClearable
+              />
             </div>
 
             {/* Taxes and Discounts */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الضريبة المطبقة</label>
-              <select name="tax_id" disabled={isLoadingOptions} value={formData.tax_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="">-- بدون ضريبة --</option>
-                {taxes.map(t => <option key={t.id} value={t.id}>{t.name?.ar}</option>)}
-              </select>
+              <SearchableSelect
+                name="tax_id"
+                disabled={isLoadingOptions}
+                value={formData.tax_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, tax_id: Number(val) || 0 }))}
+                options={taxes}
+                placeholder="بدون ضريبة..."
+                searchPlaceholder="ابحث في الضرائب..."
+                isClearable
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الخصم المطبق</label>
-              <select name="discount_id" disabled={isLoadingOptions} value={formData.discount_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="">-- بدون خصم --</option>
-                {discounts.map(d => <option key={d.id} value={d.id}>{d.name?.ar}</option>)}
-              </select>
+              <SearchableSelect
+                name="discount_id"
+                disabled={isLoadingOptions}
+                value={formData.discount_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, discount_id: Number(val) || 0 }))}
+                options={discounts}
+                placeholder="بدون خصم..."
+                searchPlaceholder="ابحث في الخصومات..."
+                isClearable
+              />
             </div>
           </div>
         </div>

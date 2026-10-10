@@ -78,3 +78,24 @@
 .sidebar-active-text {
   color: var(--color-primary) !important;
 }
+
+/* Custom Animations & Keyframes */
+@keyframes login-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.04); }
+}
+
+.animate-login-shake {
+  animation: login-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 6s ease-in-out infinite;
+}
+

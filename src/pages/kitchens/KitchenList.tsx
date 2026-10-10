@@ -10,8 +10,9 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
-import { MdSoupKitchen, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { MdSoupKitchen, MdEdit, MdDelete, MdVisibility, MdRestaurantMenu } from 'react-icons/md';
 import { renderName } from '../../utils/helpers';
+import { KitchenProductsModal } from '../../components/kitchens/KitchenProductsModal';
 
 const KitchenList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -19,6 +20,7 @@ const KitchenList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Kitchen | null>(null);
   const [viewTarget, setViewTarget] = useState<Kitchen | null>(null);
+  const [assignProductsTarget, setAssignProductsTarget] = useState<Kitchen | null>(null);
   const perPage = 15;
 
   // ── Fetch (paginated) ──────────────────
@@ -109,6 +111,10 @@ const KitchenList: React.FC = () => {
       header: 'الإجراءات',
       render: (row) => (
         <div className="flex items-center gap-2">
+          <button onClick={() => setAssignProductsTarget(row)}
+            className="p-2 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-400 transition-all shadow-sm border border-teal-100 dark:border-teal-800/50" title="ربط وتوزيع المنتجات بالمطبخ">
+            <MdRestaurantMenu size={16} />
+          </button>
           <button onClick={() => setViewTarget(row)}
             className="p-2 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50" title="عرض التفاصيل">
             <MdVisibility size={16} />
@@ -176,6 +182,12 @@ const KitchenList: React.FC = () => {
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }
         ]}
+      />
+
+      <KitchenProductsModal
+        kitchen={assignProductsTarget}
+        isOpen={Boolean(assignProductsTarget)}
+        onClose={() => setAssignProductsTarget(null)}
       />
     </div>
   );

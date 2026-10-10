@@ -52,3 +52,22 @@ export interface KitchenSelectOptionsResponse {
     branches: SelectOption[];
   };
 }
+
+// واجهة المنتجات المربوطة بالمطبخ
+export interface KitchenAssignedProduct {
+  id: number;
+  name: string;
+  name_ar?: string;
+  name_en?: string;
+  price: string | number;
+  category?: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface KitchenAssignPayload {
+  kitchen_id: number;
+  product_ids: number[];
+}
+

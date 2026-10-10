@@ -8,6 +8,7 @@ import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { renderName } from '../../utils/helpers';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const KitchenEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -177,14 +178,15 @@ const KitchenEdit: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 الفرع <span className="text-red-500">*</span>
               </label>
-              <select name="branch_id" required
-                value={formData.branch_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
-                <option value="" disabled>-- اختر الفرع --</option>
-                {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{renderName(branch.name) || `فرع #${branch.id}`}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                name="branch_id"
+                required
+                value={formData.branch_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, branch_id: val ? Number(val) : null }))}
+                options={branches}
+                placeholder="-- اختر الفرع --"
+                searchPlaceholder="ابحث باسم الفرع..."
+              />
             </div>
 
             {/* Status */}

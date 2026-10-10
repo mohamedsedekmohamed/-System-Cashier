@@ -5,6 +5,12 @@ import { taxApi, TAXES_KEY } from '../../services/taxService';
 import type { TaxFormData } from '../../types';
 import { MdArrowForward, MdSave, MdMonetizationOn } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
+
+const TAX_TYPE_OPTIONS = [
+  { id: 'percentage', name: 'نسبة مئوية (%)' },
+  { id: 'value', name: 'قيمة ثابتة (ج.م)' },
+];
 
 const TaxAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -92,11 +98,15 @@ const TaxAdd: React.FC = () => {
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">نوع الضريبة *</label>
-              <select name="type" required value={formData.type} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="percentage">نسبة مئوية (%)</option>
-                <option value="value">قيمة ثابتة (ج.م)</option>
-              </select>
+              <SearchableSelect
+                name="type"
+                required
+                value={formData.type}
+                onChange={(val) => setFormData((prev) => ({ ...prev, type: val as 'percentage' | 'value' }))}
+                options={TAX_TYPE_OPTIONS}
+                placeholder="اختر نوع الضريبة..."
+                isClearable={false}
+              />
             </div>
 
             <div>

@@ -10,6 +10,11 @@ export interface BusinessSetup {
   branch_cover?: string;
   raw_branch_cover?: string;
   description: string;
+  start_day?: string;
+  end_day?: string;
+  is_open?: boolean;
+  is_overnight?: boolean;
+  working_hours_text?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -23,6 +28,8 @@ export interface BusinessSetupPayload {
   description: string;
   logo: string | File;
   branch_cover?: string | File;
+  start_day?: string;
+  end_day?: string;
 }
 
 export interface BusinessSetupResponse {

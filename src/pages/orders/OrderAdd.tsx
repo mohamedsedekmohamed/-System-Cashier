@@ -8,6 +8,13 @@ import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdAddShoppingCart, MdDelete, MdAdd } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { renderName } from '../../utils/helpers';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
+
+const ORDER_MODULE_OPTIONS = [
+  { id: 'takeaway', name: 'تيك أواي (Takeaway)' },
+  { id: 'delivery', name: 'توصيل (Delivery)' },
+  { id: 'dine_in', name: 'صالة (Dine-in)' },
+];
 
 const OrderAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -327,12 +334,14 @@ const OrderAdd: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">طريقة الطلب</label>
-                <select name="module" value={formData.module} onChange={handleChange}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary">
-                  <option value="takeaway">تيك أواي (Takeaway)</option>
-                  <option value="delivery">توصيل (Delivery)</option>
-                  <option value="dine_in">صالة (Dine-in)</option>
-                </select>
+                <SearchableSelect
+                  name="module"
+                  value={formData.module}
+                  onChange={(val) => setFormData(prev => ({ ...prev, module: val as any }))}
+                  options={ORDER_MODULE_OPTIONS}
+                  placeholder="اختر طريقة الطلب..."
+                  isClearable={false}
+                />
               </div>
 
               <div>
@@ -360,18 +369,19 @@ const OrderAdd: React.FC = () => {
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                     الطاولة <span className="text-red-500">*</span>
                   </label>
-                  <select 
+                  <SearchableSelect 
                     name="hall_table_id" 
                     value={formData.hall_table_id || ''} 
-                    onChange={handleChange} 
+                    onChange={(val) => setFormData(prev => ({ ...prev, hall_table_id: Number(val) || null }))} 
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                  >
-                    <option value="" disabled>-- اختر الطاولة --</option>
-                    {filteredHallTables.map((ht: any) => (
-                      <option key={ht.id} value={ht.id}>{renderName(ht.name)}</option>
-                    ))}
-                  </select>
+                    options={filteredHallTables.map((ht: any) => ({
+                      id: ht.id,
+                      name: renderName(ht.name),
+                      subtext: ht.capacity ? `السعة: ${ht.capacity} أفراد` : undefined,
+                    }))}
+                    placeholder="اختر الطاولة..."
+                    searchPlaceholder="ابحث عن الطاولة..."
+                  />
                   {filteredHallTables.length === 0 && (
                     <p className="text-xs text-amber-500 mt-1">لا توجد طاولات متاحة لهذا الفرع</p>
                   )}
@@ -395,19 +405,21 @@ const OrderAdd: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">المنتج</label>
-                <select
-                  value={selectedProductId}
-                  onChange={(e) => {
-                    setSelectedProductId(Number(e.target.value));
+                <SearchableSelect
+                  value={selectedProductId || ''}
+                  onChange={(val) => {
+                    setSelectedProductId(Number(val) || 0);
                     setSelectedVariations({});
                     setSelectedAddons([]);
                   }}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary">
-                  <option value={0}>-- اختر منتجاً --</option>
-                  {options?.products?.map((p: any) => (
-                    <option key={p.id} value={p.id}>{renderName(p.name)} - {p.price} ج.م</option>
-                  ))}
-                </select>
+                  options={(options?.products ?? []).map((p: any) => ({
+                    id: p.id,
+                    name: renderName(p.name),
+                    subtext: `${p.price} ج.م`,
+                  }))}
+                  placeholder="اختر منتجاً أو ابحث باسمه..."
+                  searchPlaceholder="ابحث عن المنتج..."
+                />
               </div>
 
               {selectedProductDef && selectedProductDef.variations?.length > 0 && (
@@ -419,18 +431,18 @@ const OrderAdd: React.FC = () => {
                         <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                           {renderName(v.name)} {v.required && <span className="text-red-500">*</span>}
                         </label>
-                        <select
+                        <SearchableSelect
                           required={v.required}
                           value={selectedVariations[v.id] || ''}
-                          onChange={(e) => setSelectedVariations(prev => ({ ...prev, [v.id]: Number(e.target.value) }))}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm">
-                          <option value="" disabled>-- اختر --</option>
-                          {v.options?.map((opt: any) => (
-                            <option key={opt.id} value={opt.id}>
-                              {renderName(opt.name)} {Number(opt.price) > 0 ? `(+${opt.price})` : ''}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(val) => setSelectedVariations(prev => ({ ...prev, [v.id]: Number(val) }))}
+                          options={(v.options ?? []).map((opt: any) => ({
+                            id: opt.id,
+                            name: renderName(opt.name),
+                            subtext: Number(opt.price) > 0 ? `+${opt.price} ج.م` : undefined,
+                          }))}
+                          placeholder="حدد الخيار..."
+                          searchPlaceholder="ابحث في الخيارات..."
+                        />
                       </div>
                     ))}
                   </div>
@@ -550,18 +562,20 @@ const OrderAdd: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   الفرع
                 </label>
-                <select 
-                  value={selectedBranchId} 
-                  onChange={(e) => handleBranchChange(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
-                >
-                  <option value={0}>-- كل الفروع --</option>
-                  {branches.map((b: any) => (
-                    <option key={b.id} value={b.id}>
-                      {renderName(b.name) || `فرع #${b.id}`}
-                    </option>
-                  ))}
-                </select>
+                <SearchableSelect 
+                  value={selectedBranchId || 0} 
+                  onChange={(val) => handleBranchChange(Number(val) || 0)}
+                  options={[
+                    { id: 0, name: 'كل الفروع' },
+                    ...branches.map((b: any) => ({
+                      id: b.id,
+                      name: renderName(b.name) || `فرع #${b.id}`,
+                    })),
+                  ]}
+                  placeholder="اختر الفرع..."
+                  searchPlaceholder="ابحث عن الفرع..."
+                  isClearable={false}
+                />
               </div>
 
               {/* Cashier Machine */}
@@ -569,20 +583,18 @@ const OrderAdd: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   ماكينة الكاشير <span className="text-red-500">*</span>
                 </label>
-                <select 
+                <SearchableSelect 
                   name="cashier_id" 
-                  value={formData.cashier_id || 0} 
-                  onChange={handleChange} 
+                  value={formData.cashier_id || ''} 
+                  onChange={(val) => setFormData(prev => ({ ...prev, cashier_id: Number(val) || 0 }))} 
                   required
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
-                >
-                  <option value={0} disabled>-- اختر ماكينة الكاشير --</option>
-                  {filteredCashiers.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {renderName(c.name)}
-                    </option>
-                  ))}
-                </select>
+                  options={filteredCashiers.map((c: any) => ({
+                    id: c.id,
+                    name: renderName(c.name),
+                  }))}
+                  placeholder="اختر ماكينة الكاشير..."
+                  searchPlaceholder="ابحث عن الماكينة..."
+                />
                 {filteredCashiers.length === 0 && (
                   <p className="text-xs text-amber-500 mt-1">لا توجد ماكينات كاشير متاحة</p>
                 )}
@@ -593,20 +605,19 @@ const OrderAdd: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   الوردية <span className="text-red-500">*</span>
                 </label>
-                <select 
+                <SearchableSelect 
                   name="shift_id" 
-                  value={formData.shift_id || 0} 
-                  onChange={handleChange} 
+                  value={formData.shift_id || ''} 
+                  onChange={(val) => setFormData(prev => ({ ...prev, shift_id: Number(val) || 0 }))} 
                   required
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
-                >
-                  <option value={0} disabled>-- الوردية --</option>
-                  {filteredShifts.map((s: any) => (
-                    <option key={s.id} value={s.id}>
-                      {renderName(s.name)} {s.start_time ? `(${s.start_time} - ${s.end_time})` : ''}
-                    </option>
-                  ))}
-                </select>
+                  options={filteredShifts.map((s: any) => ({
+                    id: s.id,
+                    name: renderName(s.name),
+                    subtext: s.start_time ? `${s.start_time} - ${s.end_time}` : undefined,
+                  }))}
+                  placeholder="اختر الوردية..."
+                  searchPlaceholder="ابحث عن الوردية..."
+                />
                 {filteredShifts.length === 0 && (
                   <p className="text-xs text-amber-500 mt-1">لا توجد ورديات متاحة لهذا الفرع</p>
                 )}
@@ -617,20 +628,18 @@ const OrderAdd: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   موظف الكاشير <span className="text-red-500">*</span>
                 </label>
-                <select 
+                <SearchableSelect 
                   name="cashier_man_id" 
-                  value={formData.cashier_man_id || 0} 
-                  onChange={handleChange} 
+                  value={formData.cashier_man_id || ''} 
+                  onChange={(val) => setFormData(prev => ({ ...prev, cashier_man_id: Number(val) || 0 }))} 
                   required
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm"
-                >
-                  <option value={0} disabled>-- الموظف --</option>
-                  {filteredCashierMen.map((m: any) => (
-                    <option key={m.id} value={m.id}>
-                      {renderName(m.name)}
-                    </option>
-                  ))}
-                </select>
+                  options={filteredCashierMen.map((m: any) => ({
+                    id: m.id,
+                    name: renderName(m.name),
+                  }))}
+                  placeholder="اختر موظف الكاشير..."
+                  searchPlaceholder="ابحث عن موظف الكاشير..."
+                />
                 {filteredCashierMen.length === 0 && (
                   <p className="text-xs text-amber-500 mt-1">لا يوجد موظفو كاشير لهذا الفرع</p>
                 )}

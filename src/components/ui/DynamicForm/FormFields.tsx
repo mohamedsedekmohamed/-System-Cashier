@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { MdUploadFile, MdClose, MdCheck, MdCheckCircle } from 'react-icons/md';
+import { SearchableSelect } from '../SearchableSelect';
 
 /* ── Shared Input Class ────────────────── */
 export const inputClass = (hasError: boolean) => `
@@ -101,19 +102,23 @@ export const SelectField: React.FC<{
   onChange: (key: string, value: any) => void;
 }> = ({ field, value, error, disabled, onChange }) => (
   <FieldWrapper id={field.key} label={field.label} required={field.required} hint={field.hint} error={error}>
-    <select
+    <SearchableSelect
       id={field.key}
       name={field.key}
-      value={value || ''}
-      onChange={(e) => onChange(field.key, field.inputType === 'number' ? Number(e.target.value) : e.target.value)}
+      value={value}
+      onChange={(val) =>
+        onChange(
+          field.key,
+          field.inputType === 'number' && val !== '' ? Number(val) : val
+        )
+      }
+      options={field.options || []}
+      placeholder={field.placeholder || `اختر ${field.label}...`}
+      searchPlaceholder={`ابحث في ${field.label}...`}
       disabled={disabled || field.disabled}
-      className={`${inputClass(!!error)} disabled:opacity-50`}
-    >
-      <option value="" disabled>-- {field.placeholder || `اختر ${field.label}`} --</option>
-      {(field.options || []).map(opt => (
-        <option key={opt.id} value={opt.id}>{typeof opt.name === 'object' && opt.name !== null ? ((opt.name as any)?.ar || (opt.name as any)?.en || '') : (opt.name || '')}</option>
-      ))}
-    </select>
+      required={field.required}
+      error={error}
+    />
   </FieldWrapper>
 );
 

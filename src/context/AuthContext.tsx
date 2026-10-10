@@ -21,6 +21,7 @@ interface AuthContextType {
   login: (payload: LoginPayload) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   loginError: string | null;
+  clearLoginError: () => void;
   isLoginPending: boolean;
 }
 
@@ -62,11 +63,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       navigate('/dashboard', { replace: true });
     },
     onError: (error: unknown) => {
+      const err = error as {
+        response?: {
+          data?: {
+            message?: string;
+            error?: string;
+          };
+        };
+        message?: string;
+      };
       const msg =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setLoginError(msg || 'فشل تسجيل الدخول. تحقق من بيانات الاعتماد.');
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'فشل تسجيل الدخول. تحقق من بيانات الاعتماد.';
+      setLoginError(msg);
     },
   });
+
+  const clearLoginError = useCallback(() => {
+    setLoginError(null);
+  }, []);
 
   // ── POST /api/auth/logout ────────────────────────────────────
   const logoutMutation = useMutation({
@@ -111,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         loginError,
+        clearLoginError,
         isLoginPending: loginMutation.isPending,
       }}
     >

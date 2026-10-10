@@ -5,6 +5,7 @@ import { cashierApi, CASHIERS_KEY, CASHIERS_SELECT_OPTIONS_KEY } from '../../ser
 import type { CashierFormData } from '../../types';
 import { MdArrowForward, MdSave, MdPointOfSale } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const CashierAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -90,15 +91,16 @@ const CashierAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 الفرع <span className="text-red-500">*</span>
               </label>
-              <select name="branch_id" required
-                value={formData.branch_id || ''} onChange={handleChange}
+              <SearchableSelect
+                name="branch_id"
+                required
+                value={formData.branch_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, branch_id: Number(val) || 0 }))}
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
-                <option value="" disabled>-- اختر الفرع --</option>
-                {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || '')}</option>
-                ))}
-              </select>
+                options={branches}
+                placeholder="اختر الفرع..."
+                searchPlaceholder="ابحث عن الفرع..."
+              />
             </div>
 
             {/* Cashier Man */}
@@ -106,15 +108,16 @@ const CashierAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 موظف الكاشير <span className="text-red-500">*</span>
               </label>
-              <select name="cashier_man_id" required
-                value={formData.cashier_man_id || ''} onChange={handleChange}
+              <SearchableSelect
+                name="cashier_man_id"
+                required
+                value={formData.cashier_man_id || ''}
+                onChange={(val) => setFormData((prev) => ({ ...prev, cashier_man_id: Number(val) || 0 }))}
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
-                <option value="" disabled>-- اختر الموظف --</option>
-                {cashierMen.map(man => (
-                  <option key={man.id} value={man.id}>{typeof man.name === 'object' && man.name !== null ? ((man.name as any)?.ar || (man.name as any)?.en || '') : (man.name || '')}</option>
-                ))}
-              </select>
+                options={cashierMen}
+                placeholder="اختر الموظف..."
+                searchPlaceholder="ابحث عن موظف الكاشير..."
+              />
             </div>
           </div>
         </div>
