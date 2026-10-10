@@ -59,18 +59,25 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     [valueExtractor]
   );
 
+  // Filter out any null or invalid options
+  const cleanOptions = useMemo(() => {
+    if (!Array.isArray(options)) return [];
+    return options.filter((opt) => opt !== null && opt !== undefined && opt !== 'null' && opt !== 'undefined');
+  }, [options]);
+
   // Helper to extract option display label
   const getOptLabel = React.useCallback(
     (opt: any): string => {
-      if (!opt) return '';
+      if (!opt || opt === 'null' || opt === 'undefined') return '';
       if (labelExtractor) return labelExtractor(opt);
       if (typeof opt.name === 'object' && opt.name !== null) {
-        return renderName(opt.name) || '';
+        return renderName(opt.name) || (opt.id ? `عنصر #${opt.id}` : '');
       }
-      if (opt.name !== undefined) return String(opt.name);
-      if (opt.title !== undefined) return String(opt.title);
-      if (opt.label !== undefined) return String(opt.label);
-      return String(opt);
+      if (opt.name !== undefined && opt.name !== null && opt.name !== 'null') return String(opt.name);
+      if (opt.title !== undefined && opt.title !== null && opt.title !== 'null') return String(opt.title);
+      if (opt.label !== undefined && opt.label !== null && opt.label !== 'null') return String(opt.label);
+      if (opt.id !== undefined) return `خيار #${opt.id}`;
+      return '';
     },
     [labelExtractor]
   );
@@ -78,20 +85,37 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   // Find currently selected option
   const selectedOption = useMemo(() => {
     if (value === undefined || value === null || value === '') return null;
-    return options.find((opt) => String(getOptValue(opt)) === String(value)) || null;
-  }, [options, value, getOptValue]);
+    return cleanOptions.find((opt) => String(getOptValue(opt)) === String(value)) || null;
+  }, [cleanOptions, value, getOptValue]);
 
   // Filter options based on search query
   const filteredOptions = useMemo(() => {
-    if (!searchTerm.trim()) return options;
+    if (!searchTerm.trim()) return cleanOptions;
     const lower = searchTerm.toLowerCase().trim();
-    return options.filter((opt) => {
+    return cleanOptions.filter((opt) => {
       const label = getOptLabel(opt).toLowerCase();
       const val = String(getOptValue(opt)).toLowerCase();
       const sub = opt.subtext ? String(opt.subtext).toLowerCase() : '';
       return label.includes(lower) || val.includes(lower) || sub.includes(lower);
     });
-  }, [options, searchTerm, getOptLabel, getOptValue]);
+  }, [cleanOptions, searchTerm, getOptLabel, getOptValue]);
+
+  // Dynamic placement: detect whether to open downwards or upwards
+  const [placement, setPlacement] = useState<'bottom' | 'top'>('bottom');
+
+  const updatePlacement = React.useCallback(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // If space below is limited (< 270px) and there's more room above, open upwards
+      if (spaceBelow < 270 && spaceAbove > spaceBelow) {
+        setPlacement('top');
+      } else {
+        setPlacement('bottom');
+      }
+    }
+  }, []);
 
   // Open / Close toggle handler
   const handleToggle = () => {
@@ -99,6 +123,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     setIsOpen((prev) => {
       const next = !prev;
       if (next) {
+        updatePlacement();
         const currentIdx = filteredOptions.findIndex(
           (opt) => String(getOptValue(opt)) === String(value)
         );
@@ -114,6 +139,20 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     setIsOpen(false);
     setSearchTerm('');
   };
+
+  // Recalculate placement on window scroll/resize while open
+  useEffect(() => {
+    if (isOpen) {
+      updatePlacement();
+      const handleReposition = () => updatePlacement();
+      window.addEventListener('resize', handleReposition);
+      window.addEventListener('scroll', handleReposition, true);
+      return () => {
+        window.removeEventListener('resize', handleReposition);
+        window.removeEventListener('scroll', handleReposition, true);
+      };
+    }
+  }, [isOpen, updatePlacement]);
 
   // Handle clicking outside to close dropdown
   useEffect(() => {
@@ -201,7 +240,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full text-right ${className}`}
+      className={`relative w-full text-right ${isOpen ? 'z-50' : 'z-auto'} ${className}`}
       onKeyDown={handleKeyDown}
       dir="rtl"
     >
@@ -275,12 +314,16 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
       {/* ── Dropdown Panel with Search Bar ── */}
       {isOpen && (
         <div
-          className="
-            absolute z-50 left-0 right-0 mt-1.5 p-2 rounded-2xl
+          className={`
+            absolute z-50 left-0 right-0 p-2 rounded-2xl
             bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700
-            shadow-xl shadow-black/10 dark:shadow-black/40
-            animate-in fade-in slide-in-from-top-1 duration-150
-          "
+            shadow-2xl shadow-black/20 dark:shadow-black/60
+            ${
+              placement === 'top'
+                ? 'bottom-full mb-1.5 animate-in fade-in slide-in-from-bottom-1 duration-150'
+                : 'top-full mt-1.5 animate-in fade-in slide-in-from-top-1 duration-150'
+            }
+          `}
         >
           {/* Integrated Search Input Box */}
           <div className="relative mb-2">

@@ -192,25 +192,38 @@ const BranchList: React.FC = () => {
           { label: 'اسم الفرع', value: typeof viewTarget?.name === 'object' && viewTarget?.name !== null ? ((viewTarget?.name as any)?.ar || (viewTarget?.name as any)?.en || '') : (viewTarget?.name || '') },
           { label: 'العنوان', value: viewTarget?.address },
           { 
-            label: 'الموقع الجغرافي (Location)', 
+            label: 'الموقع الجغرافي ونطاق الفرع', 
             value: Array.isArray(viewTarget?.location) && viewTarget.location.length > 0 ? (
-              <div className="space-y-1">
-                {viewTarget.location.map((p, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs">
-                    <span className="font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
-                      lat: {p.lat}, lng: {p.lng}
-                    </span>
-                    <a 
-                      href={`https://www.google.com/maps?q=${p.lat},${p.lng}`} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-primary hover:underline font-medium inline-flex items-center gap-0.5"
-                    >
-                      <MdOpenInNew size={14} />
-                      فتح الخريطة
-                    </a>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
+                    viewTarget.location.length >= 3 
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' 
+                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                  }`}>
+                    {viewTarget.location.length >= 3 
+                      ? (viewTarget.location.length === 3 ? 'شكل مغلق: مثلث' : viewTarget.location.length === 4 ? 'شكل مغلق: مربع' : 'شكل مغلق: مضلع') 
+                      : 'نقاط غير مغلقة'} ({viewTarget.location.length} نقاط)
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto">
+                  {viewTarget.location.map((p, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-700/60 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <span className="font-mono text-slate-600 dark:text-slate-300 text-[11px]">
+                        #{idx + 1}: {p.lat}, {p.lng}
+                      </span>
+                      <a 
+                        href={`https://www.google.com/maps?q=${p.lat},${p.lng}`} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-primary hover:underline font-medium inline-flex items-center gap-0.5 text-[11px]"
+                      >
+                        <MdOpenInNew size={13} />
+                        خرائط Google
+                      </a>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : typeof viewTarget?.location === 'string' && viewTarget.location ? (
               <a href={viewTarget.location} target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium">عرض الموقع على الخريطة ↗</a>

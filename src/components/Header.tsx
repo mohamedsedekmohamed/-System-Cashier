@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MdMenu, MdPerson } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import NavigationProgressBar from './NavigationProgressBar';
+import GlobalNavbarSearch from './GlobalNavbarSearch';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -28,6 +29,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
         >
           <MdMenu size={22} />
         </button>
+
+        {/* Global Page & Action Search */}
+        <GlobalNavbarSearch />
       </div>
 
       {/* Right: User Profile Link */}
