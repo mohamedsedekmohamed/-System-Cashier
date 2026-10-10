@@ -10,6 +10,7 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { MdReceiptLong, MdEdit, MdDelete, MdVisibility, MdStorefront } from 'react-icons/md';
 
 const ProductRecipeList: React.FC = () => {
@@ -137,26 +138,23 @@ const ProductRecipeList: React.FC = () => {
 
       {branches.length > 0 && (
         <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm font-semibold">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm font-semibold shrink-0">
             <MdStorefront size={18} className="text-primary" />
             <span>عرض مخزون الفرع:</span>
           </div>
-          <select
-            value={selectedBranchId ?? ''}
-            onChange={(e) => {
-              const val = e.target.value ? Number(e.target.value) : undefined;
-              setSelectedBranchId(val);
-              setPage(1);
-            }}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-          >
-            <option value="">جميع الفروع (إجمالي المخزون)</option>
-            {branches.map(b => (
-              <option key={b.id} value={b.id}>
-                {typeof b.name === 'object' && b.name ? (b.name.ar || b.name.en) : (b.name || '')}
-              </option>
-            ))}
-          </select>
+          <div className="w-72">
+            <SearchableSelect
+              value={selectedBranchId ?? ''}
+              onChange={(val) => {
+                setSelectedBranchId(val ? Number(val) : undefined);
+                setPage(1);
+              }}
+              options={branches}
+              placeholder="جميع الفروع (إجمالي المخزون)"
+              searchPlaceholder="ابحث عن الفرع..."
+              isClearable={true}
+            />
+          </div>
         </div>
       )}
 

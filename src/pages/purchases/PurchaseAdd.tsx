@@ -16,6 +16,7 @@ import {
   MdInfoOutline,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 interface ItemFormRow {
   id: string; // local unique key
@@ -305,22 +306,16 @@ export const PurchaseAdd: React.FC = () => {
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
                 الفرع المستلم للبضاعة (المخزن) <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <select
-                  required
-                  value={selectedBranchId || ''}
-                  onChange={(e) => setSelectedBranchId(Number(e.target.value))}
-                  disabled={isLoadingOptions}
-                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none focus:ring-2 ring-primary/20 text-slate-800 dark:text-slate-100 text-sm font-medium transition-all"
-                >
-                  <option value="" disabled>-- اختر الفرع --</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {typeof b.name === 'object' && b.name ? (b.name.ar || b.name.en) : (b.name || '')}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SearchableSelect
+                id="selected-branch"
+                value={selectedBranchId || ''}
+                onChange={(val) => setSelectedBranchId(Number(val))}
+                options={branches}
+                placeholder="-- اختر الفرع --"
+                searchPlaceholder="ابحث عن الفرع..."
+                disabled={isLoadingOptions}
+                required
+              />
             </div>
 
             <div>
@@ -461,26 +456,16 @@ export const PurchaseAdd: React.FC = () => {
                       <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
                         {row.type === 'material' ? 'اختر المادة الخام' : 'اختر وصفة المنتج'}
                       </label>
-                      <select
+                      <SearchableSelect
+                        id={`item-select-${index}`}
                         value={row.type === 'material' ? row.material_id : row.product_recipe_id}
-                        onChange={(e) => handleItemSelectChange(index, Number(e.target.value))}
-                        className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none focus:ring-2 ring-primary/20 text-slate-800 dark:text-slate-100 text-xs font-medium"
-                      >
-                        <option value={0}>
-                          {isLoadingOptions ? 'جاري التحميل...' : '-- اختر الصنف --'}
-                        </option>
-                        {row.type === 'material'
-                          ? materials.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.name} (المخزون الحالي: {m.stock})
-                              </option>
-                            ))
-                          : productRecipes.map((r) => (
-                              <option key={r.id} value={r.id}>
-                                {r.name} (المخزون الحالي: {r.stock})
-                              </option>
-                            ))}
-                      </select>
+                        onChange={(val) => handleItemSelectChange(index, Number(val))}
+                        options={row.type === 'material' ? materials : productRecipes}
+                        labelExtractor={(item) => `${item.name}${item.stock !== undefined ? ` (المخزون الحالي: ${item.stock})` : ''}`}
+                        placeholder={isLoadingOptions ? 'جاري التحميل...' : '-- اختر الصنف --'}
+                        searchPlaceholder="ابحث عن الصنف..."
+                        disabled={isLoadingOptions}
+                      />
                     </div>
 
                     {/* Quantity */}

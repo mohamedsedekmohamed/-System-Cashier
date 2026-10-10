@@ -13,6 +13,7 @@ import type {
 } from '../../types';
 import { MdArrowForward, MdSave, MdPrecisionManufacturing, MdAdd, MdDelete } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const ManufacturingAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -42,6 +43,19 @@ const ManufacturingAdd: React.FC = () => {
   const products: ManufacturingProduct[] = optionsData?.data?.products ?? [];
   const productRecipes: ManufacturingProductRecipe[] = optionsData?.data?.product_recipes ?? [];
   const materials: ManufacturingMaterial[] = optionsData?.data?.materials ?? [];
+
+  const materialAndRecipeOptions = React.useMemo(() => [
+    ...materials.map((m: ManufacturingMaterial) => ({
+      id: `m_${m.id}`,
+      name: `${m.name?.ar || m.name?.en || m.id} (مادة خام)`,
+      subtext: 'مادة خام'
+    })),
+    ...productRecipes.map((r: ManufacturingProductRecipe) => ({
+      id: `r_${r.id}`,
+      name: `${r.name?.ar || r.name?.en || r.id} (وصفة شبه مصنعة)`,
+      subtext: 'وصفة شبه مصنعة'
+    }))
+  ], [materials, productRecipes]);
 
   // Auto-select first branch
   React.useEffect(() => {
@@ -202,21 +216,20 @@ const ManufacturingAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 الفرع القائم بالتصنيع <span className="text-red-500">*</span>
               </label>
-              <select
+              <SearchableSelect
+                id="branch_id"
                 name="branch_id"
-                required
                 value={formData.branch_id || ''}
-                onChange={handleMainChange}
+                onChange={(val) => {
+                  const bId = Number(val);
+                  setFormData(prev => ({ ...prev, branch_id: bId, product_id: 0, product_recipe_id: 0, recipes: [] }));
+                }}
+                options={branches}
+                placeholder="-- اختر الفرع القائم بعملية التصنيع --"
+                searchPlaceholder="ابحث عن الفرع..."
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-medium"
-              >
-                <option value="" disabled>-- اختر الفرع القائم بعملية التصنيع --</option>
-                {branches.map((b: BranchOption) => (
-                  <option key={b.id} value={b.id}>
-                    {typeof b.name === 'object' && b.name !== null ? (b.name.ar || b.name.en) : b.name}
-                  </option>
-                ))}
-              </select>
+                required
+              />
             </div>
 
             {/* Target Type Selector */}
@@ -251,30 +264,36 @@ const ManufacturingAdd: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   اختر المنتج <span className="text-red-500">*</span>
                 </label>
-                <select name="product_id" required
-                  value={formData.product_id || ''} onChange={handleMainChange}
+                <SearchableSelect
+                  id="product_id"
+                  name="product_id"
+                  value={formData.product_id || ''}
+                  onChange={(val) => handleMainChange({ target: { name: 'product_id', value: val } } as any)}
+                  options={products}
+                  labelExtractor={(p) => p.name?.ar || p.name?.en || String(p.id)}
+                  placeholder="-- اختر المنتج --"
+                  searchPlaceholder="ابحث عن المنتج..."
                   disabled={isLoadingOptions}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
-                  <option value="" disabled>-- اختر المنتج --</option>
-                  {products.map((p: ManufacturingProduct) => (
-                    <option key={p.id} value={p.id}>{p.name?.ar}</option>
-                  ))}
-                </select>
+                  required
+                />
               </div>
             ) : (
               <div className="md:col-span-1">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   اختر الوصفة <span className="text-red-500">*</span>
                 </label>
-                <select name="product_recipe_id" required
-                  value={formData.product_recipe_id || ''} onChange={handleMainChange}
+                <SearchableSelect
+                  id="product_recipe_id"
+                  name="product_recipe_id"
+                  value={formData.product_recipe_id || ''}
+                  onChange={(val) => handleMainChange({ target: { name: 'product_recipe_id', value: val } } as any)}
+                  options={productRecipes}
+                  labelExtractor={(r) => r.name?.ar || r.name?.en || String(r.id)}
+                  placeholder="-- اختر الوصفة --"
+                  searchPlaceholder="ابحث عن الوصفة..."
                   disabled={isLoadingOptions}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all">
-                  <option value="" disabled>-- اختر الوصفة --</option>
-                  {productRecipes.map((p: ManufacturingProductRecipe) => (
-                    <option key={p.id} value={p.id}>{p.name?.ar}</option>
-                  ))}
-                </select>
+                  required
+                />
               </div>
             )}
 
@@ -320,31 +339,23 @@ const ManufacturingAdd: React.FC = () => {
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     اختر مادة خام أو وصفة *
                   </label>
-                  <select
+                  <SearchableSelect
                     value={item.material_id ? `m_${item.material_id}` : item.product_recipe_id ? `r_${item.product_recipe_id}` : ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val.startsWith('m_')) {
-                        handleRecipeChange(index, 'material_id', val.replace('m_', ''));
-                      } else if (val.startsWith('r_')) {
-                        handleRecipeChange(index, 'product_recipe_id', val.replace('r_', ''));
+                    onChange={(val) => {
+                      const valStr = String(val || '');
+                      if (valStr.startsWith('m_')) {
+                        handleRecipeChange(index, 'material_id', valStr.replace('m_', ''));
+                      } else if (valStr.startsWith('r_')) {
+                        handleRecipeChange(index, 'product_recipe_id', valStr.replace('r_', ''));
+                      } else {
+                        handleRecipeChange(index, 'material_id', '0');
                       }
                     }}
+                    options={materialAndRecipeOptions}
+                    placeholder="-- اختر المادة أو الوصفة --"
+                    searchPlaceholder="ابحث عن مادة خام أو وصفة..."
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary text-sm shadow-2xs transition-all"
-                  >
-                    <option value="" disabled className="text-slate-400">-- اختر المادة --</option>
-                    <optgroup label="المواد الخام" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                      {materials.map((m: ManufacturingMaterial) => (
-                        <option key={`m_${m.id}`} value={`m_${m.id}`} className="font-normal text-slate-800 dark:text-slate-100">{m.name?.ar}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="وصفات شبه مصنعة" className="font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                      {productRecipes.map((r: ManufacturingProductRecipe) => (
-                        <option key={`r_${r.id}`} value={`r_${r.id}`} className="font-normal text-slate-800 dark:text-slate-100">{r.name?.ar}</option>
-                      ))}
-                    </optgroup>
-                  </select>
+                  />
                 </div>
 
                 {/* Amount */}

@@ -26,6 +26,7 @@ import {
   MdCalendarToday,
 } from 'react-icons/md';
 import { renderName } from '../../utils/helpers';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 export const StartShiftReportPage: React.FC = () => {
   // ── Filters State ──────────────────────
@@ -393,23 +394,21 @@ export const StartShiftReportPage: React.FC = () => {
             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
               الفرع
             </label>
-            <select
+            <SearchableSelect
               value={branchId ?? ''}
-              onChange={(e) => {
-                setBranchId(e.target.value ? Number(e.target.value) : null);
+              onChange={(val) => {
+                setBranchId(val ? Number(val) : null);
                 setCashierId(null);
                 setCashierManId(null);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:border-primary focus:outline-none"
-            >
-              <option value="">{isLoadingOptions ? 'جاري التحميل...' : 'كل الفروع'}</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {renderName(b.name) || `فرع #${b.id}`}
-                </option>
-              ))}
-            </select>
+              options={branches}
+              labelExtractor={(b) => renderName(b.name) || `فرع #${b.id}`}
+              placeholder={isLoadingOptions ? 'جاري التحميل...' : 'كل الفروع'}
+              searchPlaceholder="ابحث عن الفرع..."
+              disabled={isLoadingOptions}
+              isClearable={true}
+            />
           </div>
 
           {/* Cashier Machine Filter */}
@@ -417,21 +416,19 @@ export const StartShiftReportPage: React.FC = () => {
             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
               ماكينة الكاشير
             </label>
-            <select
+            <SearchableSelect
               value={cashierId ?? ''}
-              onChange={(e) => {
-                setCashierId(e.target.value ? Number(e.target.value) : null);
+              onChange={(val) => {
+                setCashierId(val ? Number(val) : null);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:border-primary focus:outline-none"
-            >
-              <option value="">{isLoadingOptions ? 'جاري التحميل...' : 'كل الماكينات'}</option>
-              {availableCashiers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {renderName(c.name)}
-                </option>
-              ))}
-            </select>
+              options={availableCashiers}
+              labelExtractor={(c) => renderName(c.name) || `ماكينة #${c.id}`}
+              placeholder={isLoadingOptions ? 'جاري التحميل...' : 'كل الماكينات'}
+              searchPlaceholder="ابحث عن الماكينة..."
+              disabled={isLoadingOptions}
+              isClearable={true}
+            />
           </div>
 
           {/* Cashier Man Filter */}
@@ -439,21 +436,19 @@ export const StartShiftReportPage: React.FC = () => {
             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
               موظف الكاشير
             </label>
-            <select
+            <SearchableSelect
               value={cashierManId ?? ''}
-              onChange={(e) => {
-                setCashierManId(e.target.value ? Number(e.target.value) : null);
+              onChange={(val) => {
+                setCashierManId(val ? Number(val) : null);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:border-primary focus:outline-none"
-            >
-              <option value="">{isLoadingOptions ? 'جاري التحميل...' : 'كل الموظفين'}</option>
-              {availableCashierMen.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+              options={availableCashierMen}
+              labelExtractor={(m) => m.name || `موظف #${m.id}`}
+              placeholder={isLoadingOptions ? 'جاري التحميل...' : 'كل الموظفين'}
+              searchPlaceholder="ابحث عن الموظف..."
+              disabled={isLoadingOptions}
+              isClearable={true}
+            />
           </div>
 
           {/* Start Date Filter */}

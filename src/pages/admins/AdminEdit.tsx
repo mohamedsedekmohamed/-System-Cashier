@@ -7,6 +7,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const AdminEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -130,14 +131,16 @@ const AdminEdit: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 الدور (الرتبة) <span className="text-red-500">*</span>
               </label>
-              <select name="role_id" required
-                value={formData.role_id || ''} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
-                <option value="" disabled>-- اختر الدور --</option>
-                {roles.map((role: any) => (
-                  <option key={role.id} value={role.id}>{typeof role.name === 'object' && role.name !== null ? ((role.name as any)?.ar || (role.name as any)?.en || '') : (role.name || '')}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                id="role_id"
+                name="role_id"
+                value={formData.role_id || ''}
+                onChange={(val) => setFormData(prev => ({ ...prev, role_id: Number(val) }))}
+                options={roles}
+                placeholder="-- اختر الدور --"
+                searchPlaceholder="ابحث عن الدور..."
+                required
+              />
             </div>
           </div>
         </div>

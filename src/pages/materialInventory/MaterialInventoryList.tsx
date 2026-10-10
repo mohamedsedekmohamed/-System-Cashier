@@ -26,6 +26,7 @@ import {
   MdSearch,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const MaterialInventoryList: React.FC = () => {
   const navigate = useNavigate();
@@ -390,9 +391,9 @@ const MaterialInventoryList: React.FC = () => {
       {/* Modal: Start New Inventory Session */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden transform transition-all">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-visible transform transition-all">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 rounded-t-3xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <MdFactCheck size={22} />
@@ -428,29 +429,21 @@ const MaterialInventoryList: React.FC = () => {
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                   الفرع المطلوب جرده <span className="text-rose-500">*</span>
                 </label>
-                <div className="relative">
-                  <select
-                    required
-                    value={createForm.branch_id || ''}
-                    onChange={(e) =>
-                      setCreateForm((prev) => ({
-                        ...prev,
-                        branch_id: Number(e.target.value),
-                      }))
-                    }
-                    disabled={isLoadingOptions || createMutation.isPending}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                  >
-                    <option value="" disabled>
-                      {isLoadingOptions ? 'جاري تحميل الفروع...' : '-- اختر الفرع --'}
-                    </option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {getBranchLabel(b)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <SearchableSelect
+                  value={createForm.branch_id || ''}
+                  onChange={(val) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      branch_id: Number(val),
+                    }))
+                  }
+                  options={branches}
+                  labelExtractor={getBranchLabel}
+                  placeholder={isLoadingOptions ? 'جاري تحميل الفروع...' : '-- اختر الفرع --'}
+                  searchPlaceholder="ابحث عن الفرع..."
+                  disabled={isLoadingOptions || createMutation.isPending}
+                  required
+                />
                 <p className="text-[11px] text-slate-400 mt-1.5">
                   سيتم جلب جميع المواد الخام المسجلة في رصيد هذا الفرع لبدء الجرد.
                 </p>

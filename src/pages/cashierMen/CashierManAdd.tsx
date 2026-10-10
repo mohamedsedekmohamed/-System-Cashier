@@ -5,6 +5,7 @@ import { cashierManApi, CASHIER_MEN_KEY, CASHIER_MEN_SELECT_OPTIONS_KEY } from '
 import type { CashierManFormData } from '../../types';
 import { MdArrowForward, MdSave, MdPersonOutline } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const renderName = (name: any) => {
   if (typeof name === 'object' && name !== null) {
@@ -112,15 +113,17 @@ const CashierManAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 الفرع <span className="text-red-500">*</span>
               </label>
-              <select name="branch_id" required
-                value={formData.branch_id || ''} onChange={handleChange}
+              <SearchableSelect
+                id="branch_id"
+                name="branch_id"
+                value={formData.branch_id || ''}
+                onChange={(val) => setFormData(prev => ({ ...prev, branch_id: Number(val) }))}
+                options={branches}
+                placeholder="-- اختر الفرع --"
+                searchPlaceholder="ابحث عن الفرع..."
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
-                <option value="" disabled>-- اختر الفرع --</option>
-                {branches.map((branch: any) => (
-                  <option key={branch.id} value={branch.id}>{renderName(branch.name)}</option>
-                ))}
-              </select>
+                required
+              />
             </div>
 
             {/* Cashier Machine */}
@@ -128,15 +131,17 @@ const CashierManAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 ماكينة الكاشير <span className="text-red-500">*</span>
               </label>
-              <select name="cashier_id" required
-                value={formData.cashier_id || ''} onChange={handleChange}
+              <SearchableSelect
+                id="cashier_id"
+                name="cashier_id"
+                value={formData.cashier_id || ''}
+                onChange={(val) => setFormData(prev => ({ ...prev, cashier_id: Number(val) }))}
+                options={cashiers}
+                placeholder="-- اختر ماكينة الكاشير --"
+                searchPlaceholder="ابحث عن ماكينة الكاشير..."
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
-                <option value="" disabled>-- اختر ماكينة الكاشير --</option>
-                {cashiers.map((c: any) => (
-                  <option key={c.id} value={c.id}>{renderName(c.name)}</option>
-                ))}
-              </select>
+                required
+              />
             </div>
 
             {/* Shift */}
@@ -144,15 +149,18 @@ const CashierManAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 الوردية <span className="text-red-500">*</span>
               </label>
-              <select name="shift_id" required
-                value={formData.shift_id || ''} onChange={handleChange}
+              <SearchableSelect
+                id="shift_id"
+                name="shift_id"
+                value={formData.shift_id || ''}
+                onChange={(val) => setFormData(prev => ({ ...prev, shift_id: Number(val) }))}
+                options={shifts}
+                labelExtractor={(s) => `${renderName(s.name)}${s.start_time ? ` (${s.start_time} إلى ${s.end_time})` : ''}`}
+                placeholder="-- اختر الوردية --"
+                searchPlaceholder="ابحث عن الوردية..."
                 disabled={isLoadingOptions}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50">
-                <option value="" disabled>-- اختر الوردية --</option>
-                {shifts.map((s: any) => (
-                  <option key={s.id} value={s.id}>{renderName(s.name)} - {s.start_time} إلى {s.end_time}</option>
-                ))}
-              </select>
+                required
+              />
             </div>
           </div>
         </div>
