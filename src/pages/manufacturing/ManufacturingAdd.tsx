@@ -4,16 +4,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { manufacturingApi, MANUFACTURING_KEY, MANUFACTURING_SELECT_OPTIONS_KEY } from '../../services/manufacturingService';
 import type { 
   ManufacturingFormData, 
-  ManufacturingRecipePayload,
   ManufacturingSelectOptionsResponse,
   BranchOption,
   ManufacturingProduct,
   ManufacturingProductRecipe,
   ManufacturingMaterial
 } from '../../types';
-import { MdArrowForward, MdSave, MdPrecisionManufacturing, MdAdd, MdDelete } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdPrecisionManufacturing } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
+import { renderName } from '../../utils/helpers';
+import ConsumedMaterialsCards from '../../components/manufacturing/ConsumedMaterialsCards';
 
 const ManufacturingAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -25,9 +26,7 @@ const ManufacturingAdd: React.FC = () => {
     product_id: 0,
     product_recipe_id: 0,
     count: 1,
-    recipes: [
-      { material_id: 0, product_recipe_id: 0, count: 1 }
-    ],
+    recipes: [],
   });
 
   const [targetType, setTargetType] = useState<'product' | 'recipe'>('product');
@@ -44,19 +43,6 @@ const ManufacturingAdd: React.FC = () => {
   const productRecipes: ManufacturingProductRecipe[] = optionsData?.data?.product_recipes ?? [];
   const materials: ManufacturingMaterial[] = optionsData?.data?.materials ?? [];
 
-  const materialAndRecipeOptions = React.useMemo(() => [
-    ...materials.map((m: ManufacturingMaterial) => ({
-      id: `m_${m.id}`,
-      name: `${m.name?.ar || m.name?.en || m.id} (مادة خام)`,
-      subtext: 'مادة خام'
-    })),
-    ...productRecipes.map((r: ManufacturingProductRecipe) => ({
-      id: `r_${r.id}`,
-      name: `${r.name?.ar || r.name?.en || r.id} (وصفة شبه مصنعة)`,
-      subtext: 'وصفة شبه مصنعة'
-    }))
-  ], [materials, productRecipes]);
-
   // Auto-select first branch
   React.useEffect(() => {
     if (!formData.branch_id && branches.length > 0) {
@@ -64,14 +50,13 @@ const ManufacturingAdd: React.FC = () => {
     }
   }, [branches, formData.branch_id]);
 
-  // Fetch recipe specifications when target product or recipe and branch change
-  const fetchSpecs = async (productId?: number, recipeId?: number, branchId?: number) => {
+  // Fetch recipe specifications when target recipe and branch change
+  const fetchSpecs = async (recipeId?: number, branchId?: number) => {
     const targetBranch = branchId || formData.branch_id;
-    if ((!productId && !recipeId) || !targetBranch) return;
+    if (!recipeId || !targetBranch) return;
     try {
       setIsLoadingSpecs(true);
       const res = await manufacturingApi.getSpecifications({
-        product_id: productId || undefined,
         product_recipe_id: recipeId || undefined,
         branch_id: targetBranch,
       });
@@ -110,12 +95,10 @@ const ManufacturingAdd: React.FC = () => {
       [name]: val,
     }));
 
-    if (name === 'product_id') {
-      fetchSpecs(val, undefined, formData.branch_id);
-    } else if (name === 'product_recipe_id') {
-      fetchSpecs(undefined, val, formData.branch_id);
-    } else if (name === 'branch_id') {
-      fetchSpecs(formData.product_id || undefined, formData.product_recipe_id || undefined, val);
+    if (name === 'product_recipe_id' && targetType === 'recipe') {
+      fetchSpecs(val, formData.branch_id);
+    } else if (name === 'branch_id' && targetType === 'recipe') {
+      fetchSpecs(formData.product_recipe_id || undefined, val);
     }
   };
 
@@ -125,40 +108,25 @@ const ManufacturingAdd: React.FC = () => {
       ...prev,
       product_id: type === 'product' ? prev.product_id : 0,
       product_recipe_id: type === 'recipe' ? prev.product_recipe_id : 0,
+      recipes: [],
     }));
   };
 
-  const handleAddRecipeItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      recipes: [...prev.recipes, { material_id: 0, product_recipe_id: 0, count: 1 }]
-    }));
-  };
-
-  const handleRemoveRecipeItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      recipes: prev.recipes.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleRecipeChange = (index: number, field: keyof ManufacturingRecipePayload, value: string) => {
-    const val = Number(value);
-    setFormData(prev => {
-      const newRecipes = [...prev.recipes];
-      
-      // If setting material, clear product_recipe and vice versa
-      if (field === 'material_id') {
-        newRecipes[index] = { ...newRecipes[index], material_id: val, product_recipe_id: 0 };
-      } else if (field === 'product_recipe_id') {
-        newRecipes[index] = { ...newRecipes[index], product_recipe_id: val, material_id: 0 };
-      } else {
-        newRecipes[index] = { ...newRecipes[index], [field]: val };
+  const hasStockExceeded = React.useMemo(() => {
+    return formData.recipes.some(r => {
+      if (r.material_id) {
+        const mat = materials.find(m => m.id === r.material_id);
+        const stock = Number(mat?.stock ?? 0);
+        return r.count > stock;
       }
-      
-      return { ...prev, recipes: newRecipes };
+      if (r.product_recipe_id) {
+        const rec = productRecipes.find(p => p.id === r.product_recipe_id);
+        const stock = Number(rec?.stock ?? 0);
+        return r.count > stock;
+      }
+      return false;
     });
-  };
+  }, [formData.recipes, materials, productRecipes]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,14 +134,29 @@ const ManufacturingAdd: React.FC = () => {
       alert('يرجى تحديد الفرع القائم بالتصنيع');
       return;
     }
-    if ((!formData.product_id && !formData.product_recipe_id) || formData.count <= 0) return;
+    if (targetType === 'product' && (!formData.product_id || formData.count <= 0)) {
+      alert('يرجى تحديد المنتج المستهدف والكمية المنتجة');
+      return;
+    }
+    if (targetType === 'recipe' && (!formData.product_recipe_id || formData.count <= 0)) {
+      alert('يرجى تحديد الوصفة المستهدفة والكمية المنتجة');
+      return;
+    }
+    if (targetType === 'recipe' && formData.recipes.length === 0) {
+      alert('لتحضير الوصفة، يجب اختيار المواد المستهلكة (الخامات) من الكروت أدناه');
+      return;
+    }
+    if (hasStockExceeded) {
+      alert('توجد مواد مستهلكة تتجاوز رصيد المخزن المتاح! يرجى تعديل الكميات قبل الحفظ.');
+      return;
+    }
     
     // Clean up payloads
     const payload: ManufacturingFormData = {
       ...formData,
       branch_id: formData.branch_id,
-      product_id: formData.product_id || null,
-      product_recipe_id: formData.product_recipe_id || null,
+      product_id: targetType === 'product' ? (formData.product_id || null) : null,
+      product_recipe_id: targetType === 'recipe' ? (formData.product_recipe_id || null) : null,
       recipes: formData.recipes.map(r => ({
         material_id: r.material_id || null,
         product_recipe_id: r.product_recipe_id || null,
@@ -225,6 +208,7 @@ const ManufacturingAdd: React.FC = () => {
                   setFormData(prev => ({ ...prev, branch_id: bId, product_id: 0, product_recipe_id: 0, recipes: [] }));
                 }}
                 options={branches}
+                labelExtractor={(b) => renderName(b.name) || (b.id ? `فرع #${b.id}` : '')}
                 placeholder="-- اختر الفرع القائم بعملية التصنيع --"
                 searchPlaceholder="ابحث عن الفرع..."
                 disabled={isLoadingOptions}
@@ -270,7 +254,7 @@ const ManufacturingAdd: React.FC = () => {
                   value={formData.product_id || ''}
                   onChange={(val) => handleMainChange({ target: { name: 'product_id', value: val } } as any)}
                   options={products}
-                  labelExtractor={(p) => p.name?.ar || p.name?.en || String(p.id)}
+                  labelExtractor={(p) => renderName(p.name) || (p.id ? `منتج #${p.id}` : '')}
                   placeholder="-- اختر المنتج --"
                   searchPlaceholder="ابحث عن المنتج..."
                   disabled={isLoadingOptions}
@@ -288,7 +272,7 @@ const ManufacturingAdd: React.FC = () => {
                   value={formData.product_recipe_id || ''}
                   onChange={(val) => handleMainChange({ target: { name: 'product_recipe_id', value: val } } as any)}
                   options={productRecipes}
-                  labelExtractor={(r) => r.name?.ar || r.name?.en || String(r.id)}
+                  labelExtractor={(r) => renderName(r.name) || (r.id ? `وصفة #${r.id}` : '')}
                   placeholder="-- اختر الوصفة --"
                   searchPlaceholder="ابحث عن الوصفة..."
                   disabled={isLoadingOptions}
@@ -310,90 +294,40 @@ const ManufacturingAdd: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 2: Consumed Materials */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-                المواد المستهلكة (الخامات)
-              </h2>
+        {/* Section 2: Consumed Materials (Raw ingredients) - ONLY for Recipe Preparation */}
+        {targetType === 'recipe' && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                  <span>المواد المستهلكة (الخامات)</span>
+                  <span className="text-xs text-red-500 font-semibold">* مطلوبة لتحضير الوصفة</span>
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  اختر المواد الخام أو الوصفات شبه المصنعة المستهلكة في إعداد الوصفة من الكروت أدناه (يجب توفر كمية بالمخزن)
+                </p>
+              </div>
               {isLoadingSpecs && (
-                <span className="text-xs text-primary flex items-center gap-1 font-normal">
+                <span className="text-xs text-primary flex items-center gap-1 font-normal shrink-0">
                   <AiOutlineLoading3Quarters className="animate-spin text-xs" /> جاري تحميل المكونات...
                 </span>
               )}
             </div>
-            <button type="button" onClick={handleAddRecipeItem}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-semibold">
-              <MdAdd size={18} />
-              إضافة مادة
-            </button>
+
+            <ConsumedMaterialsCards
+              materials={materials}
+              productRecipes={productRecipes}
+              recipes={formData.recipes}
+              onChange={(newRecipes) => setFormData(prev => ({ ...prev, recipes: newRecipes }))}
+              isTargetRecipe={true}
+            />
           </div>
-
-          <div className="space-y-4">
-            {formData.recipes.map((item, index) => (
-              <div key={index} className="flex flex-col md:flex-row items-end gap-4 p-4 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-2xs relative group">
-                
-                {/* Material Selection */}
-                <div className="flex-1 w-full">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    اختر مادة خام أو وصفة *
-                  </label>
-                  <SearchableSelect
-                    value={item.material_id ? `m_${item.material_id}` : item.product_recipe_id ? `r_${item.product_recipe_id}` : ''}
-                    onChange={(val) => {
-                      const valStr = String(val || '');
-                      if (valStr.startsWith('m_')) {
-                        handleRecipeChange(index, 'material_id', valStr.replace('m_', ''));
-                      } else if (valStr.startsWith('r_')) {
-                        handleRecipeChange(index, 'product_recipe_id', valStr.replace('r_', ''));
-                      } else {
-                        handleRecipeChange(index, 'material_id', '0');
-                      }
-                    }}
-                    options={materialAndRecipeOptions}
-                    placeholder="-- اختر المادة أو الوصفة --"
-                    searchPlaceholder="ابحث عن مادة خام أو وصفة..."
-                    required
-                  />
-                </div>
-
-                {/* Amount */}
-                <div className="w-full md:w-36">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    الكمية *
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    required
-                    value={item.count}
-                    onChange={(e) => handleRecipeChange(index, 'count', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary text-sm text-center font-bold shadow-2xs transition-all"
-                  />
-                </div>
-
-                {/* Delete Button */}
-                {formData.recipes.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveRecipeItem(index)}
-                    className="p-2.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors"
-                    title="حذف المادة"
-                  >
-                    <MdDelete size={20} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Error message */}
         {mutation.isError && (
           <div className="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-            حدث خطأ أثناء حفظ قائمة التصنيع. تأكد من إدخال جميع البيانات المطلوبة.
+            حدث خطأ أثناء حفظ قائمة التصنيع. تأكد من إدخال جميع البيانات المطلوبة وصحة رصيد المخزن.
           </div>
         )}
 
@@ -403,8 +337,17 @@ const ManufacturingAdd: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || (!formData.product_id && !formData.product_recipe_id) || formData.recipes.length === 0}
-            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          <button
+            type="submit"
+            disabled={
+              mutation.isPending || 
+              !formData.branch_id ||
+              formData.count <= 0 ||
+              (targetType === 'product' && !formData.product_id) ||
+              (targetType === 'recipe' && (!formData.product_recipe_id || formData.recipes.length === 0 || hasStockExceeded))
+            }
+            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>
             ) : (

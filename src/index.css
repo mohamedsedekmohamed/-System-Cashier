@@ -79,6 +79,26 @@
   color: var(--color-primary) !important;
 }
 
+/* Manufacturing Card Add Button Hover Styles */
+.btn-card-add {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: var(--color-primary) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-card-add:hover,
+.group:hover .group-hover-card-btn {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+.btn-card-add:hover *,
+.group:hover .group-hover-card-btn * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
 /* Custom Animations & Keyframes */
 @keyframes login-shake {
   0%, 100% { transform: translateX(0); }

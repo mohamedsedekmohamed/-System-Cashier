@@ -23,7 +23,7 @@ export interface PaymentMethod {
 export interface PaymentMethodFormData {
   name: PaymentMethodName;
   description: PaymentMethodDescription;
-  icon: string;
+  icon: string | File | null;
   status: boolean;
 }
 

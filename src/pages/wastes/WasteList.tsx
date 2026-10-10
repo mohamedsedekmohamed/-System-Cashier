@@ -10,6 +10,7 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdDeleteOutline, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { renderName } from '../../utils/helpers';
 
 const WasteList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -60,7 +61,7 @@ const WasteList: React.FC = () => {
       header: 'الفرع',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
-          {typeof row.branch?.name === 'object' ? (row.branch.name.ar || row.branch.name.en) : (row.branch?.name || (row.branch_id ? `فرع #${row.branch_id}` : '—'))}
+          {renderName(row.branch?.name) || (row.branch_id ? `فرع #${row.branch_id}` : '—')}
         </span>
       )
     },

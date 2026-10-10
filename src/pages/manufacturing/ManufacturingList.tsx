@@ -10,6 +10,7 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdPrecisionManufacturing, MdVisibility, MdEdit, MdDelete } from 'react-icons/md';
+import { renderName } from '../../utils/helpers';
 
 const ManufacturingListPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -40,10 +41,18 @@ const ManufacturingListPage: React.FC = () => {
 
   // ── Client-side search filter ──────────
   const filtered = [...(search
-    ? lists.filter(item =>
-        item.product?.name?.ar?.toLowerCase().includes(search.toLowerCase()) ||
-        item.product_recipe?.name?.ar?.toLowerCase().includes(search.toLowerCase()) ||
-        String(item.id).includes(search))
+    ? lists.filter(item => {
+        const prodName = renderName(item.product?.name).toLowerCase();
+        const recipeName = renderName(item.product_recipe?.name).toLowerCase();
+        const branchName = renderName(item.branch?.name).toLowerCase();
+        const s = search.toLowerCase();
+        return (
+          prodName.includes(s) ||
+          recipeName.includes(s) ||
+          branchName.includes(s) ||
+          String(item.id).includes(s)
+        );
+      })
     : lists)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
@@ -60,7 +69,7 @@ const ManufacturingListPage: React.FC = () => {
       header: 'الفرع',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
-          {typeof row.branch?.name === 'object' ? (row.branch.name.ar || row.branch.name.en) : (row.branch?.name || (row.branch_id ? `فرع #${row.branch_id}` : '—'))}
+          {renderName(row.branch?.name) || (row.branch_id ? `فرع #${row.branch_id}` : '—')}
         </span>
       )
     },
@@ -69,7 +78,7 @@ const ManufacturingListPage: React.FC = () => {
       render: (row) => (
         <div>
           <p className="font-semibold text-slate-800 dark:text-white">
-            {row.product ? row.product.name?.ar : row.product_recipe?.name?.ar}
+            {row.product ? renderName(row.product.name) : renderName(row.product_recipe?.name) || '—'}
           </p>
           <p className="text-xs text-slate-500">
             {row.product ? 'منتج جاهز' : 'وصفة تحضير'}
@@ -143,7 +152,7 @@ const ManufacturingListPage: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        itemName={deleteTarget?.product?.name?.ar || deleteTarget?.product_recipe?.name?.ar || 'هذه القائمة'}
+        itemName={renderName(deleteTarget?.product?.name) || renderName(deleteTarget?.product_recipe?.name) || 'هذه القائمة'}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
         onCancel={() => setDeleteTarget(null)}
@@ -156,8 +165,9 @@ const ManufacturingListPage: React.FC = () => {
         title="تفاصيل قائمة التصنيع"
         details={[
           { label: 'رقم القائمة', value: viewTarget?.id },
-          { label: 'المنتج', value: viewTarget?.product?.name?.ar || '—' },
-          { label: 'وصفة المنتج', value: viewTarget?.product_recipe?.name?.ar || '—' },
+          { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || (viewTarget?.branch_id ? `فرع #${viewTarget.branch_id}` : '—') },
+          { label: 'المنتج', value: renderName(viewTarget?.product?.name) || '—' },
+          { label: 'وصفة المنتج', value: renderName(viewTarget?.product_recipe?.name) || '—' },
           { label: 'الكمية المنتجة', value: viewTarget?.count },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { 
@@ -167,7 +177,7 @@ const ManufacturingListPage: React.FC = () => {
                 {viewTarget?.recipes?.map((recipe, idx) => (
                   <div key={recipe.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-sm">
                     <p className="font-semibold text-slate-800 dark:text-slate-200">
-                      {idx + 1}. {recipe.material ? recipe.material.name?.ar : recipe.product_recipe?.name?.ar}
+                      {idx + 1}. {recipe.material ? renderName(recipe.material.name) : renderName(recipe.product_recipe?.name) || '—'}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       الكمية المستهلكة: <span className="font-bold">{recipe.count}</span>

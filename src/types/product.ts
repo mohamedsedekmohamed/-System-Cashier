@@ -70,7 +70,7 @@ export interface ProductFormData {
   name: LocalizedName;
   description: LocalizedName;
   price: number;
-  image: string;
+  image: string | File | null;
   tax_id: number | null;
   discount_id: number | null;
   category_id: number;

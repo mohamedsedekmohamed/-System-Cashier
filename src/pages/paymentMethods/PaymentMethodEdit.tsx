@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { paymentMethodApi, PAYMENT_METHODS_KEY } from '../../services/paymentMethodService';
 import type { PaymentMethodFormData } from '../../types';
+import SingleImageUpload from '../../components/ui/SingleImageUpload';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
@@ -166,16 +167,14 @@ const PaymentMethodEdit: React.FC = () => {
               />
             </div>
 
-            {/* Icon */}
+            {/* Icon / Image Upload */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                الأيقونة (رابط أو اسم الأيقونة)
-              </label>
-              <input type="text" name="icon"
-                value={formData.icon} onChange={handleChange}
-                placeholder="مثال: heroicon-o-banknotes أو رابط صورة..."
-                dir="ltr"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-left"
+              <SingleImageUpload
+                value={formData.icon}
+                onChange={(fileOrUrl) => setFormData(prev => ({ ...prev, icon: fileOrUrl }))}
+                label="أيقونة طريقة الدفع"
+                hint="اضغط لاختيار صورة الشعار/الأيقونة من جهازك أو اسحبها هنا (PNG, SVG, JPG, WEBP)"
+                disabled={mutation.isPending}
               />
             </div>
 

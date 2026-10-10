@@ -169,6 +169,14 @@ const ProductList: React.FC = () => {
           { label: 'الرقم التعريفي', value: viewTarget?.id },
           { label: 'الاسم (عربي)', value: viewTarget?.name?.ar },
           { label: 'الاسم (إنجليزي)', value: viewTarget?.name?.en },
+          { 
+            label: 'صورة المنتج', 
+            value: viewTarget?.image && viewTarget.image !== 'string' ? (
+              <div className="flex items-center gap-2">
+                <img src={viewTarget.image} alt={viewTarget.name?.ar} className="w-12 h-12 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm" />
+              </div>
+            ) : 'لا توجد صورة' 
+          },
           { label: 'الوصف (عربي)', value: viewTarget?.description?.ar || '—' },
           { label: 'الوصف (إنجليزي)', value: viewTarget?.description?.en || '—' },
           { label: 'القسم الرئيسي', value: viewTarget?.category?.name?.ar || '—' },

@@ -75,21 +75,39 @@ const PaymentMethodList: React.FC = () => {
     },
     {
       header: 'طريقة الدفع',
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          {row.icon?.includes('http') ? (
-            <img src={row.icon} alt={row.name?.ar} className="w-8 h-8 object-contain" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-              <MdPayment size={18} />
+      render: (row) => {
+        const isImg = !!row.icon && (
+          row.icon.startsWith('http') ||
+          row.icon.startsWith('/') ||
+          row.icon.startsWith('data:') ||
+          row.icon.includes('storage/') ||
+          /\.(png|jpe?g|svg|webp|gif)(\?.*)?$/i.test(row.icon)
+        );
+        return (
+          <div className="flex items-center gap-3">
+            {isImg ? (
+              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 flex items-center justify-center border border-slate-200/60 dark:border-slate-700 shrink-0">
+                <img
+                  src={row.icon}
+                  alt={row.name?.ar}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 shrink-0 border border-slate-200/60 dark:border-slate-700">
+                <MdPayment size={18} />
+              </div>
+            )}
+            <div>
+              <p className="font-semibold text-slate-800 dark:text-white">{row.name?.ar}</p>
+              <p className="text-xs text-slate-500">{row.name?.en}</p>
             </div>
-          )}
-          <div>
-            <p className="font-semibold text-slate-800 dark:text-white">{row.name?.ar}</p>
-            <p className="text-xs text-slate-500">{row.name?.en}</p>
           </div>
-        </div>
-      )
+        );
+      }
     },
     {
       header: 'الوصف',
@@ -178,8 +196,17 @@ const PaymentMethodList: React.FC = () => {
           { label: 'الاسم (عربي)', value: viewTarget?.name?.ar },
           { label: 'الاسم (إنجليزي)', value: viewTarget?.name?.en },
           { label: 'الوصف (عربي)', value: viewTarget?.description?.ar || '—' },
-          { label: 'الوصف (إنجليزي)', value: viewTarget?.description?.en || '—' },
-          { label: 'الأيقونة', value: viewTarget?.icon || '—' },
+          { 
+            label: 'الأيقونة', 
+            value: viewTarget?.icon ? (
+              <div className="flex items-center gap-2">
+                {viewTarget.icon.startsWith('http') || viewTarget.icon.startsWith('/') || viewTarget.icon.includes('storage/') ? (
+                  <img src={viewTarget.icon} alt="Icon" className="w-8 h-8 object-contain rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-50 dark:bg-slate-800" />
+                ) : null}
+                <span className="text-xs font-mono truncate max-w-xs">{viewTarget.icon}</span>
+              </div>
+            ) : '—' 
+          },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={viewTarget.status} /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }

@@ -9,6 +9,7 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { PurchaseDetailsModal } from './PurchaseDetailsModal';
 import { MdShoppingBag, MdDelete, MdVisibility, MdReceipt, MdImageNotSupported } from 'react-icons/md';
+import { renderName } from '../../utils/helpers';
 
 const PurchaseList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -44,8 +45,8 @@ const PurchaseList: React.FC = () => {
         const idMatch = String(p.id).includes(s);
         const notesMatch = p.notes ? p.notes.toLowerCase().includes(s) : false;
         const itemsMatch = p.items?.some((it) => {
-          const matName = typeof it.material?.name === 'object' ? it.material?.name?.ar : it.material_name;
-          const recName = typeof it.product_recipe?.name === 'object' ? it.product_recipe?.name?.ar : it.product_recipe_name;
+          const matName = renderName(it.material?.name) || it.material_name;
+          const recName = renderName(it.product_recipe?.name) || it.product_recipe_name;
           return (matName && matName.toLowerCase().includes(s)) || (recName && recName.toLowerCase().includes(s));
         });
         return idMatch || notesMatch || itemsMatch;
@@ -99,7 +100,7 @@ const PurchaseList: React.FC = () => {
       header: 'الفرع المستلم',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
-          {typeof row.branch?.name === 'object' ? (row.branch.name.ar || row.branch.name.en) : (row.branch?.name || (row.branch_id ? `فرع #${row.branch_id}` : '—'))}
+          {renderName(row.branch?.name) || (row.branch_id ? `فرع #${row.branch_id}` : '—')}
         </span>
       ),
     },

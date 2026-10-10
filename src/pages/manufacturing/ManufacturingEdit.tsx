@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { manufacturingApi, MANUFACTURING_KEY, MANUFACTURING_SELECT_OPTIONS_KEY } from '../../services/manufacturingService';
 import type { 
   ManufacturingFormData, 
-  ManufacturingRecipePayload,
   ManufacturingSelectOptionsResponse,
   BranchOption,
   ManufacturingProduct,
@@ -14,8 +13,10 @@ import type {
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
-import { MdArrowForward, MdSave, MdEdit, MdAdd, MdDelete } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
+import ConsumedMaterialsCards from '../../components/manufacturing/ConsumedMaterialsCards';
 
 const ManufacturingEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,19 +52,6 @@ const ManufacturingEdit: React.FC = () => {
   const productRecipes: ManufacturingProductRecipe[] = optionsData?.data?.product_recipes ?? [];
   const materials: ManufacturingMaterial[] = optionsData?.data?.materials ?? [];
 
-  const materialAndRecipeOptions = React.useMemo(() => [
-    ...materials.map((m: ManufacturingMaterial) => ({
-      id: `m_${m.id}`,
-      name: `${m.name?.ar || m.name?.en || m.id} (مادة خام)`,
-      subtext: 'مادة خام'
-    })),
-    ...productRecipes.map((r: ManufacturingProductRecipe) => ({
-      id: `r_${r.id}`,
-      name: `${r.name?.ar || r.name?.en || r.id} (وصفة شبه مصنعة)`,
-      subtext: 'وصفة شبه مصنعة'
-    }))
-  ], [materials, productRecipes]);
-
   // Populate form
   useEffect(() => {
     if (item) {
@@ -74,11 +62,11 @@ const ManufacturingEdit: React.FC = () => {
         product_id: item.product_id || 0,
         product_recipe_id: item.product_recipe_id || 0,
         count: item.count || 1,
-        recipes: (item.recipes || []).map(r => ({
+        recipes: type === 'recipe' ? (item.recipes || []).map(r => ({
           material_id: r.material_id || 0,
           product_recipe_id: r.product_recipe_id || 0,
           count: r.count || 1,
-        })),
+        })) : [],
       });
     }
   }, [item]);
@@ -107,47 +95,54 @@ const ManufacturingEdit: React.FC = () => {
       ...prev,
       product_id: type === 'product' ? prev.product_id : 0,
       product_recipe_id: type === 'recipe' ? prev.product_recipe_id : 0,
+      recipes: [],
     }));
   };
 
-  const handleAddRecipeItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      recipes: [...prev.recipes, { material_id: 0, product_recipe_id: 0, count: 1 }]
-    }));
-  };
-
-  const handleRemoveRecipeItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      recipes: prev.recipes.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleRecipeChange = (index: number, field: keyof ManufacturingRecipePayload, value: string) => {
-    const val = Number(value);
-    setFormData(prev => {
-      const newRecipes = [...prev.recipes];
-      if (field === 'material_id') {
-        newRecipes[index] = { ...newRecipes[index], material_id: val, product_recipe_id: 0 };
-      } else if (field === 'product_recipe_id') {
-        newRecipes[index] = { ...newRecipes[index], product_recipe_id: val, material_id: 0 };
-      } else {
-        newRecipes[index] = { ...newRecipes[index], [field]: val };
+  const hasStockExceeded = React.useMemo(() => {
+    return formData.recipes.some(r => {
+      if (r.material_id) {
+        const mat = materials.find(m => m.id === r.material_id);
+        const stock = Number(mat?.stock ?? 0);
+        return r.count > stock;
       }
-      return { ...prev, recipes: newRecipes };
+      if (r.product_recipe_id) {
+        const rec = productRecipes.find(p => p.id === r.product_recipe_id);
+        const stock = Number(rec?.stock ?? 0);
+        return r.count > stock;
+      }
+      return false;
     });
-  };
+  }, [formData.recipes, materials, productRecipes]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!formData.product_id && !formData.product_recipe_id) || formData.count <= 0) return;
+    if (!formData.branch_id) {
+      alert('يرجى تحديد الفرع القائم بالتصنيع');
+      return;
+    }
+    if (targetType === 'product' && (!formData.product_id || formData.count <= 0)) {
+      alert('يرجى تحديد المنتج المستهدف والكمية المنتجة');
+      return;
+    }
+    if (targetType === 'recipe' && (!formData.product_recipe_id || formData.count <= 0)) {
+      alert('يرجى تحديد الوصفة المستهدفة والكمية المنتجة');
+      return;
+    }
+    if (targetType === 'recipe' && formData.recipes.length === 0) {
+      alert('لتحضير الوصفة، يجب اختيار المواد المستهلكة (الخامات) من الكروت أدناه');
+      return;
+    }
+    if (hasStockExceeded) {
+      alert('توجد مواد مستهلكة تتجاوز رصيد المخزن المتاح! يرجى تعديل الكميات قبل الحفظ.');
+      return;
+    }
     
     const payload: ManufacturingFormData = {
       ...formData,
       branch_id: formData.branch_id,
-      product_id: formData.product_id || null,
-      product_recipe_id: formData.product_recipe_id || null,
+      product_id: targetType === 'product' ? (formData.product_id || null) : null,
+      product_recipe_id: targetType === 'recipe' ? (formData.product_recipe_id || null) : null,
       recipes: formData.recipes.map(r => ({
         material_id: r.material_id || null,
         product_recipe_id: r.product_recipe_id || null,
@@ -202,6 +197,7 @@ const ManufacturingEdit: React.FC = () => {
                     setFormData(prev => ({ ...prev, branch_id: bId }));
                   }}
                   options={branches}
+                  labelExtractor={(b) => renderName(b.name) || (b.id ? `فرع #${b.id}` : '')}
                   placeholder="-- اختر الفرع القائم بعملية التصنيع --"
                   searchPlaceholder="ابحث عن الفرع..."
                   disabled={isLoadingOptions}
@@ -236,7 +232,7 @@ const ManufacturingEdit: React.FC = () => {
                   value={formData.product_id || ''}
                   onChange={(val) => handleMainChange({ target: { name: 'product_id', value: val } } as any)}
                   options={products}
-                  labelExtractor={(p) => p.name?.ar || p.name?.en || String(p.id)}
+                  labelExtractor={(p) => renderName(p.name) || (p.id ? `منتج #${p.id}` : '')}
                   placeholder="-- اختر المنتج --"
                   searchPlaceholder="ابحث عن المنتج..."
                   disabled={isLoadingOptions}
@@ -254,7 +250,7 @@ const ManufacturingEdit: React.FC = () => {
                   value={formData.product_recipe_id || ''}
                   onChange={(val) => handleMainChange({ target: { name: 'product_recipe_id', value: val } } as any)}
                   options={productRecipes}
-                  labelExtractor={(r) => r.name?.ar || r.name?.en || String(r.id)}
+                  labelExtractor={(r) => renderName(r.name) || (r.id ? `وصفة #${r.id}` : '')}
                   placeholder="-- اختر الوصفة --"
                   searchPlaceholder="ابحث عن الوصفة..."
                   disabled={isLoadingOptions}
@@ -271,61 +267,32 @@ const ManufacturingEdit: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 2: Consumed Materials */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">المواد المستهلكة (الخامات)</h2>
-            <button type="button" onClick={handleAddRecipeItem}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-sm">
-              <MdAdd size={18} /> إضافة مادة
-            </button>
+        {/* Section 2: Consumed Materials - ONLY for Recipe Preparation */}
+        {targetType === 'recipe' && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 space-y-4">
+            <div className="border-b border-slate-100 dark:border-slate-700 pb-3">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <span>المواد المستهلكة (الخامات)</span>
+                <span className="text-xs text-red-500 font-semibold">* مطلوبة لتحضير الوصفة</span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                اختر المواد الخام أو الوصفات شبه المصنعة المستهلكة من الكروت أدناه (يجب توفر كمية بالمخزن)
+              </p>
+            </div>
+
+            <ConsumedMaterialsCards
+              materials={materials}
+              productRecipes={productRecipes}
+              recipes={formData.recipes}
+              onChange={(newRecipes) => setFormData(prev => ({ ...prev, recipes: newRecipes }))}
+              isTargetRecipe={true}
+            />
           </div>
-
-          <div className="space-y-4">
-            {formData.recipes.map((item, index) => (
-              <div key={index} className="flex flex-col md:flex-row items-end gap-4 p-4 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-2xs">
-                <div className="flex-1 w-full">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">اختر مادة خام أو وصفة *</label>
-                  <SearchableSelect
-                    value={item.material_id ? `m_${item.material_id}` : item.product_recipe_id ? `r_${item.product_recipe_id}` : ''}
-                    onChange={(val) => {
-                      const valStr = String(val || '');
-                      if (valStr.startsWith('m_')) {
-                        handleRecipeChange(index, 'material_id', valStr.replace('m_', ''));
-                      } else if (valStr.startsWith('r_')) {
-                        handleRecipeChange(index, 'product_recipe_id', valStr.replace('r_', ''));
-                      } else {
-                        handleRecipeChange(index, 'material_id', '0');
-                      }
-                    }}
-                    options={materialAndRecipeOptions}
-                    placeholder="-- اختر المادة أو الوصفة --"
-                    searchPlaceholder="ابحث عن مادة خام أو وصفة..."
-                    required
-                  />
-                </div>
-
-                <div className="w-full md:w-36">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">الكمية *</label>
-                  <input type="number" min="1" step="0.01" required value={item.count}
-                    onChange={(e) => handleRecipeChange(index, 'count', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-center font-bold text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary shadow-2xs transition-all" />
-                </div>
-
-                {formData.recipes.length > 1 && (
-                  <button type="button" onClick={() => handleRemoveRecipeItem(index)}
-                    className="p-2.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors" title="حذف المادة">
-                    <MdDelete size={20} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
         {mutation.isError && (
           <div className="mt-6 p-4 rounded-xl bg-red-50 border-red-200 text-red-600 text-sm">
-            حدث خطأ أثناء حفظ التعديلات.
+            حدث خطأ أثناء حفظ التعديلات. تأكد من صحة البيانات ورصيد المخزن.
           </div>
         )}
 
@@ -334,8 +301,17 @@ const ManufacturingEdit: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || (!formData.product_id && !formData.product_recipe_id) || formData.recipes.length === 0}
-            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg disabled:opacity-60">
+          <button
+            type="submit"
+            disabled={
+              mutation.isPending || 
+              !formData.branch_id ||
+              formData.count <= 0 ||
+              (targetType === 'product' && !formData.product_id) ||
+              (targetType === 'recipe' && (!formData.product_recipe_id || formData.recipes.length === 0 || hasStockExceeded))
+            }
+            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg disabled:opacity-60"
+          >
             {mutation.isPending ? <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</> : <><MdSave size={18} /> حفظ التعديلات</>}
           </button>
         </div>

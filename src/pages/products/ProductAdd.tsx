@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productApi, PRODUCTS_KEY, PRODUCTS_SELECT_OPTIONS_KEY } from '../../services/productService';
 import type { ProductFormData } from '../../types';
+import SingleImageUpload from '../../components/ui/SingleImageUpload';
 import { MdArrowForward, MdSave, MdFastfood } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { ProductVariationsSection } from '../../components/products/ProductVariationsSection';
@@ -17,7 +18,7 @@ const ProductAdd: React.FC = () => {
     name: { ar: '', en: '' },
     description: { ar: '', en: '' },
     price: 0,
-    image: '',
+    image: null,
     tax_id: 0,
     discount_id: 0,
     category_id: 0,
@@ -136,10 +137,15 @@ const ProductAdd: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none text-left" />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">رابط الصورة (Image URL)</label>
-              <input type="text" name="image" value={formData.image} onChange={handleChange} dir="ltr"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 text-left" />
+            {/* Product Image Upload */}
+            <div className="md:col-span-2">
+              <SingleImageUpload
+                value={formData.image}
+                onChange={(fileOrUrl) => setFormData(prev => ({ ...prev, image: fileOrUrl }))}
+                label="صورة المنتج"
+                hint="اضغط لاختيار صورة المنتج من جهازك أو اسحبها هنا (PNG, JPG, WEBP)"
+                disabled={mutation.isPending}
+              />
             </div>
           </div>
         </div>
