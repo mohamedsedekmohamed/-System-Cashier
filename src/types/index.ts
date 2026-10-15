@@ -24,3 +24,5 @@ export * from './purchase';
 export * from './report';
 export * from './dashboard';
 export * from './materialInventory';
+export * from './category';
+export * from './hall';

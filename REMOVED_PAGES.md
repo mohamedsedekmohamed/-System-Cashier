@@ -4,10 +4,7 @@
 
 ## الصفحات المحذوفة
 
-### 1. الأقسام (Categories)
-- **المسار**: `/dashboard/categories`
-- **المجلد**: `src/pages/category/`
-- **الملفات المحذوفة**: `CategoryPage.tsx`
+> **ملاحظة:** تم إعادة بناء وتفعيل **الأقسام (Categories)** بنظام CRUD كامل في المسارات `/dashboard/categories` وربطها بالـ API.
 
 ### 2. الخصومات (Discounts)
 - **المسار**: `/dashboard/discounts`

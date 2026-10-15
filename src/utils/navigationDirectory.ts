@@ -101,6 +101,26 @@ export const NAVIGATION_PAGES: NavigationPageItem[] = [
     keywords: ['طلبات', 'قائمة الطلبات', 'اوردرات', 'حالات الطلب', 'تعديل طلب', 'فواتير', 'طلبات الاونلاين'],
   },
 
+  // ── الأقسام ──
+  {
+    id: 'category-add',
+    title: 'إضافة قسم جديد',
+    category: 'الأقسام',
+    actionType: 'add',
+    path: '/dashboard/categories/add',
+    description: 'إضافة تصنيف أو قسم جديد للوجبات، المواد الخام، أو وصفات التصنيع مع رفع صورته',
+    keywords: ['اضافة قسم', 'قسم جديد', 'تصنيف جديد', 'اضافة تصنيف', 'categories', 'category', 'اضافه'],
+  },
+  {
+    id: 'category-list',
+    title: 'قائمة وإدارة الأقسام',
+    category: 'الأقسام',
+    actionType: 'list',
+    path: '/dashboard/categories',
+    description: 'استعراض وتعديل جميع الأقسام والتصنيفات الرئيسية والفرعية، الفلترة حسب النوع وحذف الأقسام',
+    keywords: ['اقسام', 'الاقسام', 'تصنيفات', 'التصنيفات', 'قائمة الاقسام', 'categories', 'category'],
+  },
+
   // ── المنتجات ──
   {
     id: 'product-add',
@@ -311,6 +331,26 @@ export const NAVIGATION_PAGES: NavigationPageItem[] = [
     path: '/dashboard/suppliers',
     description: 'إدارة قائمة الموردين، تعديل بيانات التواصل ومتابعة الفواتير الموردة منهم',
     keywords: ['موردين', 'قائمة الموردين', 'تعديل مورد', 'شركات التوريد'],
+  },
+
+  // ── الصالات ──
+  {
+    id: 'hall-add',
+    title: 'إضافة صالة جديدة',
+    category: 'الصالات',
+    actionType: 'add',
+    path: '/dashboard/halls/add',
+    description: 'إنشاء صالة جلوس جديدة في المطعم وربطها بالفرع لتنظيم وتوزيع الطاولات',
+    keywords: ['اضافة صالة', 'صالة جديدة', 'قاعة جديدة', 'halls', 'hall', 'اضافه'],
+  },
+  {
+    id: 'hall-list',
+    title: 'قائمة وإدارة الصالات',
+    category: 'الصالات',
+    actionType: 'list',
+    path: '/dashboard/halls',
+    description: 'استعراض جميع صالات الجلوس في الفروع، تعديل البيانات، وتفعيل أو تعطيل الصالات',
+    keywords: ['صالات', 'الصالات', 'قائمة الصالات', 'قاعات', 'halls', 'hall'],
   },
 
   // ── طاولات الصالة ──

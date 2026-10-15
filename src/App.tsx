@@ -43,6 +43,11 @@ import ExpenseListList from './pages/expenseLists/ExpenseListList';
 import ExpenseListAdd from './pages/expenseLists/ExpenseListAdd';
 import ExpenseListEdit from './pages/expenseLists/ExpenseListEdit';
 
+// Halls
+import HallList from './pages/halls/HallList';
+import HallAdd from './pages/halls/HallAdd';
+import HallEdit from './pages/halls/HallEdit';
+
 // Hall Tables
 import HallTableList from './pages/hallTables/HallTableList';
 import HallTableAdd from './pages/hallTables/HallTableAdd';
@@ -72,6 +77,11 @@ import MaterialEdit from './pages/materials/MaterialEdit';
 import PaymentMethodList from './pages/paymentMethods/PaymentMethodList';
 import PaymentMethodAdd from './pages/paymentMethods/PaymentMethodAdd';
 import PaymentMethodEdit from './pages/paymentMethods/PaymentMethodEdit';
+
+// Categories
+import CategoryList from './pages/categories/CategoryList';
+import CategoryAdd from './pages/categories/CategoryAdd';
+import CategoryEdit from './pages/categories/CategoryEdit';
 
 // Products
 import ProductList from './pages/products/ProductList';
@@ -196,6 +206,11 @@ function App() {
                   <Route path="payment-methods" element={<PaymentMethodList />} />
                   <Route path="payment-methods/add" element={<PaymentMethodAdd />} />
                   <Route path="payment-methods/edit/:id" element={<PaymentMethodEdit />} />
+
+                  {/* Categories — full CRUD */}
+                  <Route path="categories" element={<CategoryList />} />
+                  <Route path="categories/add" element={<CategoryAdd />} />
+                  <Route path="categories/edit/:id" element={<CategoryEdit />} />
 
                   {/* Products — full CRUD */}
                   <Route path="products" element={<ProductList />} />

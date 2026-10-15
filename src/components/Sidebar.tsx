@@ -26,6 +26,8 @@ import {
   MdShoppingBag,
   MdAssessment,
   MdFactCheck,
+  MdCategory,
+  MdMeetingRoom,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -49,9 +51,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} /> },
   { label: 'التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} /> },
   { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} /> },
+  { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} /> },
   { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableRestaurant size={20} /> },
   { label: 'الطلبات', path: '/dashboard/orders', icon: <MdReceipt size={20} /> },
   { label: 'المطابخ', path: '/dashboard/kitchens', icon: <MdSoupKitchen size={20} /> },
+  { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} /> },
   { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} /> },
   { label: 'وصفات المنتجات', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} /> },
   { label: 'قوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} /> },
