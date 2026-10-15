@@ -43,6 +43,11 @@ import ExpenseListList from './pages/expenseLists/ExpenseListList';
 import ExpenseListAdd from './pages/expenseLists/ExpenseListAdd';
 import ExpenseListEdit from './pages/expenseLists/ExpenseListEdit';
 
+// Financial Accounts
+import FinancialAccountList from './pages/financialAccounts/FinancialAccountList';
+import FinancialAccountAdd from './pages/financialAccounts/FinancialAccountAdd';
+import FinancialAccountEdit from './pages/financialAccounts/FinancialAccountEdit';
+
 // Halls
 import HallList from './pages/halls/HallList';
 import HallAdd from './pages/halls/HallAdd';
@@ -97,6 +102,11 @@ import ProductRecipeEdit from './pages/productRecipes/ProductRecipeEdit';
 import SupplierList from './pages/suppliers/SupplierList';
 import SupplierAdd from './pages/suppliers/SupplierAdd';
 import SupplierEdit from './pages/suppliers/SupplierEdit';
+
+// Discounts
+import DiscountList from './pages/discounts/DiscountList';
+import DiscountAdd from './pages/discounts/DiscountAdd';
+import DiscountEdit from './pages/discounts/DiscountEdit';
 
 // Taxes
 import TaxList from './pages/taxes/TaxList';
@@ -172,6 +182,17 @@ function App() {
                   <Route path="expense-lists/edit/:id" element={<ExpenseListEdit />} />
                   <Route path="expenses" element={<Navigate to="/dashboard/expense-lists" replace />} /> {/* Legacy fallback */}
 
+                  {/* Financial Accounts — full CRUD */}
+                  <Route path="financial-accounts" element={<FinancialAccountList />} />
+                  <Route path="financial-accounts/add" element={<FinancialAccountAdd />} />
+                  <Route path="financial-accounts/edit/:id" element={<FinancialAccountEdit />} />
+                  <Route path="financial" element={<Navigate to="/dashboard/financial-accounts" replace />} /> {/* Legacy fallback */}
+
+                  {/* Halls — full CRUD */}
+                  <Route path="halls" element={<HallList />} />
+                  <Route path="halls/add" element={<HallAdd />} />
+                  <Route path="halls/edit/:id" element={<HallEdit />} />
+
                   {/* Hall Tables — full CRUD */}
                   <Route path="hall-tables" element={<HallTableList />} />
                   <Route path="hall-tables/add" element={<HallTableAdd />} />
@@ -230,6 +251,11 @@ function App() {
                   <Route path="suppliers" element={<SupplierList />} />
                   <Route path="suppliers/add" element={<SupplierAdd />} />
                   <Route path="suppliers/edit/:id" element={<SupplierEdit />} />
+
+                  {/* Discounts — full CRUD */}
+                  <Route path="discounts" element={<DiscountList />} />
+                  <Route path="discounts/add" element={<DiscountAdd />} />
+                  <Route path="discounts/edit/:id" element={<DiscountEdit />} />
 
                   {/* Taxes — full CRUD */}
                   <Route path="taxes" element={<TaxList />} />

@@ -25,6 +25,7 @@ import {
   MdTrendingUp,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
 
 const MaterialInventoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -143,16 +144,8 @@ const MaterialInventoryDetail: React.FC = () => {
 
   // Helper for material display name
   const getMaterialName = (item: MaterialInventoryItem): string => {
-    const raw = item.material_name;
-    if (typeof raw === 'string') return raw;
-    if (raw && typeof raw === 'object') {
-      if (Array.isArray(raw)) {
-        const first = raw.find((x) => x !== null && x !== undefined);
-        return first ? String(first) : `مادة خام #${item.material_id}`;
-      }
-      return raw.ar || raw.en || `مادة خام #${item.material_id}`;
-    }
-    return `مادة خام #${item.material_id}`;
+    const raw = item.material_name ?? (item as any).material?.name ?? (item as any).name;
+    return renderName(raw) || `مادة خام #${item.material_id}`;
   };
 
   // Bulk save all edited items

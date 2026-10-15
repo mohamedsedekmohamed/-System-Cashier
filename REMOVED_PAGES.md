@@ -4,22 +4,19 @@
 
 ## الصفحات المحذوفة
 
-> **ملاحظة:** تم إعادة بناء وتفعيل **الأقسام (Categories)** بنظام CRUD كامل في المسارات `/dashboard/categories` وربطها بالـ API.
+> **ملاحظة:** تم إعادة بناء وتفعيل جميع الصفحات السابقة بنظام CRUD كامل وربطها بالـ API:
+> - **الأقسام (Categories)**: `/dashboard/categories`
+> - **الصالات (Halls)**: `/dashboard/halls`
+> - **الخصومات (Discounts)**: `/dashboard/discounts`
+> - **الحسابات المالية (Financial Accounts)**: `/dashboard/financial-accounts`
 
-### 2. الخصومات (Discounts)
-- **المسار**: `/dashboard/discounts`
-- **المجلد**: `src/pages/discount/`
-- **الملفات المحذوفة**: `DiscountPage.tsx`
-
-### 3. الحسابات المالية (Financial Accounts)
-- **المسار**: `/dashboard/financial`
-- **المجلد**: `src/pages/financialAccount/`
-- **الملفات المحذوفة**: `FinancialAccountPage.tsx`
-
-### 4. الصالات (Halls)
-- **المسار**: `/dashboard/halls`
-- **المجلد**: `src/pages/hall/`
-- **الملفات المحذوفة**: `HallPage.tsx`
+### حالة الحسابات المالية (Financial Accounts)
+- **المسار الحالي**: `/dashboard/financial-accounts` (مع مسار بديل تلقائي `/dashboard/financial`)
+- **المجلد**: `src/pages/financialAccounts/`
+- **الملفات المفعلة**:
+  - `FinancialAccountList.tsx` (عرض وإدارة الحسابات، فلترة الفروع والحالة، مودال تفاصيل وحذف)
+  - `FinancialAccountAdd.tsx` (نموذج إضافة حساب مالي برصيد افتتاحي وأيقونة)
+  - `FinancialAccountEdit.tsx` (نموذج تعديل الحساب المالي وتغيير الأيقونة والبيانات)
 
 ## التغييرات في الملفات
 

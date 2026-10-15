@@ -26,3 +26,5 @@ export * from './dashboard';
 export * from './materialInventory';
 export * from './category';
 export * from './hall';
+export * from './discount';
+export * from './financialAccount';

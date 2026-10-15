@@ -28,6 +28,8 @@ import {
   MdFactCheck,
   MdCategory,
   MdMeetingRoom,
+  MdDiscount,
+  MdAccountBalance,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -51,6 +53,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} /> },
   { label: 'التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} /> },
   { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} /> },
+  { label: 'الحسابات المالية', path: '/dashboard/financial-accounts', icon: <MdAccountBalance size={20} /> },
   { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} /> },
   { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableRestaurant size={20} /> },
   { label: 'الطلبات', path: '/dashboard/orders', icon: <MdReceipt size={20} /> },
@@ -63,6 +66,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} /> },
   { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} /> },
   { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} /> },
+  { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} /> },
   { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} /> },
   { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} /> },
   { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} /> },

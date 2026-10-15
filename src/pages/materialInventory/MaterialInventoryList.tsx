@@ -27,6 +27,7 @@ import {
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
+import { renderName } from '../../utils/helpers';
 
 const MaterialInventoryList: React.FC = () => {
   const navigate = useNavigate();
@@ -128,19 +129,20 @@ const MaterialInventoryList: React.FC = () => {
   const filtered = currentList.filter((item) => {
     if (!search) return true;
     const q = search.toLowerCase();
+    const nameStr = renderName(item.name).toLowerCase();
+    const branchStr = renderName(item.branch_name || (item as any).branch).toLowerCase();
+    const dateStr = (renderName(item.date) || renderName(item.created_at)).toLowerCase();
+    const idStr = String(item.id);
     return (
-      (item.name || '').toLowerCase().includes(q) ||
-      (item.branch_name || '').toLowerCase().includes(q) ||
-      String(item.id).includes(q) ||
-      (item.date || '').toLowerCase().includes(q)
+      nameStr.includes(q) ||
+      branchStr.includes(q) ||
+      idStr.includes(q) ||
+      dateStr.includes(q)
     );
   });
 
   const getBranchLabel = (b: BranchOption) => {
-    if (typeof b.name === 'object' && b.name !== null) {
-      return b.name.ar || b.name.en || `فرع رقم #${b.id}`;
-    }
-    return b.name || `فرع رقم #${b.id}`;
+    return renderName(b.name) || renderName(b) || `فرع رقم #${b.id}`;
   };
 
   const handleOpenCreateModal = () => {
@@ -165,8 +167,11 @@ const MaterialInventoryList: React.FC = () => {
     });
   };
 
-  const renderStatusBadge = (status: string) => {
-    const s = (status || '').toLowerCase();
+  const renderStatusBadge = (status: any) => {
+    const raw = typeof status === 'object' && status !== null
+      ? (status.en || status.ar || '')
+      : String(status || '');
+    const s = raw.toLowerCase();
     if (s === 'approved' || s === 'approve' || s === 'مكتمل' || s === 'معتمد') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -209,7 +214,7 @@ const MaterialInventoryList: React.FC = () => {
             to={`/dashboard/material-inventory/${row.id}`}
             className="font-bold text-slate-800 dark:text-white hover:text-primary transition-colors text-sm"
           >
-            {row.name || `جرد رقم #${row.id}`}
+            {renderName(row.name) || `جرد رقم #${row.id}`}
           </Link>
           <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
             رقم العملية: {row.id}
@@ -225,7 +230,7 @@ const MaterialInventoryList: React.FC = () => {
             <MdStorefront size={16} />
           </div>
           <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
-            {row.branch_name || `فرع #${row.branch_id}`}
+            {renderName(row.branch_name || (row as any).branch) || `فرع #${row.branch_id}`}
           </span>
         </div>
       ),
@@ -235,7 +240,7 @@ const MaterialInventoryList: React.FC = () => {
       render: (row) => (
         <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
           <MdCalendarToday size={14} className="text-slate-400 shrink-0" />
-          <span>{row.date || row.created_at || '—'}</span>
+          <span>{renderName(row.date) || renderName(row.created_at) || '—'}</span>
         </div>
       ),
     },

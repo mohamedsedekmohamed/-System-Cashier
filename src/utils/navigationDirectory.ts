@@ -413,6 +413,26 @@ export const NAVIGATION_PAGES: NavigationPageItem[] = [
     keywords: ['مصروفات', 'نفقات', 'سجل المصروفات', 'تعديل مصروف', 'تكاليف التشغيل'],
   },
 
+  // ── الحسابات المالية ──
+  {
+    id: 'financial-account-add',
+    title: 'إضافة حساب مالي جديد',
+    category: 'الحسابات المالية',
+    actionType: 'add',
+    path: '/dashboard/financial-accounts/add',
+    description: 'إنشاء حساب مالي جديد (خزينة، بنك، محفظة إلكترونية)، تحديد الرصيد الافتتاحي والفرع ورفع الأيقونة',
+    keywords: ['اضافة حساب مالي', 'حساب مالي جديد', 'خزينة جديدة', 'بنك جديد', 'حسابات مالية', 'خزنة', 'رصيد', 'financial', 'اضافه'],
+  },
+  {
+    id: 'financial-account-list',
+    title: 'قائمة وإدارة الحسابات المالية',
+    category: 'الحسابات المالية',
+    actionType: 'list',
+    path: '/dashboard/financial-accounts',
+    description: 'استعراض الحسابات المالية والخزائن، متابعة الأرصدة، الفلترة حسب الفرع، وتعديل أو حذف الحسابات',
+    keywords: ['حسابات مالية', 'الحسابات المالية', 'خزائن', 'خزنة', 'بنوك', 'ارصدة الحسابات', 'قائمة الحسابات المالية', 'financial accounts'],
+  },
+
   // ── قوائم التصنيع ──
   {
     id: 'manufacturing-add',
@@ -431,6 +451,26 @@ export const NAVIGATION_PAGES: NavigationPageItem[] = [
     path: '/dashboard/manufacturing',
     description: 'متابعة أوامر التصنيع السابقة وتعديل الكميات المحضرة ومتابعة تكاليف الإنتاج',
     keywords: ['تصنيع', 'قوائم التصنيع', 'اوامر الانتاج', 'تشغيل'],
+  },
+
+  // ── الخصومات والعروض ──
+  {
+    id: 'discount-add',
+    title: 'إضافة خصم أو عرض جديد',
+    category: 'الخصومات',
+    actionType: 'add',
+    path: '/dashboard/discounts/add',
+    description: 'إنشاء خصم ترويجي جديد وتحديد نسبته المئوية أو قيمته النقدية وحالة التفعيل',
+    keywords: ['اضافة خصم', 'خصم جديد', 'تخفيض جديد', 'عروض', 'تخفيضات', 'discounts', 'discount', 'اضافه'],
+  },
+  {
+    id: 'discount-list',
+    title: 'قائمة وإدارة الخصومات',
+    category: 'الخصومات',
+    actionType: 'list',
+    path: '/dashboard/discounts',
+    description: 'استعراض جميع الخصومات والعروض الترويجية، تعديل النسب والقيم وتفعيل أو إيقاف الخصومات',
+    keywords: ['خصومات', 'الخصومات', 'تخفيضات', 'عروض', 'discounts', 'discount', 'قائمة الخصومات'],
   },
 
   // ── الضرائب وطرق الدفع ──

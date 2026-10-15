@@ -83,6 +83,16 @@ export function DataTable<T>({
                     } else if (col.accessorKey) {
                       cellContent = getNestedValue(row, col.accessorKey as string);
                     }
+
+                    // Safely handle localized objects or accidental non-ReactElement objects
+                    if (cellContent && typeof cellContent === 'object' && !React.isValidElement(cellContent)) {
+                      if ('ar' in cellContent || 'en' in cellContent) {
+                        cellContent = (cellContent as any).ar || (cellContent as any).en || '';
+                      } else if ('name' in cellContent) {
+                        const n = (cellContent as any).name;
+                        cellContent = typeof n === 'object' && n !== null ? (n.ar || n.en || '') : String(n || '');
+                      }
+                    }
                     
                     return (
                       <td key={idx} className={`px-5 py-4 ${col.className || ''}`}>
