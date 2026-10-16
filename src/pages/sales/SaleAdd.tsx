@@ -2,6 +2,11 @@ import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saleApi, SALES_KEY, SALES_SELECT_OPTIONS_KEY } from '../../services/saleService';
+import { MATERIALS_KEY } from '../../services/materialService';
+import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
+import { PRODUCTS_KEY } from '../../services/productService';
+import { SALERS_KEY } from '../../services/salerService';
+import { PURCHASES_SELECT_OPTIONS_KEY } from '../../services/purchaseService';
 import type { SaleFormData, SaleItemPayload, InsufficientIngredientError } from '../../types';
 import {
   MdArrowForward,
@@ -212,6 +217,14 @@ export const SaleAdd: React.FC = () => {
     mutationFn: (payload: SaleFormData) => saleApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [SALES_KEY] });
+      queryClient.invalidateQueries({ queryKey: [SALES_SELECT_OPTIONS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MATERIALS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [SALERS_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['material_inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
+      queryClient.invalidateQueries({ queryKey: [PURCHASES_SELECT_OPTIONS_KEY] });
       navigate('/dashboard/sales');
     },
     onError: (err: any) => {
@@ -377,8 +390,12 @@ export const SaleAdd: React.FC = () => {
       return;
     }
 
-    if (remainingAmount > 0) {
+    if (remainingAmount > 0 && (!selectedSalerId || selectedSalerId <= 0)) {
+      setErrorMessage('يرجى اختيار العميل / الموزع لربط المبالغ والأقساط الآجلة بحسابه.');
+      return;
+    }
 
+    if (remainingAmount > 0) {
       if (Math.abs(diffInstallmentsAmount) > 0.01) {
         setErrorMessage(
           `إجمالي مبالغ الأقساط (${totalInstallmentsAmount.toLocaleString('ar-EG')} ج.م) لا يتطابق مع المبلغ المتبقي الآجل (${remainingAmount.toLocaleString('ar-EG')} ج.م). يرجى ضبط مبالغ الأقساط.`
@@ -418,6 +435,7 @@ export const SaleAdd: React.FC = () => {
     const payload: SaleFormData = {
       branch_id: selectedBranchId,
       saler_id: selectedSalerId || null,
+      total_cost: totalCost,
       paid_amount: actualPaid,
       due_date: remainingAmount > 0 ? (payloadDues?.[0]?.date || defaultDueDate) : undefined,
       dues: payloadDues,

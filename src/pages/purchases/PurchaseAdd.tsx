@@ -2,6 +2,10 @@ import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, PURCHASES_KEY, PURCHASES_SELECT_OPTIONS_KEY } from '../../services/purchaseService';
+import { MATERIALS_KEY } from '../../services/materialService';
+import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
+import { SUPPLIERS_KEY } from '../../services/supplierService';
+import { SALES_SELECT_OPTIONS_KEY } from '../../services/saleService';
 import type { PurchaseFormData, PurchaseItemPayload } from '../../types';
 import {
   MdArrowForward,
@@ -106,6 +110,13 @@ export const PurchaseAdd: React.FC = () => {
     mutationFn: (payload: PurchaseFormData) => purchaseApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PURCHASES_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PURCHASES_SELECT_OPTIONS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MATERIALS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
+      queryClient.invalidateQueries({ queryKey: [SUPPLIERS_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['material_inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
+      queryClient.invalidateQueries({ queryKey: [SALES_SELECT_OPTIONS_KEY] });
       navigate('/dashboard/purchases');
     },
     onError: (err: any) => {
@@ -372,6 +383,11 @@ export const PurchaseAdd: React.FC = () => {
       return;
     }
 
+    if (remainingAmount > 0 && (!selectedSupplierId || selectedSupplierId <= 0)) {
+      setErrorMessage('يرجى اختيار المورد لربط المبالغ والأقساط الآجلة بحسابه.');
+      return;
+    }
+
     const payloadDues = remainingAmount > 0
       ? installments.map((inst) => ({
           amount: Number(inst.amount),
@@ -383,6 +399,7 @@ export const PurchaseAdd: React.FC = () => {
     const payload: PurchaseFormData = {
       branch_id: selectedBranchId,
       supplier_id: selectedSupplierId || null,
+      total_cost: totalCost,
       paid_amount: actualPaid,
       due_date: remainingAmount > 0 ? (payloadDues?.[0]?.date || defaultDueDate) : undefined,
       dues: payloadDues,

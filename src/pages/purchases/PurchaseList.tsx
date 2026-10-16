@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { purchaseApi, PURCHASES_KEY } from '../../services/purchaseService';
+import { purchaseApi, PURCHASES_KEY, PURCHASES_SELECT_OPTIONS_KEY } from '../../services/purchaseService';
+import { MATERIALS_KEY } from '../../services/materialService';
+import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
+import { SUPPLIERS_KEY } from '../../services/supplierService';
 import type { Purchase } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
@@ -34,6 +37,12 @@ const PurchaseList: React.FC = () => {
     mutationFn: (id: number) => purchaseApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PURCHASES_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PURCHASES_SELECT_OPTIONS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MATERIALS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
+      queryClient.invalidateQueries({ queryKey: [SUPPLIERS_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['material_inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
       setDeleteTarget(null);
     },
   });
