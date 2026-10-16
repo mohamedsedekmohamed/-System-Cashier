@@ -472,7 +472,7 @@ const ManufacturingAdd: React.FC = () => {
         </div>
 
         {/* Section 2: Consumed Materials Cards (Displayed for BOTH product & recipe) */}
-        {(formData.product_id > 0 || formData.product_recipe_id > 0 || formData.recipes.length > 0) && (
+        {((Number(formData.product_id) > 0 || Number(formData.product_recipe_id) > 0 || formData.recipes.length > 0)) && (
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
             {/* Section Header with live analysis badges */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700 pb-4">

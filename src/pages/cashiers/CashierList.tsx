@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cashierApi, CASHIERS_KEY } from '../../services/cashierService';
-import type { Cashier } from '../../types';
+import type { Cashier, CashierFormData } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
