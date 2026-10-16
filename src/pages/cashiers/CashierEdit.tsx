@@ -17,7 +17,6 @@ const CashierEdit: React.FC = () => {
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<CashierFormData>({
     name: '',
-    cashier_man_id: 0,
     branch_id: 0,
   });
 
@@ -30,14 +29,12 @@ const CashierEdit: React.FC = () => {
 
   const cashier = data?.data;
   const branches = data?.select_options?.branches ?? [];
-  const cashierMen = data?.select_options?.cashier_men ?? [];
 
   // Populate form when data arrives
   useEffect(() => {
     if (cashier) {
       setFormData({
         name: cashier.name,
-        cashier_man_id: cashier.cashier_man_id,
         branch_id: cashier.branch_id,
       });
     }
@@ -57,13 +54,13 @@ const CashierEdit: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: (name === 'cashier_man_id' || name === 'branch_id') ? Number(value) : value,
+      [name]: name === 'branch_id' ? Number(value) : value,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.cashier_man_id || !formData.branch_id) return;
+    if (!formData.name || !formData.branch_id) return;
     mutation.mutate(formData);
   };
 
@@ -97,9 +94,9 @@ const CashierEdit: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                اسم الكاشير <span className="text-red-500">*</span>
+                اسم ماكينة الكاشير <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
                 value={typeof formData.name === 'object' && formData.name !== null ? ((formData.name as any)?.ar || (formData.name as any)?.en || '') : (formData.name || '')} onChange={handleChange}
@@ -123,22 +120,6 @@ const CashierEdit: React.FC = () => {
                 searchPlaceholder="ابحث عن الفرع..."
               />
             </div>
-
-            {/* Cashier Man */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                موظف الكاشير <span className="text-red-500">*</span>
-              </label>
-              <SearchableSelect
-                name="cashier_man_id"
-                required
-                value={formData.cashier_man_id || ''}
-                onChange={(val) => setFormData((prev) => ({ ...prev, cashier_man_id: Number(val) || 0 }))}
-                options={cashierMen}
-                placeholder="اختر الموظف..."
-                searchPlaceholder="ابحث عن موظف الكاشير..."
-              />
-            </div>
           </div>
         </div>
 
@@ -155,7 +136,7 @@ const CashierEdit: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.cashier_man_id || !formData.branch_id}
+          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.branch_id}
             className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>

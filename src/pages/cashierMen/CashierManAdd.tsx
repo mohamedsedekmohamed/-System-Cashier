@@ -22,7 +22,6 @@ const CashierManAdd: React.FC = () => {
   const [formData, setFormData] = useState<CashierManFormData>({
     name: '',
     password: '',
-    cashier_id: 0,
     branch_id: 0,
     shift_id: 0,
   });
@@ -34,7 +33,6 @@ const CashierManAdd: React.FC = () => {
   });
 
   const branches = optionsData?.data?.branches ?? [];
-  const cashiers = optionsData?.data?.cashiers ?? [];
   const shifts = optionsData?.data?.shifts ?? [];
 
   // ── Create Mutation ────────────────────
@@ -51,13 +49,13 @@ const CashierManAdd: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: (name === 'cashier_id' || name === 'branch_id' || name === 'shift_id') ? Number(value) : value,
+      [name]: (name === 'branch_id' || name === 'shift_id') ? Number(value) : value,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.password || !formData.cashier_id || !formData.branch_id || !formData.shift_id) return;
+    if (!formData.name || !formData.password || !formData.branch_id || !formData.shift_id) return;
     mutation.mutate(formData);
   };
 
@@ -75,7 +73,7 @@ const CashierManAdd: React.FC = () => {
               <MdPersonOutline size={24} className="text-primary" />
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">إضافة موظف كاشير جديد</h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">أدخل بيانات الموظف وأسنده إلى فرع وماكينة كاشير</p>
+            <p className="text-sm text-slate-500 mt-1">أدخل بيانات الموظف وأسنده إلى فرع ووردية</p>
           </div>
         </div>
       </div>
@@ -126,24 +124,6 @@ const CashierManAdd: React.FC = () => {
               />
             </div>
 
-            {/* Cashier Machine */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                ماكينة الكاشير <span className="text-red-500">*</span>
-              </label>
-              <SearchableSelect
-                id="cashier_id"
-                name="cashier_id"
-                value={formData.cashier_id || ''}
-                onChange={(val) => setFormData(prev => ({ ...prev, cashier_id: Number(val) }))}
-                options={cashiers}
-                placeholder="-- اختر ماكينة الكاشير --"
-                searchPlaceholder="ابحث عن ماكينة الكاشير..."
-                disabled={isLoadingOptions}
-                required
-              />
-            </div>
-
             {/* Shift */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
@@ -178,7 +158,7 @@ const CashierManAdd: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.password || !formData.cashier_id || !formData.branch_id || !formData.shift_id}
+          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.password || !formData.branch_id || !formData.shift_id}
             className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>

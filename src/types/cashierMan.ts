@@ -24,12 +24,12 @@ export interface CashierMachine {
 export interface CashierMan {
   id: number;
   name: string;
-  cashier_id: number;
+  cashier_id?: number | null;
   branch_id: number;
   shift_id?: number;
   role: string;
   branch: CashierManBranch;
-  cashier: CashierMachine;
+  cashier?: CashierMachine | null;
   shift?: {
     id: number;
     name: { ar: string; en: string };
@@ -45,7 +45,7 @@ export interface CashierMan {
 export interface CashierManFormData {
   name: string;
   password?: string;
-  cashier_id: number;
+  cashier_id?: number | null;
   branch_id: number;
   shift_id: number;
 }

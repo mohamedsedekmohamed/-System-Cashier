@@ -223,8 +223,11 @@ const MaterialInventoryDetail: React.FC = () => {
     );
   }
 
-  const renderStatusBadge = (status: string) => {
-    const s = (status || '').toLowerCase();
+  const renderStatusBadge = (status: any) => {
+    const raw = typeof status === 'object' && status !== null
+      ? (status.en || status.ar || '')
+      : String(status || '');
+    const s = raw.toLowerCase();
     if (s === 'approved' || s === 'approve' || s === 'مكتمل' || s === 'معتمد') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -297,7 +300,7 @@ const MaterialInventoryDetail: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white">
-                {inventory.name || `جلسة جرد #${inventory.id}`}
+                {renderName(inventory.name) || `جلسة جرد #${inventory.id}`}
               </h1>
               {renderStatusBadge(inventory.status)}
             </div>
@@ -305,11 +308,11 @@ const MaterialInventoryDetail: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
               <span className="flex items-center gap-1.5">
                 <MdStorefront size={16} className="text-primary" />
-                <strong>الفرع:</strong> {inventory.branch_name || `فرع #${inventory.branch_id}`}
+                <strong>الفرع:</strong> {renderName(inventory.branch_name) || `فرع #${inventory.branch_id}`}
               </span>
               <span className="flex items-center gap-1.5">
                 <MdCalendarToday size={15} />
-                <strong>التاريخ:</strong> {inventory.date || inventory.created_at || '—'}
+                <strong>التاريخ:</strong> {renderName(inventory.date) || renderName(inventory.created_at) || '—'}
               </span>
               <span className="font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-600 dark:text-slate-300">
                 ID: {inventory.id}
@@ -671,11 +674,11 @@ const MaterialInventoryDetail: React.FC = () => {
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1.5 font-medium">
               <div className="flex justify-between">
                 <span>اسم الجرد:</span>
-                <span className="font-bold">{inventory.name}</span>
+                <span className="font-bold">{renderName(inventory.name)}</span>
               </div>
               <div className="flex justify-between">
                 <span>الفرع:</span>
-                <span className="font-bold">{inventory.branch_name}</span>
+                <span className="font-bold">{renderName(inventory.branch_name)}</span>
               </div>
               <div className="flex justify-between">
                 <span>إجمالي الأصناف:</span>

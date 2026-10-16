@@ -15,7 +15,7 @@ export interface CashierBranch {
 export interface Cashier {
   id: number;
   name: string;
-  cashier_man_id: number;
+  cashier_man_id?: number | null;
   branch_id: number;
   branch: CashierBranch;
   status?: boolean;
@@ -25,7 +25,7 @@ export interface Cashier {
 
 export interface CashierFormData {
   name: string;
-  cashier_man_id: number;
+  cashier_man_id?: number | null;
   branch_id: number;
   status?: boolean;
 }

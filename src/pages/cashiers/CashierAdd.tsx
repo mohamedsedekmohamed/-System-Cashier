@@ -14,7 +14,6 @@ const CashierAdd: React.FC = () => {
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<CashierFormData>({
     name: '',
-    cashier_man_id: 0,
     branch_id: 0,
   });
 
@@ -25,7 +24,6 @@ const CashierAdd: React.FC = () => {
   });
 
   const branches = optionsData?.data?.branches ?? [];
-  const cashierMen = optionsData?.data?.cashier_men ?? [];
 
   // ── Create Mutation ────────────────────
   const mutation = useMutation({
@@ -41,13 +39,13 @@ const CashierAdd: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: (name === 'cashier_man_id' || name === 'branch_id') ? Number(value) : value,
+      [name]: name === 'branch_id' ? Number(value) : value,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.cashier_man_id || !formData.branch_id) return;
+    if (!formData.name || !formData.branch_id) return;
     mutation.mutate(formData);
   };
 
@@ -65,7 +63,7 @@ const CashierAdd: React.FC = () => {
               <MdPointOfSale size={24} className="text-primary" />
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">إضافة كاشير جديد</h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">أدخل بيانات الكاشير وأسنده إلى فرع وموظف</p>
+            <p className="text-sm text-slate-500 mt-1">أدخل بيانات ماكينة الكاشير وأسندها إلى فرع</p>
           </div>
         </div>
       </div>
@@ -75,9 +73,9 @@ const CashierAdd: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                اسم الكاشير <span className="text-red-500">*</span>
+                اسم ماكينة الكاشير <span className="text-red-500">*</span>
               </label>
               <input type="text" name="name" required
                 value={typeof formData.name === 'object' && formData.name !== null ? ((formData.name as any)?.ar || (formData.name as any)?.en || '') : (formData.name || '')} onChange={handleChange}
@@ -102,23 +100,6 @@ const CashierAdd: React.FC = () => {
                 searchPlaceholder="ابحث عن الفرع..."
               />
             </div>
-
-            {/* Cashier Man */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                موظف الكاشير <span className="text-red-500">*</span>
-              </label>
-              <SearchableSelect
-                name="cashier_man_id"
-                required
-                value={formData.cashier_man_id || ''}
-                onChange={(val) => setFormData((prev) => ({ ...prev, cashier_man_id: Number(val) || 0 }))}
-                disabled={isLoadingOptions}
-                options={cashierMen}
-                placeholder="اختر الموظف..."
-                searchPlaceholder="ابحث عن موظف الكاشير..."
-              />
-            </div>
           </div>
         </div>
 
@@ -135,7 +116,7 @@ const CashierAdd: React.FC = () => {
             className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.cashier_man_id || !formData.branch_id}
+          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.branch_id}
             className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>

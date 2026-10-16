@@ -78,10 +78,10 @@ const CashierManList: React.FC = () => {
       )
     },
     {
-      header: 'ماكينة الكاشير',
+      header: 'الماكينة الحالية',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-          {renderName(row.cashier?.name) || 'غير محدد'}
+          {renderName(row.cashier?.name) || 'غير متصل بماكينة'}
         </span>
       )
     },
@@ -158,7 +158,7 @@ const CashierManList: React.FC = () => {
           { label: 'الرقم التعريفي', value: viewTarget?.id },
           { label: 'اسم الموظف', value: renderName(viewTarget?.name) },
           { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
-          { label: 'الماكينة (الكاشير)', value: renderName(viewTarget?.cashier?.name) || '—' },
+          { label: 'الماكينة الفاتح عليها حالياً (استرشادي)', value: renderName(viewTarget?.cashier?.name) || 'لا توجد ماكينة مفتوحة حالياً' },
           { label: 'الوردية', value: renderName(viewTarget?.shift?.name) || '—' },
           { label: 'الدور (Role)', value: viewTarget?.role },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },

@@ -43,9 +43,8 @@ const CashierList: React.FC = () => {
   // ── Toggle Status mutation ─────────────
   const toggleStatusMutation = useMutation({
     mutationFn: (cashier: Cashier) => {
-      const payload = {
+      const payload: CashierFormData = {
         name: cashier.name,
-        cashier_man_id: cashier.cashier_man_id,
         branch_id: cashier.branch_id,
         status: !cashier.status,
       };
@@ -164,7 +163,7 @@ const CashierList: React.FC = () => {
           { label: 'الرقم التعريفي', value: viewTarget?.id },
           { label: 'اسم الماكينة', value: viewTarget?.name },
           { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
-          { label: 'رقم الموظف المرتبط', value: viewTarget?.cashier_man_id || '—' },
+          { label: 'الموظف الفاتح حالياً (استرشادي)', value: viewTarget?.cashier_man_id ? `#${viewTarget.cashier_man_id}` : 'لا يوجد موظف فاتح حالياً' },
           { label: 'الحالة', value: viewTarget ? <StatusBadge active={!!viewTarget.status} /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }
