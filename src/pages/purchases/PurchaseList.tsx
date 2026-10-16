@@ -133,10 +133,35 @@ const PurchaseList: React.FC = () => {
     {
       header: 'إجمالي التكلفة',
       render: (row) => (
-        <span className="font-black text-emerald-600 dark:text-emerald-400">
+        <span className="font-black text-slate-800 dark:text-white">
           {Number(row.total_cost || row.cost || 0).toLocaleString('ar-EG')} ج.م
         </span>
       ),
+    },
+    {
+      header: 'المدفوع',
+      render: (row) => (
+        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+          {Number(row.paid_amount ?? (row.total_cost || row.cost || 0)).toLocaleString('ar-EG')} ج.م
+        </span>
+      ),
+    },
+    {
+      header: 'المتبقي (الآجل)',
+      render: (row) => {
+        const rem = Number(row.remaining_amount || 0);
+        return (
+          <span
+            className={`font-bold ${
+              rem > 0
+                ? 'text-rose-600 dark:text-rose-400'
+                : 'text-slate-400 dark:text-slate-500'
+            }`}
+          >
+            {rem > 0 ? `${rem.toLocaleString('ar-EG')} ج.م` : 'مكتمل الدفع'}
+          </span>
+        );
+      },
     },
     {
       header: 'الملاحظات',

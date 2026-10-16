@@ -1,5 +1,5 @@
 import React from 'react';
-import { MdClose, MdReceipt, MdLayers, MdReceiptLong, MdAttachMoney, MdCalendarToday, MdNotes, MdOpenInNew } from 'react-icons/md';
+import { MdClose, MdReceipt, MdReceiptLong, MdAttachMoney, MdCalendarToday, MdNotes, MdOpenInNew, MdHourglassTop, MdCheckCircle } from 'react-icons/md';
 import type { Purchase } from '../../types';
 import { renderName } from '../../utils/helpers';
 
@@ -84,24 +84,34 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
         <div className="p-6 overflow-y-auto space-y-6">
           
           {/* Metric Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/40">
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mb-1">
                 <MdAttachMoney size={16} />
                 إجمالي التكلفة
               </span>
-              <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
-                {Number(purchase.total_cost || purchase.cost || 0).toLocaleString('ar-EG')} <span className="text-sm font-normal">ج.م</span>
+              <p className="text-xl font-black text-emerald-700 dark:text-emerald-300">
+                {Number(purchase.total_cost || purchase.cost || 0).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/40">
               <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1 mb-1">
-                <MdLayers size={16} />
-                إجمالي الكمية
+                <MdCheckCircle size={16} />
+                المدفوع نقداً
               </span>
-              <p className="text-2xl font-black text-blue-700 dark:text-blue-300">
-                {Number(purchase.total_quantity || purchase.quantity || 0).toLocaleString('ar-EG')}
+              <p className="text-xl font-black text-blue-700 dark:text-blue-300">
+                {Number(purchase.paid_amount ?? (purchase.total_cost || purchase.cost || 0)).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-rose-50/80 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-800/40">
+              <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mb-1">
+                <MdHourglassTop size={16} />
+                المتبقي (الآجل)
+              </span>
+              <p className="text-xl font-black text-rose-700 dark:text-rose-300">
+                {Number(purchase.remaining_amount || 0).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
               </p>
             </div>
 
@@ -110,11 +120,41 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
                 <MdReceiptLong size={16} />
                 عدد البنود
               </span>
-              <p className="text-2xl font-black text-purple-700 dark:text-purple-300">
-                {items.length} <span className="text-sm font-normal">أصناف</span>
+              <p className="text-xl font-black text-purple-700 dark:text-purple-300">
+                {items.length} <span className="text-xs font-normal">أصناف</span>
               </p>
             </div>
           </div>
+
+          {/* Dues Section */}
+          {(purchase.dues && purchase.dues.length > 0) && (
+            <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50">
+              <h4 className="font-bold text-amber-800 dark:text-amber-300 text-sm mb-2 flex items-center gap-2">
+                <MdHourglassTop size={18} />
+                جدول استحقاق المبالغ الآجلة ({purchase.dues.length} قيد)
+              </h4>
+              <div className="space-y-2">
+                {purchase.dues.map((due) => (
+                  <div
+                    key={due.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 border border-amber-100 dark:border-amber-900/30 text-sm"
+                  >
+                    <div>
+                      <span className="font-bold text-rose-600 dark:text-rose-400">
+                        {Number(due.amount).toLocaleString('ar-EG')} ج.م
+                      </span>
+                      {due.notes && (
+                        <p className="text-xs text-slate-500 mt-0.5">{due.notes}</p>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                      تاريخ الاستحقاق: <span className="font-mono">{due.date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Notes if present */}
           {purchase.notes && (

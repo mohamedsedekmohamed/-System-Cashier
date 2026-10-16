@@ -22,6 +22,14 @@ const buildPurchaseFormData = (payload: PurchaseFormData): FormData => {
     formData.append('supplier_id', String(payload.supplier_id));
   }
 
+  if (payload.paid_amount !== undefined && payload.paid_amount !== null) {
+    formData.append('paid_amount', String(payload.paid_amount));
+  }
+
+  if (payload.due_date) {
+    formData.append('due_date', payload.due_date);
+  }
+
   if (payload.receipt) {
     formData.append('receipt', payload.receipt);
   }

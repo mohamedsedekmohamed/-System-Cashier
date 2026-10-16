@@ -61,6 +61,16 @@ export interface PurchaseItemDetail {
   updated_at?: string;
 }
 
+export interface PurchaseDue {
+  id: number;
+  purchase_id: number;
+  amount: number;
+  date: string;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Purchase {
   id: number;
   branch_id?: number;
@@ -75,10 +85,13 @@ export interface Purchase {
   receipt_url?: string | null;
   total_cost: number;
   total_quantity: number;
+  paid_amount?: number;
+  remaining_amount?: number;
   cost?: number;
   quantity?: number;
   notes?: string | null;
   items: PurchaseItemDetail[];
+  dues?: PurchaseDue[];
   created_at?: string;
   updated_at?: string;
 }
@@ -111,6 +124,8 @@ export interface PurchaseItemPayload {
 export interface PurchaseFormData {
   branch_id: number;
   supplier_id?: number | null;
+  paid_amount?: number;
+  due_date?: string;
   receipt?: File | null;
   notes?: string;
   items: PurchaseItemPayload[];

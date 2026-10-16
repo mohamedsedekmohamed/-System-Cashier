@@ -28,3 +28,5 @@ export * from './category';
 export * from './hall';
 export * from './discount';
 export * from './financialAccount';
+export * from './saler';
+export * from './sale';

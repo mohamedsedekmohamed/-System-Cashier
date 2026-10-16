@@ -127,6 +127,15 @@ import WasteEdit from './pages/wastes/WasteEdit';
 import PurchaseList from './pages/purchases/PurchaseList';
 import PurchaseAdd from './pages/purchases/PurchaseAdd';
 
+// Sales
+import SaleList from './pages/sales/SaleList';
+import SaleAdd from './pages/sales/SaleAdd';
+
+// Salers
+import SalerList from './pages/salers/SalerList';
+import SalerAdd from './pages/salers/SalerAdd';
+import SalerEdit from './pages/salers/SalerEdit';
+
 // Material Inventory
 import MaterialInventoryList from './pages/materialInventory/MaterialInventoryList';
 import MaterialInventoryDetail from './pages/materialInventory/MaterialInventoryDetail';
@@ -257,10 +266,19 @@ function App() {
                   <Route path="purchases" element={<PurchaseList />} />
                   <Route path="purchases/add" element={<PurchaseAdd />} />
 
+                  {/* Sales */}
+                  <Route path="sales" element={<SaleList />} />
+                  <Route path="sales/add" element={<SaleAdd />} />
+
                   {/* Suppliers — full CRUD */}
                   <Route path="suppliers" element={<SupplierList />} />
                   <Route path="suppliers/add" element={<SupplierAdd />} />
                   <Route path="suppliers/edit/:id" element={<SupplierEdit />} />
+
+                  {/* Salers — full CRUD */}
+                  <Route path="salers" element={<SalerList />} />
+                  <Route path="salers/add" element={<SalerAdd />} />
+                  <Route path="salers/edit/:id" element={<SalerEdit />} />
 
                   {/* Discounts — full CRUD */}
                   <Route path="discounts" element={<DiscountList />} />
