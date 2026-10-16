@@ -213,7 +213,7 @@ const HallList: React.FC = () => {
         pagination={{
           currentPage: meta?.current_page || page,
           totalPages: meta?.last_page || 1,
-          onPageChange: (newPage) => setPage(newPage),
+          onPageChange: (newPage: number) => setPage(newPage),
         }}
         emptyMessage="لم يتم العثور على أي صالات مطابقة"
       />

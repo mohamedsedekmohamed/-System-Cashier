@@ -1,12 +1,5 @@
 import type { BranchOption } from './branch';
-
-export interface Category {
-  id: number;
-  name: {
-    ar: string;
-    en: string;
-  };
-}
+import type { Category } from './category';
 
 export interface ProductRecipeStockItem {
   branch_id: number;

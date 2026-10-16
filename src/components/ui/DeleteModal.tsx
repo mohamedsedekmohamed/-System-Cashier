@@ -11,24 +11,33 @@ const renderSafe = (val: any) => {
 
 interface DeleteModalProps {
   isOpen: boolean;
-  itemName: string;
-  isDeleting: boolean;
+  itemName?: string;
+  isDeleting?: boolean;
+  isLoading?: boolean;
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  onClose?: () => void;
   title?: string;
+  message?: string;
   descriptionPrefix?: string;
 }
 
 export const DeleteModal: React.FC<DeleteModalProps> = ({
   isOpen,
-  itemName,
+  itemName = '',
   isDeleting,
+  isLoading,
   onConfirm,
   onCancel,
+  onClose,
   title = 'تأكيد الحذف',
+  message,
   descriptionPrefix = 'هل أنت متأكد من حذف',
 }) => {
   if (!isOpen) return null;
+
+  const handleCancel = onCancel || onClose || (() => {});
+  const activeLoading = Boolean(isDeleting ?? isLoading);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -39,18 +48,24 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({
           </div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{title}</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            {descriptionPrefix}{' '}
-            <strong className="text-slate-700 dark:text-slate-200">{renderSafe(itemName)}</strong>؟
-            <br />لا يمكن التراجع عن هذا الإجراء.
+            {message ? (
+              message
+            ) : (
+              <>
+                {descriptionPrefix}{' '}
+                <strong className="text-slate-700 dark:text-slate-200">{renderSafe(itemName)}</strong>؟
+                <br />لا يمكن التراجع عن هذا الإجراء.
+              </>
+            )}
           </p>
           <div className="flex gap-3 w-full">
-            <button onClick={onCancel} disabled={isDeleting}
+            <button onClick={handleCancel} disabled={activeLoading}
               className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm disabled:opacity-50">
               إلغاء
             </button>
-            <button onClick={onConfirm} disabled={isDeleting}
+            <button onClick={onConfirm} disabled={activeLoading}
               className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-60">
-              {isDeleting ? (
+              {activeLoading ? (
                 <><AiOutlineLoading3Quarters size={16} className="animate-spin" /> جاري الحذف...</>
               ) : (
                 'حذف'

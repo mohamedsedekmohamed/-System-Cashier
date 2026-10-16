@@ -10,14 +10,22 @@ export interface ColumnDef<T> {
   className?: string; // e.g. 'text-right max-w-sm truncate'
 }
 
-interface DataTableProps<T> {
+export interface DataTablePagination {
+  currentPage: number;
+  totalPages: number;
+  onPageChange?: (page: any) => void;
+}
+
+export interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
   meta?: PaginatedMeta;
+  pagination?: DataTablePagination;
   onPageChange?: (page: number) => void;
   isLoading?: boolean;
   emptyIcon?: React.ReactNode;
   emptyText?: string;
+  emptyMessage?: string;
   keyExtractor?: (row: T) => string | number;
 }
 
@@ -36,13 +44,27 @@ const getNestedValue = (obj: any, path: string) => {
 export function DataTable<T>({
   data,
   columns,
-  meta,
-  onPageChange,
+  meta: propMeta,
+  pagination,
+  onPageChange: propOnPageChange,
   isLoading,
   emptyIcon,
   emptyText = 'لا توجد بيانات',
+  emptyMessage,
   keyExtractor = (row: any) => row.id,
 }: DataTableProps<T>) {
+  const effectiveEmptyText = emptyMessage || emptyText;
+  const meta: PaginatedMeta | undefined =
+    propMeta ||
+    (pagination
+      ? {
+          current_page: pagination.currentPage,
+          last_page: pagination.totalPages,
+          per_page: 15,
+          total: pagination.totalPages * 15,
+        }
+      : undefined);
+  const onPageChange = propOnPageChange || pagination?.onPageChange || (() => {});
 
   if (isLoading && data.length === 0) {
     return (
@@ -57,7 +79,7 @@ export function DataTable<T>({
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-400">
           {emptyIcon && <div className="mb-3 opacity-40">{emptyIcon}</div>}
-          <p className="font-medium">{emptyText}</p>
+          <p className="font-medium">{effectiveEmptyText}</p>
         </div>
       ) : (
         <div className="overflow-x-auto">

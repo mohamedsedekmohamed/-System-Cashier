@@ -4,8 +4,10 @@ import { MdAdd, MdSearch, MdRefresh } from 'react-icons/md';
 
 interface CrudHeaderProps {
   title: string;
+  subtitle?: string;
   icon: React.ReactNode;
   totalCount?: number;
+  count?: number;
   
   // Search
   search?: string;
@@ -20,8 +22,10 @@ interface CrudHeaderProps {
 
 export const CrudHeader: React.FC<CrudHeaderProps> = ({
   title,
+  subtitle,
   icon,
   totalCount,
+  count,
   search,
   onSearchChange,
   searchPlaceholder = 'ابحث...',
@@ -29,6 +33,8 @@ export const CrudHeader: React.FC<CrudHeaderProps> = ({
   addLink,
   addText = 'إضافة جديد',
 }) => {
+  const displayCount = totalCount !== undefined ? totalCount : count;
+
   return (
     <div className="space-y-4">
       {/* Top Header */}
@@ -38,9 +44,12 @@ export const CrudHeader: React.FC<CrudHeaderProps> = ({
             {icon}
             <h1 className="text-xl font-bold text-slate-800 dark:text-white">{title}</h1>
           </div>
-          {totalCount !== undefined && (
+          {subtitle && (
+            <p className="text-xs text-slate-400 mb-1">{subtitle}</p>
+          )}
+          {displayCount !== undefined && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              إجمالي {totalCount} عنصر
+              إجمالي {displayCount} عنصر
             </p>
           )}
         </div>
