@@ -128,7 +128,7 @@ const ManufacturingListPage: React.FC = () => {
   return (
     <div className="space-y-5 flex flex-col h-full">
       <CrudHeader
-        title="قوائم التصنيع"
+        title="أوامر وقوائم التصنيع (التشغيل بالفرع)"
         icon={<MdPrecisionManufacturing size={28} />}
         totalCount={meta?.total}
         search={search}
@@ -136,7 +136,7 @@ const ManufacturingListPage: React.FC = () => {
         searchPlaceholder="ابحث برقم القائمة أو المنتج..."
         onRefresh={() => refetch()}
         addLink="/dashboard/manufacturing/add"
-        addText="إضافة قائمة تصنيع"
+        addText="إضافة أمر تصنيع وتشغيل"
       />
 
       <div className="flex-1">

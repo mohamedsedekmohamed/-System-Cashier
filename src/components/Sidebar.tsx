@@ -30,6 +30,7 @@ import {
   MdMeetingRoom,
   MdDiscount,
   MdAccountBalance,
+  MdSchema,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -61,7 +62,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} /> },
   { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} /> },
   { label: 'منتجات غير منتهية التصنيع', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} /> },
-  { label: 'قوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} /> },
+  { label: 'معايير تصنيع المنتجات', path: '/dashboard/product-manufacturings', icon: <MdSchema size={20} /> },
+  { label: 'أوامر وقوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} /> },
   { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} /> },
   { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} /> },
   { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} /> },

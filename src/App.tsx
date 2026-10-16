@@ -68,10 +68,15 @@ import OrderList from './pages/orders/OrderList';
 import OrderAdd from './pages/orders/OrderAdd';
 import OrderEdit from './pages/orders/OrderEdit';
 
-// Manufacturing
+// Manufacturing (أوامر وتشغيل الإنتاج الفعلي في الفروع)
 import ManufacturingList from './pages/manufacturing/ManufacturingList';
 import ManufacturingAdd from './pages/manufacturing/ManufacturingAdd';
 import ManufacturingEdit from './pages/manufacturing/ManufacturingEdit';
+
+// Product Manufacturing (معايير وتراكيب تصنيع المنتجات - BOM)
+import ProductManufacturingList from './pages/productManufacturings/ProductManufacturingList';
+import ProductManufacturingAdd from './pages/productManufacturings/ProductManufacturingAdd';
+import ProductManufacturingEdit from './pages/productManufacturings/ProductManufacturingEdit';
 
 // Materials
 import MaterialList from './pages/materials/MaterialList';
@@ -208,10 +213,15 @@ function App() {
                   <Route path="orders/add" element={<OrderAdd />} />
                   <Route path="orders/edit/:id" element={<OrderEdit />} />
 
-                  {/* Manufacturing */}
+                  {/* Manufacturing — أوامر وتشغيل التصنيع الفعلي */}
                   <Route path="manufacturing" element={<ManufacturingList />} />
                   <Route path="manufacturing/add" element={<ManufacturingAdd />} />
                   <Route path="manufacturing/edit/:id" element={<ManufacturingEdit />} />
+
+                  {/* Product Manufacturing — معايير وتراكيب تصنيع المنتجات (BOM) */}
+                  <Route path="product-manufacturings" element={<ProductManufacturingList />} />
+                  <Route path="product-manufacturings/add" element={<ProductManufacturingAdd />} />
+                  <Route path="product-manufacturings/edit/:id" element={<ProductManufacturingEdit />} />
 
                   {/* Materials — full CRUD */}
                   <Route path="materials" element={<MaterialList />} />

@@ -90,5 +90,61 @@ export interface ManufacturingSelectOptionsResponse {
 
 export interface ManufacturingSpecificationResponse {
   status: boolean;
-  data: any; // We can type this based on the provided JSON
+  data: any; // Specification with recipes
+}
+
+// ─────────────────────────────────────────────────────────────
+// Product Manufacturing (تراكيب ومعايير تصنيع المنتجات القياسية - BOM)
+// ─────────────────────────────────────────────────────────────
+
+export interface ProductManufacturingRecipeItem {
+  id: number;
+  product_manufacturing_id: number;
+  material_id: number | null;
+  material: ManufacturingMaterial | null;
+  product_recipe_id: number | null;
+  product_recipe: ManufacturingProductRecipe | null;
+  count: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProductManufacturing {
+  id: number;
+  product_id: number | null;
+  product: ManufacturingProduct | null;
+  product_recipe_id: number | null;
+  product_recipe: ManufacturingProductRecipe | null;
+  recipes: ProductManufacturingRecipeItem[];
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface ProductManufacturingFormData {
+  product_id: number | null;
+  product_recipe_id: number | null;
+  recipes: ManufacturingRecipePayload[];
+}
+
+export interface ProductManufacturingSelectOptions {
+  products: ManufacturingProduct[];
+  product_recipes: ManufacturingProductRecipe[];
+  materials: ManufacturingMaterial[];
+}
+
+export interface ProductManufacturingListResponse {
+  data: ProductManufacturing[];
+  meta: PaginatedMeta;
+  links: any;
+  status?: boolean;
+}
+
+export interface SingleProductManufacturingResponse {
+  status: boolean;
+  data: ProductManufacturing;
+}
+
+export interface ProductManufacturingSelectOptionsResponse {
+  status: boolean;
+  data: ProductManufacturingSelectOptions;
 }
