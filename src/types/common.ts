@@ -25,3 +25,10 @@ export interface LocalizedDescription {
   ar: string | null;
   en: string | null;
 }
+
+export interface DueItemPayload {
+  amount: number;
+  date: string;
+  notes?: string;
+}
+

@@ -14,12 +14,14 @@ export const SALES_SELECT_OPTIONS_KEY = 'sales_select_options';
 const buildSaleFormData = (payload: SaleFormData): FormData => {
   const formData = new FormData();
 
-  if (payload.branch_id) {
-    formData.append('branch_id', String(payload.branch_id));
-  }
+  formData.append('branch_id', String(payload.branch_id));
 
   if (payload.saler_id) {
     formData.append('saler_id', String(payload.saler_id));
+  }
+
+  if (payload.total_cost !== undefined && payload.total_cost !== null) {
+    formData.append('total_cost', String(payload.total_cost));
   }
 
   if (payload.paid_amount !== undefined && payload.paid_amount !== null) {
@@ -30,31 +32,23 @@ const buildSaleFormData = (payload: SaleFormData): FormData => {
     formData.append('due_date', payload.due_date);
   }
 
+  if (payload.dues && payload.dues.length > 0) {
+    formData.append('dues', JSON.stringify(payload.dues));
+  }
+
   if (payload.without_recipe) {
     formData.append('without_recipe', '1');
   }
 
-  if (payload.receipt) {
+  if (payload.receipt instanceof File) {
     formData.append('receipt', payload.receipt);
   }
 
-  if (payload.notes !== undefined && payload.notes !== null) {
+  if (payload.notes) {
     formData.append('notes', payload.notes);
   }
 
-  payload.items.forEach((item, index) => {
-    if (item.product_id) {
-      formData.append(`items[${index}][product_id]`, String(item.product_id));
-    }
-    if (item.material_id) {
-      formData.append(`items[${index}][material_id]`, String(item.material_id));
-    }
-    if (item.product_recipe_id) {
-      formData.append(`items[${index}][product_recipe_id]`, String(item.product_recipe_id));
-    }
-    formData.append(`items[${index}][quantity]`, String(item.quantity));
-    formData.append(`items[${index}][cost]`, String(item.cost));
-  });
+  formData.append('items', JSON.stringify(payload.items));
 
   return formData;
 };
@@ -91,16 +85,34 @@ export const saleApi = {
     return data;
   },
 
-  /** POST /api/admin/sales (multipart/form-data) */
+  /** POST /api/admin/sales */
   create: async (payload: SaleFormData): Promise<Sale> => {
-    const formData = buildSaleFormData(payload);
+    if (payload.receipt instanceof File) {
+      const formData = buildSaleFormData(payload);
+      const { data } = await api.post<{ data: Sale } | Sale>(
+        '/api/admin/sales',
+        formData,
+        {
+          headers: {
+            'Content-Type': undefined,
+          },
+        }
+      );
+      return 'data' in data && data.data ? (data.data as Sale) : (data as Sale);
+    }
+
     const { data } = await api.post<{ data: Sale } | Sale>(
       '/api/admin/sales',
-      formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        branch_id: payload.branch_id,
+        saler_id: payload.saler_id || null,
+        total_cost: payload.total_cost,
+        paid_amount: payload.paid_amount,
+        due_date: payload.due_date,
+        dues: payload.dues,
+        without_recipe: payload.without_recipe,
+        notes: payload.notes,
+        items: payload.items,
       }
     );
     return 'data' in data && data.data ? (data.data as Sale) : (data as Sale);

@@ -1,5 +1,6 @@
-import type { PaginatedMeta } from './common';
+import type { PaginatedMeta, DueItemPayload } from './common';
 import type { Branch, BranchOption } from './branch';
+
 
 export interface PurchaseSelectMaterial {
   id: number;
@@ -121,12 +122,16 @@ export interface PurchaseItemPayload {
   cost: number;
 }
 
+
 export interface PurchaseFormData {
   branch_id: number;
   supplier_id?: number | null;
+  total_cost?: number;
   paid_amount?: number;
   due_date?: string;
+  dues?: DueItemPayload[];
   receipt?: File | null;
   notes?: string;
   items: PurchaseItemPayload[];
 }
+

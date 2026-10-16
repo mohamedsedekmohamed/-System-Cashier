@@ -14,12 +14,14 @@ export const PURCHASES_SELECT_OPTIONS_KEY = 'purchases_select_options';
 const buildPurchaseFormData = (payload: PurchaseFormData): FormData => {
   const formData = new FormData();
 
-  if (payload.branch_id) {
-    formData.append('branch_id', String(payload.branch_id));
-  }
+  formData.append('branch_id', String(payload.branch_id));
 
   if (payload.supplier_id) {
     formData.append('supplier_id', String(payload.supplier_id));
+  }
+
+  if (payload.total_cost !== undefined && payload.total_cost !== null) {
+    formData.append('total_cost', String(payload.total_cost));
   }
 
   if (payload.paid_amount !== undefined && payload.paid_amount !== null) {
@@ -30,24 +32,19 @@ const buildPurchaseFormData = (payload: PurchaseFormData): FormData => {
     formData.append('due_date', payload.due_date);
   }
 
-  if (payload.receipt) {
+  if (payload.dues && payload.dues.length > 0) {
+    formData.append('dues', JSON.stringify(payload.dues));
+  }
+
+  if (payload.receipt instanceof File) {
     formData.append('receipt', payload.receipt);
   }
 
-  if (payload.notes !== undefined && payload.notes !== null) {
+  if (payload.notes) {
     formData.append('notes', payload.notes);
   }
 
-  payload.items.forEach((item, index) => {
-    if (item.material_id) {
-      formData.append(`items[${index}][material_id]`, String(item.material_id));
-    }
-    if (item.product_recipe_id) {
-      formData.append(`items[${index}][product_recipe_id]`, String(item.product_recipe_id));
-    }
-    formData.append(`items[${index}][quantity]`, String(item.quantity));
-    formData.append(`items[${index}][cost]`, String(item.cost));
-  });
+  formData.append('items', JSON.stringify(payload.items));
 
   return formData;
 };
@@ -84,16 +81,33 @@ export const purchaseApi = {
     return data;
   },
 
-  /** POST /api/admin/purchases (multipart/form-data) */
+  /** POST /api/admin/purchases */
   create: async (payload: PurchaseFormData): Promise<Purchase> => {
-    const formData = buildPurchaseFormData(payload);
+    if (payload.receipt instanceof File) {
+      const formData = buildPurchaseFormData(payload);
+      const { data } = await api.post<{ data: Purchase } | Purchase>(
+        '/api/admin/purchases',
+        formData,
+        {
+          headers: {
+            'Content-Type': undefined,
+          },
+        }
+      );
+      return 'data' in data && data.data ? (data.data as Purchase) : (data as Purchase);
+    }
+
     const { data } = await api.post<{ data: Purchase } | Purchase>(
       '/api/admin/purchases',
-      formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        branch_id: payload.branch_id,
+        supplier_id: payload.supplier_id || null,
+        total_cost: payload.total_cost,
+        paid_amount: payload.paid_amount,
+        due_date: payload.due_date,
+        dues: payload.dues,
+        notes: payload.notes,
+        items: payload.items,
       }
     );
     return 'data' in data && data.data ? (data.data as Purchase) : (data as Purchase);

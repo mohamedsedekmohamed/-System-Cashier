@@ -29,6 +29,13 @@ interface ItemFormRow {
   cost: number;
 }
 
+interface InstallmentRow {
+  id: string;
+  amount: number | '';
+  date: string;
+  notes: string;
+}
+
 export const PurchaseAdd: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -55,11 +62,26 @@ export const PurchaseAdd: React.FC = () => {
   const [selectedSupplierId, setSelectedSupplierId] = useState<number>(0);
 
   const [paidAmount, setPaidAmount] = useState<number | ''>('');
-  const [dueDate, setDueDate] = useState<string>(() => {
+  const defaultDueDate = useMemo(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 1);
     return d.toISOString().split('T')[0];
-  });
+  }, []);
+
+
+  const [installments, setInstallments] = useState<InstallmentRow[]>([
+    {
+      id: 'inst-1',
+      amount: '',
+      date: (() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        return d.toISOString().split('T')[0];
+      })(),
+      notes: 'القسط الأول',
+    },
+  ]);
+
 
   // ── Fetch Select Options (Guarded by Purchase permissions) ───────────────
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
@@ -206,7 +228,88 @@ export const PurchaseAdd: React.FC = () => {
   }, [items]);
 
   const actualPaid = paidAmount === '' ? totalCost : Math.min(totalCost, Math.max(0, Number(paidAmount)));
-  const remainingAmount = Math.max(0, totalCost - actualPaid);
+  const remainingAmount = Math.max(0, +(totalCost - actualPaid).toFixed(2));
+
+  // ── Installment Management ─────────────
+  const totalInstallmentsAmount = useMemo(() => {
+    return +installments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0).toFixed(2);
+  }, [installments]);
+
+  const diffInstallmentsAmount = useMemo(() => {
+    return +(remainingAmount - totalInstallmentsAmount).toFixed(2);
+  }, [remainingAmount, totalInstallmentsAmount]);
+
+  // Sync single installment amount if default
+  React.useEffect(() => {
+    if (remainingAmount > 0) {
+      setInstallments((prev) => {
+        if (prev.length === 1 && (prev[0].amount === '' || prev[0].amount === 0)) {
+          return [{ ...prev[0], amount: remainingAmount }];
+        }
+        return prev;
+      });
+    }
+  }, [remainingAmount]);
+
+  const handleSplitInstallments = (count: number) => {
+    if (remainingAmount <= 0) return;
+    const baseAmount = Math.floor((remainingAmount / count) * 100) / 100;
+    const remainder = Math.round((remainingAmount - baseAmount * count) * 100) / 100;
+
+    const newRows: InstallmentRow[] = [];
+    for (let i = 0; i < count; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + (i + 1));
+      const instAmount = i === count - 1 ? +(baseAmount + remainder).toFixed(2) : baseAmount;
+      newRows.push({
+        id: `inst-${Date.now()}-${i}`,
+        amount: instAmount,
+        date: d.toISOString().split('T')[0],
+        notes: `القسط ${i + 1} من ${count}`,
+      });
+    }
+    setInstallments(newRows);
+  };
+
+  const handleAddInstallment = () => {
+    const diff = Math.max(0, +(remainingAmount - totalInstallmentsAmount).toFixed(2));
+    const d = new Date();
+    d.setMonth(d.getMonth() + installments.length + 1);
+    setInstallments((prev) => [
+      ...prev,
+      {
+        id: `inst-${Date.now()}-${Math.random()}`,
+        amount: diff > 0 ? diff : '',
+        date: d.toISOString().split('T')[0],
+        notes: `القسط ${prev.length + 1}`,
+      },
+    ]);
+  };
+
+  const handleRemoveInstallment = (index: number) => {
+    if (installments.length <= 1) return;
+    setInstallments((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleInstallmentChange = (index: number, field: keyof InstallmentRow, value: any) => {
+    setInstallments((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleAdjustRemainingInLastInstallment = () => {
+    if (installments.length === 0 || diffInstallmentsAmount === 0) return;
+    setInstallments((prev) => {
+      const updated = [...prev];
+      const lastIndex = updated.length - 1;
+      const currentLastAmount = Number(updated[lastIndex].amount) || 0;
+      const newAmount = Math.max(0, +(currentLastAmount + diffInstallmentsAmount).toFixed(2));
+      updated[lastIndex] = { ...updated[lastIndex], amount: newAmount };
+      return updated;
+    });
+  };
 
   // ── Form Submit ─────────────────────────
   const handleSubmit = (e: React.FormEvent) => {
@@ -236,6 +339,27 @@ export const PurchaseAdd: React.FC = () => {
       }
     }
 
+    if (remainingAmount > 0) {
+      if (Math.abs(diffInstallmentsAmount) > 0.01) {
+        setErrorMessage(
+          `إجمالي مبالغ الأقساط (${totalInstallmentsAmount.toLocaleString('ar-EG')} ج.م) لا يتطابق مع المبلغ المتبقي الآجل (${remainingAmount.toLocaleString('ar-EG')} ج.م). يرجى ضبط مبالغ الأقساط.`
+        );
+        return;
+      }
+
+      for (let i = 0; i < installments.length; i++) {
+        const inst = installments[i];
+        if (!inst.amount || Number(inst.amount) <= 0) {
+          setErrorMessage(`يرجى تحديد مبلغ صحيح للقسط رقم #${i + 1}`);
+          return;
+        }
+        if (!inst.date) {
+          setErrorMessage(`يرجى تحديد تاريخ استحقاق القسط رقم #${i + 1}`);
+          return;
+        }
+      }
+    }
+
     const payloadItems: PurchaseItemPayload[] = items.map((item) => ({
       material_id: item.type === 'material' ? item.material_id : null,
       product_recipe_id: item.type === 'recipe' ? item.product_recipe_id : null,
@@ -248,11 +372,21 @@ export const PurchaseAdd: React.FC = () => {
       return;
     }
 
+    const payloadDues = remainingAmount > 0
+      ? installments.map((inst) => ({
+          amount: Number(inst.amount),
+          date: inst.date,
+          notes: inst.notes.trim() || undefined,
+        }))
+      : undefined;
+
     const payload: PurchaseFormData = {
       branch_id: selectedBranchId,
       supplier_id: selectedSupplierId || null,
       paid_amount: actualPaid,
-      due_date: remainingAmount > 0 ? dueDate : undefined,
+      due_date: remainingAmount > 0 ? (payloadDues?.[0]?.date || defaultDueDate) : undefined,
+      dues: payloadDues,
+
       receipt: receiptFile,
       notes: notes.trim() || undefined,
       items: payloadItems,
@@ -260,6 +394,7 @@ export const PurchaseAdd: React.FC = () => {
 
     mutation.mutate(payload);
   };
+
 
   return (
     <div className="w-full space-y-6 pb-20">
@@ -598,74 +733,249 @@ export const PurchaseAdd: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    المبلغ المدفوع الآن (ج.م)
-                  </label>
-                  <div className="flex gap-2">
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  المبلغ المدفوع الآن (ج.م)
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaidAmount(totalCost)}
+                    className="text-[11px] font-bold text-primary hover:underline"
+                  >
+                    دفع بالكامل
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaidAmount(0)}
+                    className="text-[11px] font-bold text-rose-600 hover:underline"
+                  >
+                    آجل بالكامل
+                  </button>
+                </div>
+              </div>
+              <input
+                type="number"
+                min="0"
+                max={totalCost}
+                step="any"
+                value={paidAmount}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
+                  setPaidAmount(val);
+                }}
+                placeholder={`الافتراضي: ${totalCost} ج.م`}
+                className="w-full md:w-1/2 px-4 py-2 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-primary"
+              />
+            </div>
+
+            {/* Installment Schedule Builder (when remainingAmount > 0) */}
+
+            {remainingAmount > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                      <MdHourglassTop size={18} />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                        جدولة أقساط المبلغ المتبقي الآجل ({remainingAmount.toLocaleString('ar-EG')} ج.م)
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        يمكنك تقسيم المبلغ على عدة أقساط وتحديد موعد وبيان كل قسط
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Quick Preset Buttons */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-semibold text-slate-500 ml-1">تقسيم سريع:</span>
                     <button
                       type="button"
-                      onClick={() => setPaidAmount(totalCost)}
-                      className="text-[11px] font-bold text-primary hover:underline"
+                      onClick={() => handleSplitInstallments(2)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
                     >
-                      دفع بالكامل
+                      قسطين
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPaidAmount(0)}
-                      className="text-[11px] font-bold text-rose-600 hover:underline"
+                      onClick={() => handleSplitInstallments(3)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
                     >
-                      آجل بالكامل
+                      3 أقساط
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSplitInstallments(4)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
+                    >
+                      4 أقساط
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSplitInstallments(6)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
+                    >
+                      6 أقساط
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddInstallment}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
+                    >
+                      <MdAdd size={14} />
+                      إضافة قسط
                     </button>
                   </div>
                 </div>
-                <input
-                  type="number"
-                  min="0"
-                  max={totalCost}
-                  step="any"
-                  value={paidAmount}
-                  onChange={(e) => {
-                    const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
-                    setPaidAmount(val);
-                  }}
-                  placeholder={`الافتراضي: ${totalCost} ج.م`}
-                  className="w-full px-4 py-2 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-primary"
-                />
-              </div>
 
-              {remainingAmount > 0 && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    تاريخ استحقاق المبلغ الآجل ({remainingAmount.toLocaleString('ar-EG')} ج.م) *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-4 py-2 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-primary"
-                  />
+                {/* Installments Table / Rows */}
+                <div className="space-y-2.5">
+                  {installments.map((inst, idx) => (
+                    <div
+                      key={inst.id}
+                      className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+                    >
+                      <div className="md:col-span-1 flex items-center gap-1.5">
+                        <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 md:hidden">
+                          القسط #{idx + 1}
+                        </span>
+                      </div>
+
+                      <div className="md:col-span-3">
+                        <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                          قيمة القسط (ج.م) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="any"
+                          required
+                          value={inst.amount}
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
+                            handleInstallmentChange(idx, 'amount', val);
+                          }}
+                          placeholder="0.00"
+                          className="w-full px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-primary"
+                        />
+                      </div>
+
+                      <div className="md:col-span-3">
+                        <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                          تاريخ الاستحقاق *
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={inst.date}
+                          onChange={(e) => handleInstallmentChange(idx, 'date', e.target.value)}
+                          className="w-full px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-primary"
+                        />
+                      </div>
+
+                      <div className="md:col-span-4">
+                        <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                          بيان / ملاحظات القسط (اختياري)
+                        </label>
+                        <input
+                          type="text"
+                          value={inst.notes}
+                          onChange={(e) => handleInstallmentChange(idx, 'notes', e.target.value)}
+                          placeholder="مثال: شيك بنكي، دفعة أولى..."
+                          className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-primary"
+                        />
+                      </div>
+
+                      <div className="md:col-span-1 flex justify-end">
+                        {installments.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveInstallment(idx)}
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                            title="حذف القسط"
+                          >
+                            <MdDelete size={18} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
 
-            {remainingAmount > 0 && (
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs font-medium text-amber-800 dark:text-amber-300 flex items-center gap-2">
-                <MdHourglassTop size={16} className="shrink-0" />
-                <span>
-                  {selectedSupplierId && suppliers.find((s) => s.id === selectedSupplierId)?.name
-                    ? `سيتم تسجيل مبلغ ${remainingAmount.toLocaleString('ar-EG')} ج.م كمديونية لصالح المورد (${
-                        typeof suppliers.find((s) => s.id === selectedSupplierId)?.name === 'object'
-                          ? (suppliers.find((s) => s.id === selectedSupplierId)?.name as any)?.ar || ''
-                          : suppliers.find((s) => s.id === selectedSupplierId)?.name
-                      }) وزيادة رصيده تلقائياً.`
-                    : `تنبيه: المبلغ المتبقي (${remainingAmount.toLocaleString('ar-EG')} ج.م) آجل ولكن لم يتم تحديد مورد. يفضل اختيار مورد لربط المديونية بحسابه.`}
-                </span>
+                {/* Validation Indicator Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400 block text-[10px]">مجموع الأقساط:</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                        {totalInstallmentsAmount.toLocaleString('ar-EG')} ج.م
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400 block text-[10px]">المبلغ الآجل المطلوب:</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                        {remainingAmount.toLocaleString('ar-EG')} ج.م
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    {Math.abs(diffInstallmentsAmount) < 0.01 ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800">
+                        ✓ مجموع الأقساط مطابق تماماً للمبلغ الآجل
+                      </span>
+                    ) : diffInstallmentsAmount > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-800">
+                          متبقي لم يتم توزيعه: {diffInstallmentsAmount.toLocaleString('ar-EG')} ج.م
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleAdjustRemainingInLastInstallment}
+                          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
+                        >
+                          إضافة الفارق للقسط الأخير
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 font-bold border border-rose-200 dark:border-rose-800">
+                          مجموع الأقساط يزيد بـ {Math.abs(diffInstallmentsAmount).toLocaleString('ar-EG')} ج.م
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleAdjustRemainingInLastInstallment}
+                          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors"
+                        >
+                          خصم الزيادة من القسط الأخير
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Supplier balance notice */}
+                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs font-medium text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                  <MdHourglassTop size={16} className="shrink-0" />
+                  <span>
+                    {selectedSupplierId && suppliers.find((s) => s.id === selectedSupplierId)?.name
+                      ? `سيتم تسجيل مبلغ ${remainingAmount.toLocaleString('ar-EG')} ج.م كمديونية لصالح المورد (${
+                          typeof suppliers.find((s) => s.id === selectedSupplierId)?.name === 'object'
+                            ? (suppliers.find((s) => s.id === selectedSupplierId)?.name as any)?.ar || ''
+                            : suppliers.find((s) => s.id === selectedSupplierId)?.name
+                        }) موزعة على ${installments.length} قسط وزيادة رصيده تلقائياً.`
+                      : `تنبيه: المبلغ المتبقي (${remainingAmount.toLocaleString('ar-EG')} ج.م) آجل ولكن لم يتم تحديد مورد. يفضل اختيار مورد لربط المديونية بحسابه.`}
+                  </span>
+                </div>
               </div>
             )}
+
           </div>
 
           {/* Table Footer with Summary */}
