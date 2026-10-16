@@ -18,6 +18,10 @@ const buildPurchaseFormData = (payload: PurchaseFormData): FormData => {
     formData.append('branch_id', String(payload.branch_id));
   }
 
+  if (payload.supplier_id) {
+    formData.append('supplier_id', String(payload.supplier_id));
+  }
+
   if (payload.receipt) {
     formData.append('receipt', payload.receipt);
   }
@@ -49,11 +53,18 @@ export const purchaseApi = {
     return data;
   },
 
-  /** GET /api/admin/purchases?page=&per_page=&lang= */
-  list: async (page = 1, perPage = 15, lang?: string, branch_id?: number): Promise<PurchaseListResponse> => {
+  /** GET /api/admin/purchases?page=&per_page=&lang=&branch_id=&supplier_id= */
+  list: async (
+    page = 1,
+    perPage = 15,
+    lang?: string,
+    branch_id?: number,
+    supplier_id?: number
+  ): Promise<PurchaseListResponse> => {
     const params: Record<string, any> = { page, per_page: perPage };
     if (lang) params.lang = lang;
     if (branch_id) params.branch_id = branch_id;
+    if (supplier_id) params.supplier_id = supplier_id;
 
     const { data } = await api.get<PurchaseListResponse>('/api/admin/purchases', { params });
     return data;

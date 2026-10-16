@@ -50,6 +50,7 @@ export const PurchaseAdd: React.FC = () => {
   ]);
 
   const [selectedBranchId, setSelectedBranchId] = useState<number>(0);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<number>(0);
 
   // ── Fetch Select Options (Guarded by Purchase permissions) ───────────────
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
@@ -58,6 +59,7 @@ export const PurchaseAdd: React.FC = () => {
   });
 
   const branches = optionsData?.data?.branches ?? [];
+  const suppliers = optionsData?.data?.suppliers ?? [];
   const materials = optionsData?.data?.materials ?? [];
   const productRecipes = optionsData?.data?.product_recipes ?? [];
 
@@ -236,6 +238,7 @@ export const PurchaseAdd: React.FC = () => {
 
     const payload: PurchaseFormData = {
       branch_id: selectedBranchId,
+      supplier_id: selectedSupplierId || null,
       receipt: receiptFile,
       notes: notes.trim() || undefined,
       items: payloadItems,
@@ -301,21 +304,40 @@ export const PurchaseAdd: React.FC = () => {
               بيانات وملاحظات الفاتورة
             </h3>
 
-            {/* Branch Selection (Required) */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                الفرع المستلم للبضاعة (المخزن) <span className="text-red-500">*</span>
-              </label>
-              <SearchableSelect
-                id="selected-branch"
-                value={selectedBranchId || ''}
-                onChange={(val) => setSelectedBranchId(Number(val))}
-                options={branches}
-                placeholder="-- اختر الفرع --"
-                searchPlaceholder="ابحث عن الفرع..."
-                disabled={isLoadingOptions}
-                required
-              />
+            {/* Branch & Supplier Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Branch Selection (Required) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+                  الفرع المستلم للبضاعة (المخزن) <span className="text-red-500">*</span>
+                </label>
+                <SearchableSelect
+                  id="selected-branch"
+                  value={selectedBranchId || ''}
+                  onChange={(val) => setSelectedBranchId(Number(val))}
+                  options={branches}
+                  placeholder="-- اختر الفرع --"
+                  searchPlaceholder="ابحث عن الفرع..."
+                  disabled={isLoadingOptions}
+                  required
+                />
+              </div>
+
+              {/* Supplier Selection (Optional) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+                  المورد (اختياري)
+                </label>
+                <SearchableSelect
+                  id="selected-supplier"
+                  value={selectedSupplierId || ''}
+                  onChange={(val) => setSelectedSupplierId(Number(val))}
+                  options={suppliers}
+                  placeholder="-- اختر المورد --"
+                  searchPlaceholder="ابحث عن المورد..."
+                  disabled={isLoadingOptions}
+                />
+              </div>
             </div>
 
             <div>

@@ -41,9 +41,18 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
   isStandardBOM = false,
   allowedType = 'all',
 }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [activeTab, setActiveTab] = useState<TabType>(recipes.length > 0 ? 'selected' : 'all');
   const [search, setSearch] = useState('');
   const [onlyAvailable, setOnlyAvailable] = useState(false);
+
+  // Auto switch to selected recipe tab when specifications load
+  const prevRecipesLen = React.useRef(recipes.length);
+  React.useEffect(() => {
+    if (prevRecipesLen.current === 0 && recipes.length > 0) {
+      setActiveTab('selected');
+    }
+    prevRecipesLen.current = recipes.length;
+  }, [recipes.length]);
 
   // Unified items list with type identifier
   const allItems = useMemo(() => {
@@ -372,9 +381,11 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                 }}
                 className={`relative flex flex-col justify-between p-4 rounded-2xl border-2 transition-all duration-200 shadow-2xs group ${
                   isSelected
-                    ? isExceeded
-                      ? 'border-rose-400 bg-rose-50/30 dark:bg-rose-950/20 ring-2 ring-rose-400/20'
-                      : 'border-primary/60 bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20 shadow-md'
+                    ? isStandardBOM
+                      ? 'border-primary/60 bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20 shadow-md'
+                      : isExceeded
+                      ? 'border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 ring-2 ring-rose-500/25 shadow-md'
+                      : 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-2 ring-emerald-500/25 shadow-md'
                     : hasStock
                     ? 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-primary/60 hover:shadow-md hover:-translate-y-0.5 cursor-pointer'
                     : 'border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 opacity-70 cursor-not-allowed'
@@ -394,13 +405,29 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                   </span>
 
                   {isSelected && (
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                      isExceeded
-                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300'
-                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${
+                      isStandardBOM
+                        ? 'bg-primary/10 text-primary border-primary/30'
+                        : isExceeded
+                        ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/80 dark:text-rose-200 border-rose-300 dark:border-rose-700 animate-pulse'
+                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
                     }`}>
-                      <MdCheckCircle size={13} />
-                      {isExceeded ? 'تجاوز المخزون' : isStandardBOM ? 'محدد للمعيار' : 'محدد للاستهلاك'}
+                      {isStandardBOM ? (
+                        <>
+                          <MdCheckCircle size={14} />
+                          <span>محدد للمعيار</span>
+                        </>
+                      ) : isExceeded ? (
+                        <>
+                          <MdErrorOutline size={14} className="text-rose-600 dark:text-rose-400" />
+                          <span>عجز بالمخزون</span>
+                        </>
+                      ) : (
+                        <>
+                          <MdCheckCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
+                          <span>الرصيد متوفر</span>
+                        </>
+                      )}
                     </span>
                   )}
                 </div>
@@ -427,9 +454,15 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                         </span>
                       </div>
                     ) : hasStock ? (
-                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/50">
-                        <MdInventory size={14} className="text-emerald-600 dark:text-emerald-400" />
-                        <span>رصيد المخزن: <strong className="font-mono">{item.stockNumber}</strong></span>
+                      <div className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${
+                        isSelected && !isExceeded
+                          ? 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                          : isSelected && isExceeded
+                          ? 'bg-rose-100/80 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 border-rose-300 dark:border-rose-700'
+                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800/50'
+                      }`}>
+                        <MdInventory size={14} className={isSelected && isExceeded ? 'text-rose-600' : 'text-emerald-600 dark:text-emerald-400'} />
+                        <span>رصيد المخزن المتاح: <strong className="font-mono">{item.stockNumber}</strong></span>
                       </div>
                     ) : (
                       <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-800/50">
@@ -466,9 +499,9 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                       )}
                     </button>
                   ) : (
-                    <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="space-y-2.5" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        <span>{isStandardBOM ? 'الكمية لكل وحدة:' : 'الكمية المستهلكة:'}</span>
+                        <span>{isStandardBOM ? 'الكمية لكل وحدة:' : 'الكمية المستهلكة في الوصفة:'}</span>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -477,9 +510,9 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                           }}
                           disabled={disabled}
                           className="text-rose-500 hover:text-rose-700 text-xs font-medium flex items-center gap-0.5 px-2 py-0.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                          title="إلغاء المادة"
+                          title="استبعاد المادة من الوصفة"
                         >
-                          <MdDeleteOutline size={14} /> إلغاء
+                          <MdDeleteOutline size={14} /> استبعاد
                         </button>
                       </div>
 
@@ -492,57 +525,77 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                             e.stopPropagation();
                             handleUpdateCount(item.uniqueKey, Math.max(1, Number((currentCount - 1).toFixed(2))));
                           }}
-                          className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold transition-colors disabled:opacity-40"
+                          className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold transition-colors disabled:opacity-40 shadow-2xs shrink-0"
+                          title="تقليل الكمية (-1)"
                         >
-                          <MdRemove size={15} />
+                          <MdRemove size={16} />
                         </button>
 
                         <input
                           type="number"
                           min="1"
-                          max={isStandardBOM ? undefined : item.stockNumber}
                           step="1"
                           disabled={disabled}
                           value={currentCount === 0 ? '' : currentCount}
                           onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleUpdateCount(item.uniqueKey, e.target.value === '' ? 1 : Math.max(1, parseInt(e.target.value) || 1))}
-                          className={`flex-1 py-1.5 px-2 rounded-lg border text-center font-mono font-bold text-sm bg-white dark:bg-slate-900 focus:outline-none transition-all ${
-                            isExceeded
-                              ? 'border-rose-500 text-rose-600 focus:ring-2 focus:ring-rose-400/30'
-                              : 'border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary/30'
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                            handleUpdateCount(item.uniqueKey, isNaN(val) ? 0 : Math.max(0, val));
+                          }}
+                          className={`flex-1 py-1.5 px-2 rounded-xl border-2 text-center font-mono font-bold text-base bg-white dark:bg-slate-900 focus:outline-none transition-all shadow-2xs ${
+                            isStandardBOM
+                              ? 'border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary/30'
+                              : isExceeded
+                              ? 'border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-400/30'
+                              : 'border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20 focus:ring-2 focus:ring-emerald-400/30'
                           }`}
                         />
 
                         <button
                           type="button"
-                          disabled={disabled || (!isStandardBOM && currentCount >= item.stockNumber)}
+                          disabled={disabled}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUpdateCount(
-                              item.uniqueKey,
-                              isStandardBOM
-                                ? Number((currentCount + 1).toFixed(2))
-                                : Math.min(item.stockNumber, Number((currentCount + 1).toFixed(2)))
-                            );
+                            handleUpdateCount(item.uniqueKey, Number((currentCount + 1).toFixed(2)));
                           }}
-                          className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold transition-colors disabled:opacity-40"
+                          className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold transition-colors disabled:opacity-40 shadow-2xs shrink-0"
+                          title="زيادة الكمية (+1)"
                         >
-                          <MdAdd size={15} />
+                          <MdAdd size={16} />
                         </button>
                       </div>
 
                       {/* Stock Remaining / Exceeded feedback (Only in branch execution mode) */}
                       {!isStandardBOM && (
-                        <div className="text-[11px] font-semibold text-center pt-0.5">
+                        <div className="text-xs pt-1">
                           {isExceeded ? (
-                            <span className="text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1">
-                              <MdErrorOutline size={13} />
-                              تجاوزت المخزون المتاح ({item.stockNumber})!
-                            </span>
+                            <div className="space-y-1.5">
+                              <div className="p-2 rounded-xl bg-rose-100/90 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs flex items-center justify-between font-bold">
+                                <span>عجز في المخزون!</span>
+                                <span className="font-mono text-rose-600 dark:text-rose-300">
+                                  -{(currentCount - item.stockNumber).toFixed(2)}
+                                </span>
+                              </div>
+                              {item.stockNumber > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateCount(item.uniqueKey, item.stockNumber);
+                                  }}
+                                  className="w-full py-1.5 px-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition-colors flex items-center justify-center gap-1 shadow-2xs"
+                                >
+                                  <span>تعديل الكمية تلقائياً لتناسب المتاح ({item.stockNumber})</span>
+                                </button>
+                              )}
+                            </div>
                           ) : (
-                            <span className="text-slate-500 dark:text-slate-400 font-mono">
-                              المتبقي بالمخزن: {remaining.toFixed(2)}
-                            </span>
+                            <div className="p-1.5 rounded-lg bg-emerald-100/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs flex items-center justify-between font-semibold">
+                              <span>الرصيد يغطي بالكامل</span>
+                              <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                                متبقي: {remaining.toFixed(2)}
+                              </span>
+                            </div>
                           )}
                         </div>
                       )}

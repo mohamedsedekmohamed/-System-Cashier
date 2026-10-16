@@ -13,8 +13,14 @@ export interface PurchaseSelectRecipe {
   stock: number;
 }
 
+export interface PurchaseSelectSupplier {
+  id: number;
+  name: any;
+}
+
 export interface PurchaseSelectOptions {
   branches: BranchOption[];
+  suppliers?: PurchaseSelectSupplier[];
   materials: PurchaseSelectMaterial[];
   product_recipes: PurchaseSelectRecipe[];
 }
@@ -59,6 +65,12 @@ export interface Purchase {
   id: number;
   branch_id?: number;
   branch?: Branch;
+  supplier_id?: number | null;
+  supplier?: {
+    id: number;
+    name: any;
+    phone?: string;
+  } | null;
   receipt?: string | null;
   receipt_url?: string | null;
   total_cost: number;
@@ -98,6 +110,7 @@ export interface PurchaseItemPayload {
 
 export interface PurchaseFormData {
   branch_id: number;
+  supplier_id?: number | null;
   receipt?: File | null;
   notes?: string;
   items: PurchaseItemPayload[];
