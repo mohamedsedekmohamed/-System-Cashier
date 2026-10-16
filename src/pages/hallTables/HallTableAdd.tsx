@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hallTableApi, HALL_TABLES_KEY, HALL_TABLES_SELECT_OPTIONS_KEY } from '../../services/hallTableService';
 import type { HallTablePayload } from '../../types';
-import { MdArrowForward, MdSave, MdTableRestaurant } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdTableRestaurant, MdLink } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
@@ -32,9 +32,11 @@ const HallTableAdd: React.FC = () => {
   // Filter halls based on chosen branch
   const filteredHalls = useMemo(() => {
     if (!formData.branch_id) return [];
-    const hallsHaveBranchId = halls.some((h: any) => h.branch_id !== undefined && h.branch_id !== null);
+    const hallsHaveBranchId = halls.some(
+      (h: any) => h.branch_id !== undefined && h.branch_id !== null
+    );
     if (!hallsHaveBranchId) return halls;
-    return halls.filter(hall => Number(hall.branch_id) === Number(formData.branch_id));
+    return halls.filter((hall) => Number(hall.branch_id) === Number(formData.branch_id));
   }, [halls, formData.branch_id]);
 
   // ── Create Mutation ────────────────────
@@ -49,41 +51,57 @@ const HallTableAdd: React.FC = () => {
   // ── Handlers ───────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      setFormData((prev) => ({ ...prev, [name]: checked }));
     } else if (name === 'branch_id') {
       const selectedBranchId = Number(value);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         branch_id: selectedBranchId,
         hall_id: 0, // Reset selected hall when branch changes
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: (name === 'branch_id' || name === 'hall_id') ? Number(value) : value,
+        [name]: name === 'branch_id' || name === 'hall_id' ? Number(value) : value,
       }));
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.branch_id || !formData.hall_id || !formData.base_url?.trim()) return;
-    mutation.mutate({
-      ...formData,
-      base_url: formData.base_url.trim(),
-    });
+    if (!formData.name?.trim() || !formData.branch_id || !formData.hall_id) return;
+
+    const payload: HallTablePayload = {
+      name: formData.name.trim(),
+      branch_id: Number(formData.branch_id),
+      hall_id: Number(formData.hall_id),
+      status: Boolean(formData.status),
+    };
+
+    if (formData.base_url?.trim()) {
+      payload.base_url = formData.base_url.trim();
+    }
+
+    mutation.mutate(payload);
   };
+
+  const isFormValid =
+    Boolean(formData.name?.trim()) &&
+    Boolean(formData.branch_id && formData.branch_id > 0) &&
+    Boolean(formData.hall_id && formData.hall_id > 0);
 
   return (
     <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard/hall-tables"
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors">
+          <Link
+            to="/dashboard/hall-tables"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+          >
             <MdArrowForward size={20} />
           </Link>
           <div>
@@ -97,53 +115,50 @@ const HallTableAdd: React.FC = () => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6"
+      >
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
             {/* Table Name */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                اسم الطاولة <span className="text-red-500">*</span>
-              </label>
-              <input type="text" name="name" required
-                value={typeof formData.name === 'object' && formData.name !== null ? ((formData.name as any)?.ar || (formData.name as any)?.en || '') : (formData.name || '')} onChange={handleChange}
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  اسم الطاولة (Name) <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-400">
+                  {formData.name?.length || 0} / 255
+                </span>
+              </div>
+              <input
+                type="text"
+                name="name"
+                required
+                maxLength={255}
+                value={
+                  typeof formData.name === 'object' && formData.name !== null
+                    ? (formData.name as any)?.ar || (formData.name as any)?.en || ''
+                    : formData.name || ''
+                }
+                onChange={handleChange}
                 placeholder="مثال: طاولة رقم 1"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
             </div>
 
-            {/* Base URL */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                الرابط الأساسي (Base URL) <span className="text-red-500">*</span>
-              </label>
-              <input 
-                type="text" 
-                name="base_url" 
-                required
-                maxLength={255}
-                value={formData.base_url} 
-                onChange={handleChange}
-                placeholder="https://ecommerce.mazoom.online"
-                dir="ltr"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-left"
-              />
-              <p className="text-xs text-slate-400 mt-1.5">
-                الرابط الأساسي المعتمد لإنشاء رمز الـ QR وتوجيه العملاء لقائمة الطلبات (أقل من أو يساوي 255 حرف)
-              </p>
-            </div>
-
             {/* Branch */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                الفرع <span className="text-red-500">*</span>
+                الفرع (Branch) <span className="text-red-500">*</span>
               </label>
               <SearchableSelect
                 id="branch_id"
                 name="branch_id"
                 value={formData.branch_id || ''}
-                onChange={(val) => setFormData(prev => ({ ...prev, branch_id: Number(val), hall_id: 0 }))}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, branch_id: Number(val), hall_id: 0 }))
+                }
                 options={branches}
                 placeholder="-- اختر الفرع --"
                 searchPlaceholder="ابحث عن الفرع..."
@@ -155,13 +170,13 @@ const HallTableAdd: React.FC = () => {
             {/* Hall */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                الصالة <span className="text-red-500">*</span>
+                الصالة (Hall) <span className="text-red-500">*</span>
               </label>
               <SearchableSelect
                 id="hall_id"
                 name="hall_id"
                 value={formData.hall_id || ''}
-                onChange={(val) => setFormData(prev => ({ ...prev, hall_id: Number(val) }))}
+                onChange={(val) => setFormData((prev) => ({ ...prev, hall_id: Number(val) }))}
                 options={filteredHalls}
                 placeholder={
                   !formData.branch_id
@@ -178,48 +193,121 @@ const HallTableAdd: React.FC = () => {
                 <p className="text-xs text-slate-400 mt-1.5">اختر الفرع أولاً لتحديد الصالات المتاحة</p>
               )}
               {formData.branch_id > 0 && filteredHalls.length === 0 && (
-                <p className="text-xs text-amber-500 dark:text-amber-400 mt-1.5">لا توجد صالات تابعة لهذا الفرع حالياً</p>
+                <p className="text-xs text-amber-500 dark:text-amber-400 mt-1.5">
+                  لا توجد صالات تابعة لهذا الفرع حالياً
+                </p>
               )}
+            </div>
+
+            {/* Base URL (Optional in POST) */}
+            <div className="md:col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <MdLink size={18} className="text-slate-400" />
+                  <span>الرابط الأساسي (Base URL)</span>
+                  <span className="text-xs text-slate-400 font-normal">(اختياري عند الإضافة)</span>
+                </label>
+                <span className="text-xs text-slate-400">
+                  {formData.base_url?.length || 0} / 255
+                </span>
+              </div>
+              <input
+                type="text"
+                name="base_url"
+                maxLength={255}
+                value={formData.base_url || ''}
+                onChange={handleChange}
+                placeholder="https://ecommerce.mazoom.online"
+                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-left font-mono text-xs sm:text-sm"
+              />
+              <p className="text-xs text-slate-400 mt-1.5">
+                الرابط المستخدم لإنشاء رمز الـ QR وتوجيه العملاء لقائمة طلبات الطاولة (إذا ترك فارغاً سيتم تعيين الرابط الافتراضي للنظام).
+              </p>
             </div>
 
             {/* Status */}
             <div className="md:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-700">
               <label className="flex items-center gap-3 cursor-pointer group w-max">
                 <div className="relative">
-                  <input type="checkbox" name="status" className="sr-only"
-                    checked={formData.status} onChange={handleChange} />
-                  <div className={`block w-12 h-6 rounded-full transition-colors ${formData.status ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                  <div className={`absolute right-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.status ? '-translate-x-6' : 'translate-x-0'}`}></div>
+                  <input
+                    type="checkbox"
+                    name="status"
+                    className="sr-only"
+                    checked={formData.status}
+                    onChange={handleChange}
+                  />
+                  <div
+                    className={`block w-12 h-6 rounded-full transition-colors ${
+                      formData.status ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute right-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                      formData.status ? '-translate-x-6' : 'translate-x-0'
+                    }`}
+                  ></div>
                 </div>
                 <div>
-                  <span className="block text-sm font-semibold text-slate-800 dark:text-white">حالة الطاولة</span>
-                  <span className="text-xs text-slate-500">{formData.status ? 'مفعلة (متاحة للحجز)' : 'غير مفعلة'}</span>
+                  <span className="block text-sm font-semibold text-slate-800 dark:text-white">
+                    حالة الطاولة (Status) <span className="text-red-500">*</span>
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {formData.status ? 'مفعلة (متاحة للطلب والحجز)' : 'غير مفعلة'}
+                  </span>
                 </div>
               </label>
             </div>
-
           </div>
         </div>
 
         {/* Error message */}
         {mutation.isError && (
-          <div className="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-            {(mutation.error as any)?.response?.data?.message || 'حدث خطأ أثناء الإضافة. تأكد من صحة البيانات وحاول مرة أخرى.'}
+          <div className="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm space-y-1">
+            <p className="font-semibold">
+              {(mutation.error as any)?.response?.data?.message ||
+                'حدث خطأ أثناء الإضافة. تأكد من صحة البيانات وحاول مرة أخرى.'}
+            </p>
+            {(() => {
+              const errs = (mutation.error as any)?.response?.data?.errors;
+              if (errs && typeof errs === 'object') {
+                return (
+                  <ul className="list-disc list-inside text-xs mt-1 space-y-0.5">
+                    {Object.entries(errs).map(([f, msgs]: [string, any]) => (
+                      <li key={f}>
+                        <strong>{f}:</strong>{' '}
+                        {Array.isArray(msgs) ? msgs.join(', ') : String(msgs)}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
 
         {/* Footer Actions */}
         <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
-          <Link to="/dashboard/hall-tables"
-            className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
+          <Link
+            to="/dashboard/hall-tables"
+            className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm"
+          >
             إلغاء
           </Link>
-          <button type="submit" disabled={mutation.isPending || !formData.name || !formData.branch_id || !formData.hall_id || !formData.base_url?.trim()}
-            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          <button
+            type="submit"
+            disabled={mutation.isPending || !isFormValid}
+            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
             {mutation.isPending ? (
-              <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>
+              <>
+                <AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...
+              </>
             ) : (
-              <><MdSave size={18} /> حفظ الطاولة</>
+              <>
+                <MdSave size={18} /> حفظ الطاولة
+              </>
             )}
           </button>
         </div>

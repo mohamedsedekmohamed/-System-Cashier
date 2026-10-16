@@ -86,7 +86,7 @@ const HallTableEdit: React.FC = () => {
         branch_id: Number(tableData.branch_id) || 0,
         hall_id: Number(tableData.hall_id) || 0,
         status: Boolean(tableData.status),
-        base_url: tableData.base_url || '',
+        base_url: tableData.base_url?.trim() || 'https://ecommerce.mazoom.online',
       });
     }
   }, [tableData]);
@@ -269,8 +269,26 @@ const HallTableEdit: React.FC = () => {
 
         {/* Error message */}
         {mutation.isError && (
-          <div className="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-            {(mutation.error as any)?.response?.data?.message || 'حدث خطأ أثناء التحديث. تأكد من صحة البيانات وحاول مرة أخرى.'}
+          <div className="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm space-y-1">
+            <p className="font-semibold">
+              {(mutation.error as any)?.response?.data?.message || 'حدث خطأ أثناء التحديث. تأكد من صحة البيانات وحاول مرة أخرى.'}
+            </p>
+            {(() => {
+              const errs = (mutation.error as any)?.response?.data?.errors;
+              if (errs && typeof errs === 'object') {
+                return (
+                  <ul className="list-disc list-inside text-xs mt-1 space-y-0.5">
+                    {Object.entries(errs).map(([f, msgs]: [string, any]) => (
+                      <li key={f}>
+                        <strong>{f}:</strong>{' '}
+                        {Array.isArray(msgs) ? msgs.join(', ') : String(msgs)}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
 

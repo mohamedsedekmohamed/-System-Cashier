@@ -96,7 +96,7 @@ const ProductRecipeEdit: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <MdEdit size={24} className="text-primary" />
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات الوصفة</h1>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات المنتج غير منتهي التصنيع</h1>
             </div>
             <p className="text-sm text-slate-500 mt-1">تعديل {recipe?.name?.ar}</p>
           </div>

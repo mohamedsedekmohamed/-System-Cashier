@@ -60,7 +60,7 @@ const HallTableList: React.FC = () => {
         branch_id: table.branch_id,
         hall_id: table.hall_id,
         status: !table.status,
-        base_url: table.base_url || '',
+        base_url: table.base_url?.trim() || 'https://ecommerce.mazoom.online',
       };
       return hallTableApi.update(table.id, payload);
     },

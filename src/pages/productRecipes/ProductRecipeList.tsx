@@ -125,15 +125,15 @@ const ProductRecipeList: React.FC = () => {
   return (
     <div className="space-y-5 flex flex-col h-full">
       <CrudHeader
-        title="وصفات المنتجات"
+        title="منتجات غير منتهية التصنيع"
         icon={<MdReceiptLong size={28} />}
         totalCount={meta?.total}
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="ابحث باسم الوصفة، القسم، أو المعرف..."
+        searchPlaceholder="ابحث باسم المنتج غير منتهي التصنيع، القسم، أو المعرف..."
         onRefresh={() => refetch()}
         addLink="/dashboard/product-recipes/add"
-        addText="إضافة وصفة جديدة"
+        addText="إضافة منتج غير منتهي التصنيع"
       />
 
       {branches.length > 0 && (

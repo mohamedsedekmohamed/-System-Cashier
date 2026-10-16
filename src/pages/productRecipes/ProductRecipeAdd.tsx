@@ -72,9 +72,9 @@ const ProductRecipeAdd: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <MdReceiptLong size={24} className="text-primary" />
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">إضافة وصفة منتج جديدة</h1>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">إضافة منتج غير منتهي التصنيع</h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">إدخال بيانات الوصفة وتحديد القسم والمخزون</p>
+            <p className="text-sm text-slate-500 mt-1">إدخال بيانات المنتج غير منتهي التصنيع وتحديد القسم والمخزون</p>
           </div>
         </div>
       </div>

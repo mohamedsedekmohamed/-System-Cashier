@@ -7,11 +7,11 @@ export interface BusinessSetup {
   whats: string;
   logo: string;
   raw_logo?: string;
-  branch_cover?: string;
-  raw_branch_cover?: string;
   description: string;
-  start_day?: string;
-  end_day?: string;
+  branch_cover?: number | null;
+  table_order_url?: string;
+  start_day?: string | null;
+  end_day?: string | null;
   is_open?: boolean;
   is_overnight?: boolean;
   working_hours_text?: string;
@@ -27,9 +27,10 @@ export interface BusinessSetupPayload {
   whats: string;
   description: string;
   logo: string | File;
-  branch_cover?: string | File;
-  start_day?: string;
-  end_day?: string;
+  table_order_url: string;
+  branch_cover?: number | null;
+  start_day?: string | null;
+  end_day?: string | null;
 }
 
 export interface BusinessSetupResponse {
@@ -37,3 +38,4 @@ export interface BusinessSetupResponse {
   data: BusinessSetup | null;
   message?: string;
 }
+

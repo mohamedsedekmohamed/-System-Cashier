@@ -7,6 +7,17 @@ import type {
 
 export const BUSINESS_SETUP_KEY = 'business_setup';
 
+/** Format time string ensuring HH:mm format matching pattern ^([01]?\d|2[0-3]):[0-5]\d(:[0-5]\d)?$ */
+export const formatTimePattern = (time?: string | null): string | null => {
+  if (!time) return null;
+  const trimmed = time.trim();
+  if (!trimmed) return null;
+  if (/^([01]?\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(trimmed)) {
+    return trimmed;
+  }
+  return trimmed.substring(0, 5);
+};
+
 export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 'PUT'): FormData => {
   const formData = new FormData();
   formData.append('name', payload.name || '');
@@ -15,24 +26,26 @@ export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 
   formData.append('instagram', payload.instagram || '');
   formData.append('whats', payload.whats || '');
   formData.append('description', payload.description || '');
+  formData.append('table_order_url', payload.table_order_url || '');
 
-  if (payload.start_day) {
-    formData.append('start_day', payload.start_day);
+  if (payload.branch_cover !== null && payload.branch_cover !== undefined) {
+    formData.append('branch_cover', String(payload.branch_cover));
   }
-  if (payload.end_day) {
-    formData.append('end_day', payload.end_day);
+
+  const startDay = formatTimePattern(payload.start_day);
+  if (startDay) {
+    formData.append('start_day', startDay);
+  }
+
+  const endDay = formatTimePattern(payload.end_day);
+  if (endDay) {
+    formData.append('end_day', endDay);
   }
 
   if (payload.logo instanceof File) {
     formData.append('logo', payload.logo);
   } else if (typeof payload.logo === 'string' && payload.logo.trim()) {
     formData.append('logo', payload.logo.trim());
-  }
-
-  if (payload.branch_cover instanceof File) {
-    formData.append('branch_cover', payload.branch_cover);
-  } else if (typeof payload.branch_cover === 'string' && payload.branch_cover.trim()) {
-    formData.append('branch_cover', payload.branch_cover.trim());
   }
 
   if (method === 'PUT') {
@@ -42,44 +55,97 @@ export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 
   return formData;
 };
 
+export const toBusinessSetupJson = (payload: BusinessSetupPayload): Record<string, any> => {
+  const json: Record<string, any> = {
+    name: payload.name || '',
+    phone: payload.phone || '',
+    face: payload.face || '',
+    instagram: payload.instagram || '',
+    whats: payload.whats || '',
+    description: payload.description || '',
+    table_order_url: payload.table_order_url || '',
+    branch_cover:
+      payload.branch_cover !== null && payload.branch_cover !== undefined
+        ? Number(payload.branch_cover)
+        : 0,
+    start_day: formatTimePattern(payload.start_day),
+    end_day: formatTimePattern(payload.end_day),
+    logo: typeof payload.logo === 'string' ? payload.logo.trim() : '',
+  };
+  return json;
+};
+
 export const businessSetupApi = {
-  /** GET /api/admin/business-setup (يعرض branch_cover) */
+  /** GET /api/admin/business-setup */
   get: async (): Promise<BusinessSetupResponse> => {
     const { data } = await api.get<BusinessSetupResponse>('/api/admin/business-setup');
     return data;
   },
 
-  /** POST /api/admin/business-setup (يقبل branch_cover ورفع ملفات الصور) */
+  /** POST /api/admin/business-setup */
   create: async (payload: BusinessSetupPayload): Promise<{ data: BusinessSetup; message?: string }> => {
-    const formData = toBusinessSetupFormData(payload);
-    const { data } = await api.post<{ data: BusinessSetup; message?: string }>(
-      '/api/admin/business-setup',
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
-    );
-    return data;
-  },
-
-  /** PUT /api/admin/business-setup/{id?} (يحدث branch_cover ورفع ملفات الصور) */
-  update: async (id?: string | number, payload: BusinessSetupPayload = {} as BusinessSetupPayload): Promise<{ data: BusinessSetup; message?: string }> => {
-    const url = id !== undefined && id !== '' ? `/api/admin/business-setup/${id}` : '/api/admin/business-setup';
-    const formData = toBusinessSetupFormData(payload, 'PUT');
-
-    try {
-      // Standard Laravel multipart update via POST with _method=PUT
+    // If logo is a File, use FormData with multipart
+    if (payload.logo instanceof File) {
+      const formData = toBusinessSetupFormData(payload);
       const { data } = await api.post<{ data: BusinessSetup; message?: string }>(
-        url,
+        '/api/admin/business-setup',
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       return data;
-    } catch (err: any) {
-      // Fallback to native PUT if server returns 405 Method Not Allowed
-      if (err?.response?.status === 405) {
-        const { data } = await api.put<{ data: BusinessSetup; message?: string }>(
+    }
+
+    // Standard application/json
+    const jsonBody = toBusinessSetupJson(payload);
+    const { data } = await api.post<{ data: BusinessSetup; message?: string }>(
+      '/api/admin/business-setup',
+      jsonBody
+    );
+    return data;
+  },
+
+  /** PUT /api/admin/business-setup/{id?} */
+  update: async (
+    id?: string | number,
+    payload: BusinessSetupPayload = {} as BusinessSetupPayload
+  ): Promise<{ data: BusinessSetup; message?: string }> => {
+    const url = id !== undefined && id !== '' ? `/api/admin/business-setup/${id}` : '/api/admin/business-setup';
+
+    // If logo is a File, send via multipart/form-data
+    if (payload.logo instanceof File) {
+      const formData = toBusinessSetupFormData(payload, 'PUT');
+      try {
+        const { data } = await api.post<{ data: BusinessSetup; message?: string }>(
           url,
           formData,
           { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        return data;
+      } catch (err: any) {
+        if (err?.response?.status === 405) {
+          const { data } = await api.put<{ data: BusinessSetup; message?: string }>(
+            url,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+          );
+          return data;
+        }
+        throw err;
+      }
+    }
+
+    // JSON payload
+    const jsonBody = toBusinessSetupJson(payload);
+    try {
+      // Standard PUT with application/json
+      const { data } = await api.put<{ data: BusinessSetup; message?: string }>(url, jsonBody);
+      return data;
+    } catch (err: any) {
+      // Fallback: POST with _method: 'PUT' if PUT method is rejected
+      if (err?.response?.status === 405) {
+        const { data } = await api.post<{ data: BusinessSetup; message?: string }>(
+          url,
+          { ...jsonBody, _method: 'PUT' }
         );
         return data;
       }

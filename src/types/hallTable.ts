@@ -49,7 +49,7 @@ export interface HallTablePayload {
   branch_id: number;
   hall_id: number;
   status: boolean;
-  base_url: string;
+  base_url?: string;
 }
 
 export interface HallTableSelectOptionsResponse {

@@ -34,14 +34,41 @@ export const hallTableApi = {
 
   /** POST /api/admin/hall-tables */
   create: async (payload: HallTablePayload): Promise<HallTable> => {
-    const { data } = await api.post<{ data: HallTable }>('/api/admin/hall-tables', payload);
+    const body: Record<string, any> = {
+      name: typeof payload.name === 'string' ? payload.name.trim() : payload.name,
+      branch_id: Number(payload.branch_id),
+      hall_id: Number(payload.hall_id),
+      status: Boolean(payload.status),
+    };
+    if (payload.base_url && payload.base_url.trim()) {
+      body.base_url = payload.base_url.trim();
+    }
+    const { data } = await api.post<{ data: HallTable }>('/api/admin/hall-tables', body);
     return data.data;
   },
 
   /** PUT /api/admin/hall-tables/:id */
   update: async (id: number | string, payload: HallTablePayload): Promise<HallTable> => {
-    const { data } = await api.put<{ data: HallTable }>(`/api/admin/hall-tables/${id}`, payload);
-    return data.data;
+    const body: Record<string, any> = {
+      name: typeof payload.name === 'string' ? payload.name.trim() : payload.name,
+      branch_id: payload.branch_id ? Number(payload.branch_id) : null,
+      hall_id: payload.hall_id ? Number(payload.hall_id) : null,
+      status: payload.status !== undefined && payload.status !== null ? Boolean(payload.status) : null,
+      base_url: payload.base_url?.trim() || 'https://ecommerce.mazoom.online',
+    };
+    try {
+      const { data } = await api.put<{ data: HallTable }>(`/api/admin/hall-tables/${id}`, body);
+      return data.data;
+    } catch (err: any) {
+      if (err?.response?.status === 405) {
+        const { data } = await api.post<{ data: HallTable }>(`/api/admin/hall-tables/${id}`, {
+          ...body,
+          _method: 'PUT',
+        });
+        return data.data;
+      }
+      throw err;
+    }
   },
 
   /** DELETE /api/admin/hall-tables/:id */
