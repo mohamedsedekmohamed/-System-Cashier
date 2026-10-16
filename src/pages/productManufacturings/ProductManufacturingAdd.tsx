@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   productManufacturingApi, 
@@ -29,7 +29,11 @@ import ConsumedMaterialsCards from '../../components/manufacturing/ConsumedMater
 
 const ProductManufacturingAdd: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  const urlType = searchParams.get('type');
+  const initialTargetType = (urlType === 'unfinished' || urlType === 'recipe') ? 'recipe' : 'product';
 
   // ── Form State ─────────────────────────
   const [formData, setFormData] = useState<ProductManufacturingFormData>({
@@ -38,12 +42,12 @@ const ProductManufacturingAdd: React.FC = () => {
     recipes: [],
   });
 
-  const [targetType, setTargetType] = useState<'product' | 'recipe'>('product');
+  const [targetType, setTargetType] = useState<'product' | 'recipe'>(initialTargetType);
 
   // ── Fetch Select Options ───────────────
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery<ProductManufacturingSelectOptionsResponse>({
-    queryKey: [PRODUCT_MANUFACTURING_SELECT_OPTIONS_KEY],
-    queryFn: () => productManufacturingApi.getSelectOptions(),
+    queryKey: [PRODUCT_MANUFACTURING_SELECT_OPTIONS_KEY, targetType],
+    queryFn: () => productManufacturingApi.getSelectOptions(targetType === 'product' ? 'finished' : 'unfinished'),
   });
 
   const products: ManufacturingProduct[] = optionsData?.data?.products ?? [];
@@ -66,11 +70,11 @@ const ProductManufacturingAdd: React.FC = () => {
   // ── Handlers ───────────────────────────
   const handleTargetTypeChange = (type: 'product' | 'recipe') => {
     setTargetType(type);
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
       product_id: 0,
       product_recipe_id: 0,
-    }));
+      recipes: [],
+    });
   };
 
   const handleRecipesChange = (newRecipes: ManufacturingRecipePayload[]) => {
@@ -94,21 +98,33 @@ const ProductManufacturingAdd: React.FC = () => {
     }
 
     if (!formData.recipes || formData.recipes.length === 0) {
-      alert('يجب إضافة مادة خام أو مكون واحد على الأقل لتحديد تركيبة المنتج');
+      alert(
+        targetType === 'product'
+          ? 'يجب إضافة وصفة تحضيرية واحدة على الأقل لتركيبة المنتج'
+          : 'يجب إضافة مادة خام واحدة على الأقل لتركيبة المنتج غير المنتهي'
+      );
       return;
     }
 
-    const payload: ProductManufacturingFormData = {
-      product_id: targetType === 'product' ? (formData.product_id || null) : null,
-      product_recipe_id: targetType === 'recipe' ? (formData.product_recipe_id || null) : null,
-      recipes: formData.recipes.map(r => ({
-        material_id: r.material_id ? Number(r.material_id) : null,
-        product_recipe_id: r.product_recipe_id ? Number(r.product_recipe_id) : null,
-        count: Number(r.count) || 1,
-      }))
-    };
-
-    mutation.mutate(payload);
+    if (targetType === 'product') {
+      const payload: any = {
+        product_id: Number(formData.product_id),
+        recipes: formData.recipes.map(r => ({
+          product_recipe_id: Number(r.product_recipe_id),
+          count: Number(r.count) || 1,
+        }))
+      };
+      mutation.mutate(payload);
+    } else {
+      const payload: any = {
+        product_recipe_id: Number(formData.product_recipe_id),
+        recipes: formData.recipes.map(r => ({
+          material_id: Number(r.material_id),
+          count: Number(r.count) || 1,
+        }))
+      };
+      mutation.mutate(payload);
+    }
   };
 
   const productOptions = products.map(p => ({
@@ -233,15 +249,18 @@ const ProductManufacturingAdd: React.FC = () => {
         {/* Consumed Materials Component */}
         <div className="space-y-3">
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 px-1">
-            2. تحديد المكونات والخامات المستخدمة (لكل 1 قطعة / وحدة)
+            {targetType === 'product'
+              ? '2. تحديد الوصفات التحضيرية الداخلة في التصنيع (لكل 1 قطعة / وحدة)'
+              : '2. تحديد المواد الخام الداخلة في التصنيع (لكل 1 قطعة / وحدة)'}
           </h2>
           
           <ConsumedMaterialsCards
-            materials={materials}
-            productRecipes={productRecipes}
+            materials={targetType === 'recipe' ? materials : []}
+            productRecipes={targetType === 'product' ? productRecipes : []}
             recipes={formData.recipes}
             onChange={handleRecipesChange}
-            isTargetRecipe={targetType === 'recipe'}
+            isStandardBOM={true}
+            allowedType={targetType === 'product' ? 'recipes_only' : 'materials_only'}
           />
         </div>
 

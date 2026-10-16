@@ -15,23 +15,27 @@ import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdSchema, MdVisibility, MdEdit, MdDelete, MdLayers, MdFastfood } from 'react-icons/md';
 import { renderName } from '../../utils/helpers';
 
+type TabType = 'finished' | 'unfinished';
+
 const ProductManufacturingListPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<TabType>('finished');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [viewTarget, setViewTarget] = useState<ProductManufacturing | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProductManufacturing | null>(null);
   const perPage = 15;
 
-  // ── Fetch (paginated) ──────────────────
+  // ── Fetch (paginated by activeTab) ─────
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: [PRODUCT_MANUFACTURING_KEY, page, perPage],
-    queryFn: () => productManufacturingApi.list(page, perPage),
+    queryKey: [PRODUCT_MANUFACTURING_KEY, activeTab, page, perPage],
+    queryFn: () => productManufacturingApi.list(page, perPage, activeTab),
     placeholderData: (prev) => prev,
   });
 
   const lists = data?.data ?? [];
   const meta = data?.meta;
+  const counts = data?.counts;
 
   // ── Delete mutation ────────────────────
   const deleteMutation = useMutation({
@@ -67,28 +71,24 @@ const ProductManufacturingListPage: React.FC = () => {
       )
     },
     {
-      header: 'النوع المستهدف',
+      header: activeTab === 'finished' ? 'اسم المنتج المنتهي (النهائي)' : 'اسم المنتج غير المنتهي (تحضيري)',
       render: (row) => (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-          row.product 
-            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800' 
-            : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-        }`}>
-          {row.product ? <MdFastfood size={13} /> : <MdLayers size={13} />}
-          {row.product ? 'منتج جاهز' : 'منتج غير منتهي التصنيع'}
-        </span>
-      )
-    },
-    {
-      header: 'اسم المنتج / الصنف المستهدف',
-      render: (row) => (
-        <div>
-          <p className="font-semibold text-slate-800 dark:text-white">
-            {row.product ? renderName(row.product.name) : renderName(row.product_recipe?.name) || '—'}
-          </p>
-          <span className="text-xs text-slate-400">
-            {row.product ? `كود المنتج: #${row.product.id}` : `كود الصنف: #${row.product_recipe?.id}`}
-          </span>
+        <div className="flex items-center gap-2.5">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+            row.product 
+              ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300' 
+              : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300'
+          }`}>
+            {row.product ? <MdFastfood size={16} /> : <MdLayers size={16} />}
+          </div>
+          <div>
+            <p className="font-semibold text-slate-800 dark:text-white">
+              {row.product ? renderName(row.product.name) : renderName(row.product_recipe?.name) || '—'}
+            </p>
+            <span className="text-xs text-slate-400">
+              {row.product ? `كود المنتج: #${row.product.id}` : `كود الصنف: #${row.product_recipe?.id}`}
+            </span>
+          </div>
         </div>
       )
     },
@@ -138,21 +138,68 @@ const ProductManufacturingListPage: React.FC = () => {
     }
   ];
 
+  const tabs = [
+    { 
+      id: 'finished' as TabType, 
+      label: 'منتجات منتهية التصنيع', 
+      icon: <MdFastfood size={18} />,
+      count: counts?.finished
+    },
+    { 
+      id: 'unfinished' as TabType, 
+      label: 'منتجات غير منتهية التصنيع', 
+      icon: <MdLayers size={18} />,
+      count: counts?.unfinished
+    },
+  ];
+
   if (isError) return <ErrorFallback error={error} onRetry={refetch} />;
 
   return (
     <div className="space-y-5 flex flex-col h-full">
       <CrudHeader
-        title="معايير وتراكيب تصنيع المنتجات"
+        title={activeTab === 'finished' ? 'معايير تصنيع المنتجات المنتهية' : 'معايير تصنيع المنتجات غير المنتهية'}
         icon={<MdSchema size={28} />}
         totalCount={meta?.total}
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="ابحث باسم المنتج أو الصنف المستهدف..."
+        searchPlaceholder={activeTab === 'finished' ? 'ابحث باسم المنتج المنتهي...' : 'ابحث باسم المنتج غير المنتهي...'}
         onRefresh={() => refetch()}
-        addLink="/dashboard/product-manufacturings/add"
-        addText="إضافة معيار تصنيع"
+        addLink={`/dashboard/product-manufacturings/add?type=${activeTab}`}
+        addText={activeTab === 'finished' ? 'إضافة معيار لمنتج منتهي' : 'إضافة معيار لمنتج غير منتهي'}
       />
+
+      {/* ── Tabs Bar ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-800/80 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-sm">
+        <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl w-full sm:w-fit">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setPage(1);
+              }}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                activeTab === tab.id
+                  ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+              {typeof tab.count === 'number' && (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                  activeTab === tab.id
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex-1">
         <DataTable
@@ -161,7 +208,7 @@ const ProductManufacturingListPage: React.FC = () => {
           meta={meta}
           onPageChange={setPage}
           isLoading={isLoading && !data}
-          emptyIcon={<MdSchema size={48} />}
+          emptyIcon={activeTab === 'finished' ? <MdFastfood size={48} /> : <MdLayers size={48} />}
         />
       </div>
 
@@ -180,7 +227,7 @@ const ProductManufacturingListPage: React.FC = () => {
         title="تفاصيل معيار تصنيع المنتج القياسي"
         details={[
           { label: 'رقم المعيار', value: viewTarget?.id },
-          { label: 'نوع الصنف', value: viewTarget?.product ? 'منتج جاهز للبيع' : 'منتج غير منتهي التصنيع (تحضيري)' },
+          { label: 'نوع الصنف', value: viewTarget?.product ? 'منتج جاهز للبيع (منتهي التصنيع)' : 'منتج غير منتهي التصنيع (تحضيري)' },
           { label: 'الاسم', value: renderName(viewTarget?.product?.name) || renderName(viewTarget?.product_recipe?.name) || '—' },
           { label: 'تاريخ التسجيل', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '—' },
           { 

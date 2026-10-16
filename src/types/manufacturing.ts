@@ -137,6 +137,11 @@ export interface ProductManufacturingListResponse {
   meta: PaginatedMeta;
   links: any;
   status?: boolean;
+  counts?: {
+    all: number;
+    finished: number;
+    unfinished: number;
+  };
 }
 
 export interface SingleProductManufacturingResponse {

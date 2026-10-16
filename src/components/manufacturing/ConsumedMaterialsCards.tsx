@@ -19,12 +19,14 @@ import {
 } from 'react-icons/md';
 
 export interface ConsumedMaterialsCardsProps {
-  materials: ManufacturingMaterial[];
-  productRecipes: ManufacturingProductRecipe[];
+  materials?: ManufacturingMaterial[];
+  productRecipes?: ManufacturingProductRecipe[];
   recipes: ManufacturingRecipePayload[];
   onChange: (recipes: ManufacturingRecipePayload[]) => void;
   disabled?: boolean;
   isTargetRecipe?: boolean;
+  isStandardBOM?: boolean;
+  allowedType?: 'materials_only' | 'recipes_only' | 'all';
 }
 
 type TabType = 'all' | 'materials' | 'recipes' | 'selected';
@@ -36,6 +38,8 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
   onChange,
   disabled = false,
   isTargetRecipe = false,
+  isStandardBOM = false,
+  allowedType = 'all',
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [search, setSearch] = useState('');
@@ -43,22 +47,22 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
 
   // Unified items list with type identifier
   const allItems = useMemo(() => {
-    const matItems = (materials || []).map(m => ({
+    const matItems = (allowedType === 'recipes_only' ? [] : (materials || [])).map(m => ({
       ...m,
       itemType: 'material' as const,
       uniqueKey: `m_${m.id}`,
-      stockNumber: Number(m.stock ?? 0),
+      stockNumber: isStandardBOM ? 999999 : Number(m.stock ?? 0),
     }));
 
-    const recItems = (productRecipes || []).map(r => ({
+    const recItems = (allowedType === 'materials_only' ? [] : (productRecipes || [])).map(r => ({
       ...r,
       itemType: 'recipe' as const,
       uniqueKey: `r_${r.id}`,
-      stockNumber: Number(r.stock ?? 0),
+      stockNumber: isStandardBOM ? 999999 : Number(r.stock ?? 0),
     }));
 
     return [...matItems, ...recItems];
-  }, [materials, productRecipes]);
+  }, [materials, productRecipes, allowedType, isStandardBOM]);
 
   // Selected items map for quick lookup
   const selectedMap = useMemo(() => {
@@ -75,6 +79,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
 
   // Check if any selected item exceeds stock
   const hasExceededItems = useMemo(() => {
+    if (isStandardBOM) return false;
     return recipes.some(r => {
       if (r.material_id) {
         const mat = materials.find(m => m.id === r.material_id);
@@ -88,7 +93,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
       }
       return false;
     });
-  }, [recipes, materials, productRecipes]);
+  }, [recipes, materials, productRecipes, isStandardBOM]);
 
   // Filter items based on tab, search, and availability
   const filteredItems = useMemo(() => {
@@ -98,8 +103,8 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
       if (activeTab === 'recipes' && item.itemType !== 'recipe') return false;
       if (activeTab === 'selected' && !selectedMap.has(item.uniqueKey)) return false;
 
-      // Only available toggle
-      if (onlyAvailable && item.stockNumber <= 0) return false;
+      // Only available toggle (only applies to actual stock operations)
+      if (!isStandardBOM && onlyAvailable && item.stockNumber <= 0) return false;
 
       // Search filter
       if (search.trim()) {
@@ -114,12 +119,12 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
 
       return true;
     });
-  }, [allItems, activeTab, onlyAvailable, search, selectedMap]);
+  }, [allItems, activeTab, onlyAvailable, search, selectedMap, isStandardBOM]);
 
   // ── Actions ───────────────────────────
   const handleToggleSelect = (item: typeof allItems[0]) => {
     if (disabled) return;
-    if (item.stockNumber <= 0) return; // Cannot select items with 0 stock!
+    if (!isStandardBOM && item.stockNumber <= 0) return; // Cannot select items with 0 stock in stock deduction mode!
 
     if (selectedMap.has(item.uniqueKey)) {
       // Remove
@@ -129,8 +134,8 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
       });
       onChange(updated);
     } else {
-      // Add with default count 1 (or max stock if stock < 1)
-      const initialCount = Math.min(1, item.stockNumber > 0 ? item.stockNumber : 1);
+      // Add with default count 1
+      const initialCount = 1;
       const newItem: ManufacturingRecipePayload = {
         material_id: item.itemType === 'material' ? item.id : null,
         product_recipe_id: item.itemType === 'recipe' ? item.id : null,
@@ -268,16 +273,18 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
           )}
         </div>
 
-        {/* Filter Toggle: Only available in stock */}
-        <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-600 dark:text-slate-300 select-none bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-colors shrink-0">
-          <input
-            type="checkbox"
-            checked={onlyAvailable}
-            onChange={(e) => setOnlyAvailable(e.target.checked)}
-            className="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300"
-          />
-          <span>المتوفر بالمخزن فقط (رصيد &gt; 0)</span>
-        </label>
+        {/* Filter Toggle: Only available in stock (Hidden for BOM) */}
+        {!isStandardBOM && (
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-600 dark:text-slate-300 select-none bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-colors shrink-0">
+            <input
+              type="checkbox"
+              checked={onlyAvailable}
+              onChange={(e) => setOnlyAvailable(e.target.checked)}
+              className="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300"
+            />
+            <span>المتوفر بالمخزن فقط (رصيد &gt; 0)</span>
+          </label>
+        )}
       </div>
 
       {/* Tabs */}
@@ -291,30 +298,40 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
-          الكل ({allItems.length})
+          {allowedType === 'recipes_only'
+            ? `كل الوصفات التحضيرية (${allItems.length})`
+            : allowedType === 'materials_only'
+            ? `كل المواد الخام (${allItems.length})`
+            : `الكل (${allItems.length})`}
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('materials')}
-          className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap ${
-            activeTab === 'materials'
-              ? 'bg-white dark:bg-slate-700 text-primary shadow-2xs'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-        >
-          المواد الخام ({materials.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('recipes')}
-          className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap ${
-            activeTab === 'recipes'
-              ? 'bg-white dark:bg-slate-700 text-primary shadow-2xs'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-        >
-          الوصفات شبه المصنعة ({productRecipes.length})
-        </button>
+
+        {allowedType === 'all' && (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveTab('materials')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'materials'
+                  ? 'bg-white dark:bg-slate-700 text-primary shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              المواد الخام ({materials.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('recipes')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'recipes'
+                  ? 'bg-white dark:bg-slate-700 text-primary shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              الوصفات شبه المصنعة ({productRecipes.length})
+            </button>
+          </>
+        )}
+
         <button
           type="button"
           onClick={() => setActiveTab('selected')}
@@ -341,8 +358,8 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
           {filteredItems.map(item => {
             const isSelected = selectedMap.has(item.uniqueKey);
             const currentCount = selectedMap.get(item.uniqueKey) || 1;
-            const hasStock = item.stockNumber > 0;
-            const isExceeded = isSelected && currentCount > item.stockNumber;
+            const hasStock = isStandardBOM || item.stockNumber > 0;
+            const isExceeded = !isStandardBOM && isSelected && currentCount > item.stockNumber;
             const remaining = Math.max(0, item.stockNumber - currentCount);
 
             return (
@@ -383,7 +400,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                         : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
                     }`}>
                       <MdCheckCircle size={13} />
-                      {isExceeded ? 'تجاوز المخزون' : 'محدد للاستهلاك'}
+                      {isExceeded ? 'تجاوز المخزون' : isStandardBOM ? 'محدد للمعيار' : 'محدد للاستهلاك'}
                     </span>
                   )}
                 </div>
@@ -401,9 +418,15 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                     )}
                   </div>
 
-                  {/* Stock Info Badge */}
+                  {/* Stock Info or Code Badge */}
                   <div className="flex items-center gap-1.5 pt-1">
-                    {hasStock ? (
+                    {isStandardBOM ? (
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        <span className="font-mono">
+                          {item.itemType === 'material' ? `كود المادة: #${item.id}` : `كود الصنف: #${item.id}`}
+                        </span>
+                      </div>
+                    ) : hasStock ? (
                       <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/50">
                         <MdInventory size={14} className="text-emerald-600 dark:text-emerald-400" />
                         <span>رصيد المخزن: <strong className="font-mono">{item.stockNumber}</strong></span>
@@ -422,21 +445,21 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                   {!isSelected ? (
                     <button
                       type="button"
-                      disabled={disabled || !hasStock}
+                      disabled={disabled || (!isStandardBOM && !hasStock)}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleToggleSelect(item);
                       }}
                       className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs ${
-                        hasStock
+                        isStandardBOM || hasStock
                           ? 'btn-card-add group-hover-card-btn'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700'
                       }`}
                     >
-                      {hasStock ? (
+                      {isStandardBOM || hasStock ? (
                         <>
                           <MdAdd size={16} />
-                          <span>إضافة للاستهلاك</span>
+                          <span>{isStandardBOM ? 'إضافة للتركيبة' : 'إضافة للاستهلاك'}</span>
                         </>
                       ) : (
                         <span>غير متوفر بالمخزن</span>
@@ -445,7 +468,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                   ) : (
                     <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        <span>الكمية المستهلكة:</span>
+                        <span>{isStandardBOM ? 'الكمية لكل وحدة:' : 'الكمية المستهلكة:'}</span>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -464,10 +487,10 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          disabled={disabled || currentCount <= 0.1}
+                          disabled={disabled || currentCount <= 1}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUpdateCount(item.uniqueKey, Math.max(0.1, Number((currentCount - 1).toFixed(2))));
+                            handleUpdateCount(item.uniqueKey, Math.max(1, Number((currentCount - 1).toFixed(2))));
                           }}
                           className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold transition-colors disabled:opacity-40"
                         >
@@ -476,13 +499,13 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
 
                         <input
                           type="number"
-                          min="0.01"
-                          max={item.stockNumber}
-                          step="any"
+                          min="1"
+                          max={isStandardBOM ? undefined : item.stockNumber}
+                          step="1"
                           disabled={disabled}
                           value={currentCount === 0 ? '' : currentCount}
                           onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleUpdateCount(item.uniqueKey, e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                          onChange={(e) => handleUpdateCount(item.uniqueKey, e.target.value === '' ? 1 : Math.max(1, parseInt(e.target.value) || 1))}
                           className={`flex-1 py-1.5 px-2 rounded-lg border text-center font-mono font-bold text-sm bg-white dark:bg-slate-900 focus:outline-none transition-all ${
                             isExceeded
                               ? 'border-rose-500 text-rose-600 focus:ring-2 focus:ring-rose-400/30'
@@ -492,10 +515,15 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
 
                         <button
                           type="button"
-                          disabled={disabled || currentCount >= item.stockNumber}
+                          disabled={disabled || (!isStandardBOM && currentCount >= item.stockNumber)}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUpdateCount(item.uniqueKey, Math.min(item.stockNumber, Number((currentCount + 1).toFixed(2))));
+                            handleUpdateCount(
+                              item.uniqueKey,
+                              isStandardBOM
+                                ? Number((currentCount + 1).toFixed(2))
+                                : Math.min(item.stockNumber, Number((currentCount + 1).toFixed(2)))
+                            );
                           }}
                           className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold transition-colors disabled:opacity-40"
                         >
@@ -503,19 +531,21 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                         </button>
                       </div>
 
-                      {/* Stock Remaining / Exceeded feedback */}
-                      <div className="text-[11px] font-semibold text-center pt-0.5">
-                        {isExceeded ? (
-                          <span className="text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1">
-                            <MdErrorOutline size={13} />
-                            تجاوزت المخزون المتاح ({item.stockNumber})!
-                          </span>
-                        ) : (
-                          <span className="text-slate-500 dark:text-slate-400 font-mono">
-                            المتبقي بالمخزن: {remaining.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
+                      {/* Stock Remaining / Exceeded feedback (Only in branch execution mode) */}
+                      {!isStandardBOM && (
+                        <div className="text-[11px] font-semibold text-center pt-0.5">
+                          {isExceeded ? (
+                            <span className="text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1">
+                              <MdErrorOutline size={13} />
+                              تجاوزت المخزون المتاح ({item.stockNumber})!
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 dark:text-slate-400 font-mono">
+                              المتبقي بالمخزن: {remaining.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

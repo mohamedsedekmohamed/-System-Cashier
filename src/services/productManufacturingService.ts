@@ -11,19 +11,30 @@ export const PRODUCT_MANUFACTURING_KEY = 'product_manufacturings';
 export const PRODUCT_MANUFACTURING_SELECT_OPTIONS_KEY = 'product_manufacturing_select_options';
 
 export const productManufacturingApi = {
-  /** GET /api/admin/product-manufacturings/select-options */
-  getSelectOptions: async (): Promise<ProductManufacturingSelectOptionsResponse> => {
+  /** GET /api/admin/product-manufacturings/select-options?type= */
+  getSelectOptions: async (type?: 'finished' | 'unfinished' | string): Promise<ProductManufacturingSelectOptionsResponse> => {
+    const params: Record<string, any> = {};
+    if (type) params.type = type;
     const { data } = await api.get<ProductManufacturingSelectOptionsResponse>(
-      '/api/admin/product-manufacturings/select-options'
+      '/api/admin/product-manufacturings/select-options',
+      { params }
     );
     return data;
   },
 
-  /** GET /api/admin/product-manufacturings?page=&per_page= */
-  list: async (page = 1, perPage = 15): Promise<ProductManufacturingListResponse> => {
+  /** GET /api/admin/product-manufacturings?page=&per_page=&type= */
+  list: async (
+    page = 1, 
+    perPage = 15, 
+    type?: 'finished' | 'unfinished' | string
+  ): Promise<ProductManufacturingListResponse> => {
+    const params: Record<string, any> = { page, per_page: perPage };
+    if (type && type !== 'all') {
+      params.type = type;
+    }
     const { data } = await api.get<ProductManufacturingListResponse>(
       '/api/admin/product-manufacturings',
-      { params: { page, per_page: perPage } }
+      { params }
     );
     return data;
   },
