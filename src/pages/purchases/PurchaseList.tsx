@@ -4,13 +4,14 @@ import { purchaseApi, PURCHASES_KEY, PURCHASES_SELECT_OPTIONS_KEY } from '../../
 import { MATERIALS_KEY } from '../../services/materialService';
 import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
 import { SUPPLIERS_KEY } from '../../services/supplierService';
+import { MATERIAL_INVENTORY_KEY } from '../../services/materialInventoryService';
 import type { Purchase } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
 import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
-import { PurchaseDetailsModal } from './PurchaseDetailsModal';
+import { PurchaseDetailsModal } from '../../components/purchases/PurchaseDetailsModal';
 import { MdShoppingBag, MdDelete, MdVisibility, MdReceipt, MdImageNotSupported } from 'react-icons/md';
 import { renderName } from '../../utils/helpers';
 
@@ -41,7 +42,7 @@ const PurchaseList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [MATERIALS_KEY] });
       queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
       queryClient.invalidateQueries({ queryKey: [SUPPLIERS_KEY] });
-      queryClient.invalidateQueries({ queryKey: ['material_inventory'] });
+      queryClient.invalidateQueries({ queryKey: [MATERIAL_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
       setDeleteTarget(null);
     },

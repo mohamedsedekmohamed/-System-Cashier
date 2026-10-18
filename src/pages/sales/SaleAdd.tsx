@@ -7,6 +7,7 @@ import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
 import { PRODUCTS_KEY } from '../../services/productService';
 import { SALERS_KEY } from '../../services/salerService';
 import { PURCHASES_SELECT_OPTIONS_KEY } from '../../services/purchaseService';
+import { MATERIAL_INVENTORY_KEY } from '../../services/materialInventoryService';
 import type { SaleFormData, SaleItemPayload, InsufficientIngredientError } from '../../types';
 import {
   MdArrowForward,
@@ -222,7 +223,7 @@ export const SaleAdd: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
       queryClient.invalidateQueries({ queryKey: [SALERS_KEY] });
-      queryClient.invalidateQueries({ queryKey: ['material_inventory'] });
+      queryClient.invalidateQueries({ queryKey: [MATERIAL_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
       queryClient.invalidateQueries({ queryKey: [PURCHASES_SELECT_OPTIONS_KEY] });
       navigate('/dashboard/sales');

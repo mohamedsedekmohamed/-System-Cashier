@@ -31,4 +31,3 @@ export interface DueItemPayload {
   date: string;
   notes?: string;
 }
-

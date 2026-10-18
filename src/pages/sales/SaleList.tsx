@@ -5,13 +5,14 @@ import { MATERIALS_KEY } from '../../services/materialService';
 import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
 import { PRODUCTS_KEY } from '../../services/productService';
 import { SALERS_KEY } from '../../services/salerService';
+import { MATERIAL_INVENTORY_KEY } from '../../services/materialInventoryService';
 import type { Sale } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
 import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
-import { SaleDetailsModal } from './SaleDetailsModal';
+import { SaleDetailsModal } from '../../components/sales/SaleDetailsModal';
 import {
   MdPointOfSale,
   MdDelete,
@@ -48,7 +49,7 @@ const SaleList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
       queryClient.invalidateQueries({ queryKey: [SALERS_KEY] });
-      queryClient.invalidateQueries({ queryKey: ['material_inventory'] });
+      queryClient.invalidateQueries({ queryKey: [MATERIAL_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
       setDeleteTarget(null);
     },

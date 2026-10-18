@@ -2,7 +2,6 @@ import type { PaginatedMeta, DueItemPayload } from './common';
 import type { Branch, BranchOption } from './branch';
 import type { Saler } from './saler';
 
-
 export interface SaleSelectMaterial {
   id: number;
   name: string;
@@ -126,7 +125,6 @@ export interface SaleItemPayload {
   cost: number;
 }
 
-
 export interface SaleFormData {
   branch_id: number;
   saler_id?: number | null;
@@ -139,7 +137,6 @@ export interface SaleFormData {
   notes?: string;
   items: SaleItemPayload[];
 }
-
 
 export interface InsufficientIngredientError {
   type: 'product' | 'material' | 'product_recipe' | 'recipe';
