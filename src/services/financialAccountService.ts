@@ -21,7 +21,7 @@ export const toFinancialAccountFormData = (
 
   if (payload.icon instanceof File) {
     formData.append('icon', payload.icon);
-  } else if (typeof payload.icon === 'string' && payload.icon.trim()) {
+  } else if (typeof payload.icon === 'string' && payload.icon.trim() && !payload.icon.startsWith('http')) {
     formData.append('icon', payload.icon.trim());
   }
 
