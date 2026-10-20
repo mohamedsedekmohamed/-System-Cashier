@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orderService, ORDERS_KEY } from '../../services/orderService';
 import type { Order, OrderStatus } from '../../types';
 import {
@@ -15,6 +15,7 @@ import {
   MdWarningAmber,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
 
 interface UpdateOrderStatusModalProps {
   order: Order | null;
@@ -29,15 +30,35 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(order?.status || null);
+  const [selectedDeliveryId, setSelectedDeliveryId] = useState<number | ''>(order?.delivery_id || '');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (order) {
+      setSelectedStatus(order.status || null);
+      setSelectedDeliveryId(order.delivery_id || '');
+      setErrorMessage(null);
+    }
+  }, [order]);
+
+  // Fetch delivery drivers list strictly with id and name
+  const { data: deliveriesData, isLoading: isLoadingDeliveries } = useQuery({
+    queryKey: ['deliveries-select', (order as any)?.branch_id],
+    queryFn: () => orderService.getDeliveriesSelect((order as any)?.branch_id),
+    enabled: isOpen && order?.module === 'delivery',
+  });
+
+  const deliveries = deliveriesData?.data || [];
   const allowedStatuses = order ? getAllowedStatusesForModule(order.module) : [];
   const currentConfig = getOrderStatusConfig(order?.status);
 
+  const isOutOfDeliveryTransition =
+    order?.module === 'delivery' && selectedStatus === 'out_of_delivery';
+
   const mutation = useMutation({
-    mutationFn: (status: OrderStatus) => {
+    mutationFn: ({ status, deliveryId }: { status: OrderStatus; deliveryId?: number | null }) => {
       if (!order) throw new Error('Order is missing');
-      return orderService.updateStatus(order.id, status);
+      return orderService.updateStatus(order.id, status, deliveryId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ORDERS_KEY] });
@@ -68,8 +89,21 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
 
   const handleConfirm = () => {
     if (!selectedStatus) return;
-    mutation.mutate(selectedStatus);
+
+    if (isOutOfDeliveryTransition && !selectedDeliveryId) {
+      setErrorMessage('يجب اختيار سائق التوصيل أولاً لتحويل حالة الطلب إلى (خارج للتوصيل).');
+      return;
+    }
+
+    mutation.mutate({
+      status: selectedStatus,
+      deliveryId: selectedDeliveryId ? Number(selectedDeliveryId) : null,
+    });
   };
+
+  const isSameState =
+    selectedStatus === order.status &&
+    (!isOutOfDeliveryTransition || Number(selectedDeliveryId || 0) === Number(order.delivery_id || 0));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -109,7 +143,7 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {errorMessage && (
             <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
               <MdWarningAmber size={18} className="shrink-0" />
@@ -135,7 +169,7 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
               اختر الحالة الجديدة للطلب:
             </label>
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-0.5">
               {allowedStatuses.map((st) => {
                 const conf = getOrderStatusConfig(st);
                 const isSelected = selectedStatus === st;
@@ -183,6 +217,44 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
               )}
             </div>
           </div>
+
+          {/* Delivery Driver Selection (Required for out_of_delivery) */}
+          {isOutOfDeliveryTransition && (
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-700 space-y-2.5 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-sm">
+                <MdDeliveryDining size={22} className="text-amber-600 dark:text-amber-400" />
+                <span>تحديد سائق التوصيل لهذا الطلب <span className="text-red-500">*</span></span>
+              </div>
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                يلزم اختيار سائق التوصيل لتعيينه على هذا الطلب وحفظه في جدول الطلبات قبل إرسال الطلب إلى مسار (خارج للتوصيل).
+              </p>
+
+              <div>
+                <select
+                  value={selectedDeliveryId}
+                  onChange={(e) => {
+                    setSelectedDeliveryId(e.target.value ? Number(e.target.value) : '');
+                    setErrorMessage(null);
+                  }}
+                  disabled={isLoadingDeliveries}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                >
+                  <option value="">-- اختر سائق التوصيل من القائمة --</option>
+                  {deliveries.map((del) => (
+                    <option key={del.id} value={del.id}>
+                      {renderName(del.name)} (كود #{del.id})
+                    </option>
+                  ))}
+                </select>
+                {isLoadingDeliveries && (
+                  <p className="text-xs text-slate-400 mt-1">جاري تحميل قائمة السائقين...</p>
+                )}
+                {!isLoadingDeliveries && deliveries.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">لا يوجد سائقو توصيل مسجلون في النظام حالياً.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -198,7 +270,7 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={mutation.isPending || !selectedStatus || selectedStatus === order.status}
+            disabled={mutation.isPending || !selectedStatus || isSameState || (isOutOfDeliveryTransition && !selectedDeliveryId)}
             className="
               px-5 py-2.5 rounded-xl font-bold text-xs text-white
               btn-primary flex items-center gap-2 shadow-md
@@ -211,7 +283,7 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
                 <span>جاري الحفظ...</span>
               </>
             ) : (
-              <span>تأكيد تغيير الحالة</span>
+              <span>تأكيد وتحديث الحالة</span>
             )}
           </button>
         </div>

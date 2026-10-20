@@ -51,8 +51,23 @@ export const orderService = {
   },
 
   /** PUT /api/admin/orders/:orderId/status */
-  updateStatus: async (orderId: number | string, status: OrderStatus): Promise<{ status: boolean; message?: string }> => {
-    const { data } = await api.put(`/api/admin/orders/${orderId}/status`, { status });
+  updateStatus: async (
+    orderId: number | string,
+    status: OrderStatus,
+    deliveryId?: number | null
+  ): Promise<{ status: boolean; message?: string; data?: any }> => {
+    const payload: { status: OrderStatus; delivery_id?: number } = { status };
+    if (deliveryId) {
+      payload.delivery_id = deliveryId;
+    }
+    const { data } = await api.put(`/api/admin/orders/${orderId}/status`, payload);
+    return data;
+  },
+
+  /** GET /api/admin/deliveries/select */
+  getDeliveriesSelect: async (branchId?: number | null): Promise<{ status: boolean; data: Array<{ id: number; name: any }> }> => {
+    const params = branchId ? `?branch_id=${branchId}` : '';
+    const { data } = await api.get(`/api/admin/deliveries/select${params}`);
     return data;
   },
 
