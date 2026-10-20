@@ -57,7 +57,28 @@ const OrderAdd: React.FC = () => {
   const hallTables = options?.hall_tables ?? [];
   const financialAccounts = options?.financial_accounts ?? [];
   const paymentMethods = options?.payment_methods ?? [];
-  const deliveries = options?.deliveries ?? [];
+
+  // Dedicated query to ensure deliveries are always loaded even if select-options endpoint lacks it
+  const { data: dedicatedDeliveriesData, isLoading: isLoadingDeliveries } = useQuery({
+    queryKey: ['adminDeliveriesSelect', selectedBranchId],
+    queryFn: () => orderService.getDeliveriesSelect(selectedBranchId > 0 ? selectedBranchId : undefined),
+  });
+
+  const allDeliveries = useMemo(() => {
+    const fromOptions = options?.deliveries ?? [];
+    const fromDedicated = dedicatedDeliveriesData?.data ?? [];
+
+    const map = new Map<number, any>();
+    fromOptions.forEach((d: any) => d?.id && map.set(Number(d.id), d));
+    fromDedicated.forEach((d: any) => {
+      if (d?.id) {
+        const existing = map.get(Number(d.id));
+        map.set(Number(d.id), { ...existing, ...d });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [options?.deliveries, dedicatedDeliveriesData?.data]);
 
   const filteredCashiers = selectedBranchId 
     ? cashiers.filter((c: any) => c.branch_id === selectedBranchId)
@@ -79,9 +100,15 @@ const OrderAdd: React.FC = () => {
     ? financialAccounts.filter((fa: any) => !fa.branch_id || fa.branch_id === selectedBranchId)
     : financialAccounts;
 
-  const filteredDeliveries = selectedBranchId
-    ? deliveries.filter((d: any) => !d.branch_id || d.branch_id === selectedBranchId)
-    : deliveries;
+  const filteredDeliveries = useMemo(() => {
+    if (!selectedBranchId || allDeliveries.length === 0) return allDeliveries;
+
+    const matched = allDeliveries.filter((d: any) =>
+      !d.branch_id || Number(d.branch_id) === Number(selectedBranchId)
+    );
+
+    return matched.length > 0 ? matched : allDeliveries;
+  }, [allDeliveries, selectedBranchId]);
 
   // Auto-select initial options when data loads
   useEffect(() => {
@@ -530,9 +557,18 @@ const OrderAdd: React.FC = () => {
               {/* Delivery Driver (if module === 'delivery') */}
               {formData.module === 'delivery' && (
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    سائق التوصيل (Delivery Driver)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      سائق التوصيل (Delivery Driver)
+                    </label>
+                    <Link
+                      to="/dashboard/deliveries/add"
+                      target="_blank"
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      + إضافة سائق جديد
+                    </Link>
+                  </div>
                   <SearchableSelect
                     name="delivery_id"
                     value={formData.delivery_id || ''}
@@ -542,10 +578,18 @@ const OrderAdd: React.FC = () => {
                       name: renderName(d.name),
                       subtext: d.phone ? `هاتف: ${d.phone}` : undefined,
                     }))}
-                    placeholder="اختر سائق التوصيل (اختياري)..."
+                    placeholder={isLoadingDeliveries ? 'جاري تحميل السائقين...' : 'اختر سائق التوصيل (اختياري)...'}
                     searchPlaceholder="ابحث عن سائق..."
                     isClearable
                   />
+                  {!isLoadingDeliveries && filteredDeliveries.length === 0 && (
+                    <p className="text-xs text-amber-500 mt-1.5 flex items-center gap-1">
+                      <span>لا يوجد سائقو توصيل مسجلون في النظام.</span>
+                      <Link to="/dashboard/deliveries/add" className="underline font-semibold hover:text-primary">
+                        انقر هنا لإضافة سائق جديد
+                      </Link>
+                    </p>
+                  )}
                 </div>
               )}
             </div>
