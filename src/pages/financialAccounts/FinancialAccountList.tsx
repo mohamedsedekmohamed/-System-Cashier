@@ -21,6 +21,8 @@ import {
   MdDelete,
   MdVisibility,
   MdStorefront,
+  MdAttachMoney,
+  MdCreditCard,
 } from 'react-icons/md';
 
 const FinancialAccountList: React.FC = () => {
@@ -124,6 +126,21 @@ const FinancialAccountList: React.FC = () => {
           </div>
         </div>
       ),
+    },
+    {
+      header: 'النوع',
+      render: (row) =>
+        row.is_cash ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+            <MdAttachMoney size={14} className="text-emerald-500" />
+            خزينة نقدية (كاش)
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+            <MdCreditCard size={14} className="text-blue-500" />
+            بنكي / إلكتروني
+          </span>
+        ),
     },
     {
       header: 'الفرع',
@@ -271,6 +288,14 @@ const FinancialAccountList: React.FC = () => {
             { label: 'كود الحساب (ID)', value: `#${viewTarget.id}` },
             { label: 'الاسم بالعربي', value: renderName(viewTarget.name, 'ar') },
             { label: 'الاسم بالإنجليزي', value: renderName(viewTarget.name, 'en') },
+            {
+              label: 'نوع الحساب',
+              value: viewTarget.is_cash ? (
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">💵 خزينة نقدية (درج الكاشير / كاش)</span>
+              ) : (
+                <span className="font-semibold text-blue-600 dark:text-blue-400">💳 حساب بنكي / بطاقات / إلكتروني</span>
+              ),
+            },
             {
               label: 'الفرع التابع له',
               value: renderName(viewTarget.branch?.name || viewTarget.branch) || 'عام (كافة الفروع)',

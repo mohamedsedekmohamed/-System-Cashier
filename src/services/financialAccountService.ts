@@ -30,6 +30,7 @@ export const toFinancialAccountFormData = (
   }
 
   formData.append('status', payload.status ? '1' : '0');
+  formData.append('is_cash', payload.is_cash ? '1' : '0');
 
   if (method === 'PUT') {
     formData.append('_method', 'PUT');

@@ -17,6 +17,8 @@ import {
   MdSave,
   MdAccountBalance,
   MdInfoOutline,
+  MdAttachMoney,
+  MdCreditCard,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
@@ -33,6 +35,7 @@ const FinancialAccountEdit: React.FC = () => {
     balance: 0,
     status: true,
     branch_id: null,
+    is_cash: false,
   });
 
   // ── Fetch Existing Financial Account ───
@@ -69,6 +72,7 @@ const FinancialAccountEdit: React.FC = () => {
         balance: Number(account.balance || 0),
         status: account.status,
         branch_id: account.branch_id || null,
+        is_cash: Boolean(account.is_cash),
       });
     }
   }, [account]);
@@ -159,7 +163,7 @@ const FinancialAccountEdit: React.FC = () => {
               </h1>
             </div>
             <p className="text-sm text-slate-500 mt-1">
-              تحديث الاسم، الرصيد، الشعار أو ربط الحساب بفرع
+              تحديث الاسم، نوع الحساب، الرصيد، الشعار أو ربط الحساب بفرع
             </p>
           </div>
         </div>
@@ -212,6 +216,70 @@ const FinancialAccountEdit: React.FC = () => {
                 placeholder="e.g. Main Vault, CIB Account..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm"
               />
+            </div>
+          </div>
+
+          {/* Account Type Selection (is_cash) */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              نوع الحساب المالي <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, is_cash: false }))}
+                className={`flex items-start gap-3 p-4 rounded-xl border text-right transition-all ${
+                  !formData.is_cash
+                    ? 'border-primary bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-slate-300'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-lg ${
+                    !formData.is_cash
+                      ? 'bg-primary text-white'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                  }`}
+                >
+                  <MdCreditCard size={22} />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-800 dark:text-white">
+                    حساب بنكي / محفظة إلكترونية
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    حسابات البنوك وبوابات الدفع الإلكتروني (يعتبر مدفوعاً فورياً)
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, is_cash: true }))}
+                className={`flex items-start gap-3 p-4 rounded-xl border text-right transition-all ${
+                  formData.is_cash
+                    ? 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10 ring-2 ring-emerald-500/20'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-slate-300'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-lg ${
+                    formData.is_cash
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                  }`}
+                >
+                  <MdAttachMoney size={22} />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-800 dark:text-white">
+                    خزينة نقدية (درج الكاشير / Cash Vault)
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    خزينة كاش نقدي (في طلبات التوصيل يعتبر غير مدفوع لحين التحصيل)
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
 

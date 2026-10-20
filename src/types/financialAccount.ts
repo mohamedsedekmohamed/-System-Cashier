@@ -7,6 +7,7 @@ export interface FinancialAccount {
   icon: string | null;
   balance: number;
   status: boolean;
+  is_cash: boolean;
   branch_id: number | null;
   branch?: {
     id: number;
@@ -24,6 +25,7 @@ export interface FinancialAccountFormData {
   icon: File | string | null;
   balance: number;
   status: boolean;
+  is_cash: boolean;
   branch_id: number | null;
 }
 

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentMethodApi, PAYMENT_METHODS_KEY } from '../../services/paymentMethodService';
 import type { PaymentMethodFormData } from '../../types';
 import SingleImageUpload from '../../components/ui/SingleImageUpload';
-import { MdArrowForward, MdSave, MdPayment } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdPayment, MdAttachMoney, MdCreditCard } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 const PaymentMethodAdd: React.FC = () => {
@@ -17,6 +17,7 @@ const PaymentMethodAdd: React.FC = () => {
     description: { ar: '', en: '' },
     icon: null,
     status: true,
+    is_cash: false,
   });
 
   // ── Create Mutation ────────────────────
@@ -129,6 +130,50 @@ const PaymentMethodAdd: React.FC = () => {
                 dir="ltr"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none text-left"
               />
+            </div>
+
+            {/* Payment Type Selection (is_cash) */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                نوع طريقة الدفع <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, is_cash: false }))}
+                  className={`flex items-start gap-3 p-4 rounded-xl border text-right transition-all ${
+                    !formData.is_cash
+                      ? 'border-primary bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`p-2.5 rounded-lg ${!formData.is_cash ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+                    <MdCreditCard size={22} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800 dark:text-white">إلكتروني / فوري (Card / Online)</div>
+                    <div className="text-xs text-slate-500 mt-1">يُعتبر الطلب مدفوعاً فور إتمامه مباشرة</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, is_cash: true }))}
+                  className={`flex items-start gap-3 p-4 rounded-xl border text-right transition-all ${
+                    formData.is_cash
+                      ? 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10 ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`p-2.5 rounded-lg ${formData.is_cash ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+                    <MdAttachMoney size={22} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800 dark:text-white">نقدي (كاش عند الاستلام / Cash)</div>
+                    <div className="text-xs text-slate-500 mt-1">في طلبات التوصيل (Delivery) يظل الطلب غير مدفوع حتى تحصيله من السائق</div>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* Icon / Image Upload */}

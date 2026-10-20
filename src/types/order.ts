@@ -41,6 +41,12 @@ export interface Order {
   cashier_id: number | null;
   cashier_man_id: number | null;
   hall_table_id: number | null;
+  financial_account_id?: number | null;
+  financial_account?: any | null;
+  delivery_id?: number | null;
+  delivery?: any | null;
+  payment_method_id?: number | null;
+  payment_method?: any | null;
   module: OrderModule | string;
   status?: OrderStatus;
   address: string | null;
@@ -48,6 +54,7 @@ export interface Order {
   phone: string | null;
   name: string | null;
   is_pos: boolean;
+  paid: boolean;
   total: number;
   total_tax: number;
   total_discount: number;
@@ -62,12 +69,16 @@ export interface OrderFormData {
   cashier_id: number;
   cashier_man_id: number;
   hall_table_id: number | null;
+  financial_account_id?: number | null;
+  delivery_id?: number | null;
+  payment_method_id?: number | null;
   module: string;
   address: string;
   note: string;
   phone: string;
   name: string;
   is_pos: boolean;
+  paid?: boolean;
   total: number;
   total_tax: number;
   total_discount: number;
@@ -81,6 +92,9 @@ export interface OrderSelectOptions {
   cashiers: any[];
   cashier_men: any[];
   hall_tables: any[];
+  financial_accounts?: any[];
+  payment_methods?: any[];
+  deliveries?: any[];
   products: any[];
   addons: any[];
 }

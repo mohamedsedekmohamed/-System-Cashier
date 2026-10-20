@@ -5,7 +5,7 @@ import { orderService, ORDERS_KEY } from '../../services/orderService';
 import type { OrderFormData, OrderProduct } from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
-import { MdArrowForward, MdSave, MdAddShoppingCart, MdDelete, MdAdd } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdAddShoppingCart, MdDelete, MdAdd, MdStore, MdLanguage, MdCreditCard, MdAttachMoney, MdDeliveryDining } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { renderName } from '../../utils/helpers';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
@@ -31,6 +31,9 @@ const OrderAdd: React.FC = () => {
     phone: '',
     name: '',
     is_pos: true,
+    financial_account_id: null,
+    payment_method_id: null,
+    delivery_id: null,
     total: 0,
     total_tax: 0,
     total_discount: 0,
@@ -52,6 +55,9 @@ const OrderAdd: React.FC = () => {
   const shifts = options?.shifts ?? [];
   const cashierMen = options?.cashier_men ?? [];
   const hallTables = options?.hall_tables ?? [];
+  const financialAccounts = options?.financial_accounts ?? [];
+  const paymentMethods = options?.payment_methods ?? [];
+  const deliveries = options?.deliveries ?? [];
 
   const filteredCashiers = selectedBranchId 
     ? cashiers.filter((c: any) => c.branch_id === selectedBranchId)
@@ -69,6 +75,14 @@ const OrderAdd: React.FC = () => {
     ? hallTables.filter((t: any) => t.branch_id === selectedBranchId)
     : hallTables;
 
+  const filteredFinancialAccounts = selectedBranchId
+    ? financialAccounts.filter((fa: any) => !fa.branch_id || fa.branch_id === selectedBranchId)
+    : financialAccounts;
+
+  const filteredDeliveries = selectedBranchId
+    ? deliveries.filter((d: any) => !d.branch_id || d.branch_id === selectedBranchId)
+    : deliveries;
+
   // Auto-select initial options when data loads
   useEffect(() => {
     if (options) {
@@ -79,12 +93,16 @@ const OrderAdd: React.FC = () => {
         
         const matchingShift = shifts.find((s: any) => s.branch_id === bId) || shifts[0];
         const matchingMan = cashierMen.find((m: any) => m.branch_id === bId) || cashierMen[0];
+        const matchingFa = financialAccounts.find((fa: any) => !fa.branch_id || fa.branch_id === bId) || financialAccounts[0];
+        const matchingPm = paymentMethods[0];
         
         setFormData(prev => ({
           ...prev,
           cashier_id: firstCashier.id,
           shift_id: matchingShift ? matchingShift.id : prev.shift_id,
           cashier_man_id: matchingMan ? matchingMan.id : prev.cashier_man_id,
+          financial_account_id: prev.financial_account_id || (matchingFa ? matchingFa.id : null),
+          payment_method_id: prev.payment_method_id || (matchingPm ? matchingPm.id : null),
         }));
       }
     }
@@ -286,8 +304,22 @@ const OrderAdd: React.FC = () => {
       return;
     }
 
+    if (formData.is_pos && (!formData.financial_account_id || formData.financial_account_id === 0)) {
+      setValidationError('يرجى اختيار الحساب المالي (الخزينة) لطلبات نقطة البيع (POS).');
+      return;
+    }
+
+    if (!formData.is_pos && (!formData.payment_method_id || formData.payment_method_id === 0)) {
+      setValidationError('يرجى اختيار طريقة الدفع للطلبات الأونلاين.');
+      return;
+    }
+
     const payload: OrderFormData = {
       ...formData,
+      is_pos: formData.is_pos,
+      financial_account_id: formData.is_pos && formData.financial_account_id ? Number(formData.financial_account_id) : null,
+      payment_method_id: !formData.is_pos && formData.payment_method_id ? Number(formData.payment_method_id) : null,
+      delivery_id: formData.module === 'delivery' && formData.delivery_id ? Number(formData.delivery_id) : null,
       cashier_id: Number(formData.cashier_id),
       shift_id: Number(formData.shift_id),
       cashier_man_id: Number(formData.cashier_man_id),
@@ -393,6 +425,163 @@ const OrderAdd: React.FC = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">ملاحظات الطلب</label>
               <textarea name="note" value={formData.note} onChange={handleChange} placeholder="أي ملاحظات عامة للطلب..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none" rows={2}></textarea>
+            </div>
+          </div>
+
+          {/* Payment & Delivery Details */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
+              تفاصيل الدفع والتسليم
+            </h2>
+
+            {/* POS vs Online Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                نوع القناة (نقطة بيع أم أونلاين)
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, is_pos: true }))}
+                  className={`flex items-center gap-3 p-3.5 rounded-xl border text-right transition-all ${
+                    formData.is_pos
+                      ? 'border-primary bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-slate-50 dark:bg-slate-900/50'
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg ${formData.is_pos ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
+                    <MdStore size={20} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm text-slate-800 dark:text-white">نقطة بيع (POS)</div>
+                    <div className="text-xs text-slate-500">يتطلب تحديد الخزينة / الحساب المالي</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, is_pos: false }))}
+                  className={`flex items-center gap-3 p-3.5 rounded-xl border text-right transition-all ${
+                    !formData.is_pos
+                      ? 'border-primary bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-slate-50 dark:bg-slate-900/50'
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg ${!formData.is_pos ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
+                    <MdLanguage size={20} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm text-slate-800 dark:text-white">طلب أونلاين (Online)</div>
+                    <div className="text-xs text-slate-500">يتطلب تحديد طريقة الدفع الإلكتروني أو الكاش</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Financial Account (if POS) */}
+              {formData.is_pos ? (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                    الحساب المالي (الخزينة) <span className="text-red-500">*</span>
+                  </label>
+                  <SearchableSelect
+                    name="financial_account_id"
+                    value={formData.financial_account_id || ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, financial_account_id: Number(val) || null }))}
+                    required
+                    options={filteredFinancialAccounts.map((fa: any) => ({
+                      id: fa.id,
+                      name: renderName(fa.name),
+                      subtext: fa.is_cash ? '💵 خزينة نقدية (كاش)' : '💳 بنكي / إلكتروني',
+                    }))}
+                    placeholder="اختر الحساب المالي (الخزينة)..."
+                    searchPlaceholder="ابحث عن الخزينة..."
+                  />
+                  {filteredFinancialAccounts.length === 0 && (
+                    <p className="text-xs text-amber-500 mt-1">لا توجد حسابات مالية متاحة لهذا الفرع</p>
+                  )}
+                </div>
+              ) : (
+                /* Payment Method (if Online) */
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                    طريقة الدفع <span className="text-red-500">*</span>
+                  </label>
+                  <SearchableSelect
+                    name="payment_method_id"
+                    value={formData.payment_method_id || ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, payment_method_id: Number(val) || null }))}
+                    required
+                    options={paymentMethods.map((pm: any) => ({
+                      id: pm.id,
+                      name: renderName(pm.name),
+                      subtext: pm.is_cash ? '💵 دفع نقدي (كاش)' : '💳 دفع إلكتروني / بطاقة',
+                    }))}
+                    placeholder="اختر طريقة الدفع..."
+                    searchPlaceholder="ابحث عن طريقة الدفع..."
+                  />
+                  {paymentMethods.length === 0 && (
+                    <p className="text-xs text-amber-500 mt-1">لا توجد طرق دفع متاحة</p>
+                  )}
+                </div>
+              )}
+
+              {/* Delivery Driver (if module === 'delivery') */}
+              {formData.module === 'delivery' && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                    سائق التوصيل (Delivery Driver)
+                  </label>
+                  <SearchableSelect
+                    name="delivery_id"
+                    value={formData.delivery_id || ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, delivery_id: Number(val) || null }))}
+                    options={filteredDeliveries.map((d: any) => ({
+                      id: d.id,
+                      name: renderName(d.name),
+                      subtext: d.phone ? `هاتف: ${d.phone}` : undefined,
+                    }))}
+                    placeholder="اختر سائق التوصيل (اختياري)..."
+                    searchPlaceholder="ابحث عن سائق..."
+                    isClearable
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Live Payment Status Banner */}
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+              {(() => {
+                const selectedAccount = financialAccounts.find((fa: any) => fa.id === formData.financial_account_id);
+                const selectedMethod = paymentMethods.find((pm: any) => pm.id === formData.payment_method_id);
+                const isCash = formData.is_pos ? Boolean(selectedAccount?.is_cash) : Boolean(selectedMethod?.is_cash);
+                const isDelivery = formData.module === 'delivery';
+                const willBePaid = !(isCash && isDelivery);
+
+                return (
+                  <div className={`p-3.5 rounded-xl border text-xs flex items-center justify-between ${
+                    willBePaid
+                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                      : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+                  }`}>
+                    <div className="flex items-center gap-2.5">
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${willBePaid ? 'bg-emerald-500' : 'bg-amber-500 animate-ping'}`} />
+                      <div>
+                        <span className="font-bold">حالة الدفع المقررة للطلب: </span>
+                        <span>
+                          {willBePaid
+                            ? 'مدفوع بالكامل فور الإنشاء'
+                            : 'غير مدفوع (مطلوب تحصيل كاش عند تسليم الطلب للعميل)'}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="font-semibold px-2 py-0.5 rounded-md bg-white/60 dark:bg-black/20 text-[11px]">
+                      {isCash ? '💵 وسيلة نقدية' : '💳 وسيلة إلكترونية'}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

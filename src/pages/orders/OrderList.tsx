@@ -194,6 +194,22 @@ const OrderList: React.FC = () => {
       },
     },
     {
+      header: 'حالة الدفع',
+      render: (row) => (
+        row.paid ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            مدفوع
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            غير مدفوع (تحصيل)
+          </span>
+        )
+      ),
+    },
+    {
       header: 'الإجمالي',
       render: (row) => (
         <div className="text-right">
@@ -528,6 +544,34 @@ const OrderList: React.FC = () => {
           { label: 'رقم الهاتف', value: viewTarget?.phone || '—' },
           { label: 'العنوان', value: viewTarget?.address || '—' },
           { label: 'النوع', value: viewTarget?.is_pos ? 'نقطة بيع (POS)' : 'أونلاين' },
+          {
+            label: 'حالة الدفع',
+            value: viewTarget ? (
+              viewTarget.paid ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  مدفوع بالكامل
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  غير مدفوع (مطلوب تحصيل نقدي)
+                </span>
+              )
+            ) : null,
+          },
+          {
+            label: 'طريقة الدفع',
+            value: renderName((viewTarget as any)?.payment_method?.name) || '—',
+          },
+          {
+            label: 'الحساب المالي (الخزينة)',
+            value: renderName((viewTarget as any)?.financial_account?.name) || '—',
+          },
+          {
+            label: 'مندوب التوصيل (Delivery)',
+            value: renderName((viewTarget as any)?.delivery?.name) || '—',
+          },
           { label: 'طريقة الطلب', value: viewTarget?.module || '—' },
           { label: 'الوردية', value: renderName((viewTarget as any)?.shift?.name) || '—' },
           { label: 'الكاشير', value: renderName((viewTarget as any)?.cashier?.name) || '—' },

@@ -10,7 +10,7 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
-import { MdPayment, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { MdPayment, MdEdit, MdDelete, MdVisibility, MdAttachMoney, MdCreditCard } from 'react-icons/md';
 
 const PaymentMethodList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -47,6 +47,7 @@ const PaymentMethodList: React.FC = () => {
         description: method.description,
         icon: method.icon,
         status: !method.status,
+        is_cash: method.is_cash,
       };
       return paymentMethodApi.update(method.id, payload);
     },
@@ -108,6 +109,22 @@ const PaymentMethodList: React.FC = () => {
           </div>
         );
       }
+    },
+    {
+      header: 'النوع',
+      render: (row) => (
+        row.is_cash ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+            <MdAttachMoney size={14} className="text-emerald-500" />
+            نقدي (كاش)
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+            <MdCreditCard size={14} className="text-blue-500" />
+            إلكتروني (بطاقة)
+          </span>
+        )
+      )
     },
     {
       header: 'الوصف',
@@ -195,6 +212,14 @@ const PaymentMethodList: React.FC = () => {
           { label: 'الرقم التعريفي', value: viewTarget?.id },
           { label: 'الاسم (عربي)', value: viewTarget?.name?.ar },
           { label: 'الاسم (إنجليزي)', value: viewTarget?.name?.en },
+          {
+            label: 'نوع الطريقة',
+            value: viewTarget?.is_cash ? (
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">💵 نقدي (كاش عند الاستلام)</span>
+            ) : (
+              <span className="font-semibold text-blue-600 dark:text-blue-400">💳 إلكتروني / فوري</span>
+            )
+          },
           { label: 'الوصف (عربي)', value: viewTarget?.description?.ar || '—' },
           { 
             label: 'الأيقونة', 
