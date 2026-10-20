@@ -6,6 +6,7 @@ import { MATERIALS_KEY } from '../../services/materialService';
 import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
 import { SUPPLIERS_KEY } from '../../services/supplierService';
 import { SALES_SELECT_OPTIONS_KEY } from '../../services/saleService';
+import { MATERIAL_INVENTORY_KEY } from '../../services/materialInventoryService';
 import type { PurchaseFormData, PurchaseItemPayload } from '../../types';
 import {
   MdArrowForward,
@@ -114,7 +115,7 @@ export const PurchaseAdd: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [MATERIALS_KEY] });
       queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
       queryClient.invalidateQueries({ queryKey: [SUPPLIERS_KEY] });
-      queryClient.invalidateQueries({ queryKey: ['material_inventory'] });
+      queryClient.invalidateQueries({ queryKey: [MATERIAL_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
       queryClient.invalidateQueries({ queryKey: [SALES_SELECT_OPTIONS_KEY] });
       navigate('/dashboard/purchases');

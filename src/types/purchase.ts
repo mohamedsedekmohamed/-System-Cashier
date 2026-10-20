@@ -1,7 +1,6 @@
 import type { PaginatedMeta, DueItemPayload } from './common';
 import type { Branch, BranchOption } from './branch';
 
-
 export interface PurchaseSelectMaterial {
   id: number;
   name: string;
@@ -122,7 +121,6 @@ export interface PurchaseItemPayload {
   cost: number;
 }
 
-
 export interface PurchaseFormData {
   branch_id: number;
   supplier_id?: number | null;
@@ -134,4 +132,3 @@ export interface PurchaseFormData {
   notes?: string;
   items: PurchaseItemPayload[];
 }
-
