@@ -5,7 +5,7 @@ import { orderService, ORDERS_KEY } from '../../services/orderService';
 import type { OrderFormData, OrderProduct } from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
-import { MdArrowForward, MdSave, MdAddShoppingCart, MdDelete, MdAdd, MdStore, MdLanguage, MdCreditCard, MdAttachMoney, MdDeliveryDining } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdAddShoppingCart, MdDelete, MdAdd, MdStore, MdLanguage } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { renderName } from '../../utils/helpers';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
