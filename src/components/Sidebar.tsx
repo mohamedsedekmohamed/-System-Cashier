@@ -42,39 +42,40 @@ interface NavItem {
   label: string;
   path: string;
   icon: React.ReactElement;
+  keywords?: string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'الرئيسية', path: '/dashboard', icon: <MdDashboard size={20} /> },
-  { label: 'الفروع', path: '/dashboard/branches', icon: <MdStorefront size={20} /> },
-  { label: 'المديرين', path: '/dashboard/admins', icon: <MdAdminPanelSettings size={20} /> },
-  { label: 'الكاشير', path: '/dashboard/cashiers', icon: <MdPointOfSale size={20} /> },
-  { label: 'موظفي الكاشير', path: '/dashboard/cashier-men', icon: <MdPeople size={20} /> },
-  { label: 'الورديات', path: '/dashboard/shifts', icon: <MdSchedule size={20} /> },
-  { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} /> },
-  { label: 'التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} /> },
-  { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} /> },
-  { label: 'الحسابات المالية', path: '/dashboard/financial-accounts', icon: <MdAccountBalance size={20} /> },
-  { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} /> },
-  { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableRestaurant size={20} /> },
-  { label: 'الطلبات', path: '/dashboard/orders', icon: <MdReceipt size={20} /> },
-  { label: 'المطابخ', path: '/dashboard/kitchens', icon: <MdSoupKitchen size={20} /> },
-  { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} /> },
-  { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} /> },
-  { label: 'منتجات غير منتهية التصنيع', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} /> },
-  { label: 'معايير تصنيع المنتجات', path: '/dashboard/product-manufacturings', icon: <MdSchema size={20} /> },
-  { label: 'أوامر وقوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} /> },
-  { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} /> },
-  { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} /> },
-  { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} /> },
-  { label: 'المبيعات', path: '/dashboard/sales', icon: <MdPointOfSale size={20} /> },
-  { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} /> },
-  { label: 'الموزعين / العملاء', path: '/dashboard/salers', icon: <MdStorefront size={20} /> },
-  { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} /> },
-  { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} /> },
-  { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} /> },
-  { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} /> },
-  { label: 'الإعدادات', path: '/dashboard/settings', icon: <MdSettings size={20} /> },
+  { label: 'الرئيسية', path: '/dashboard', icon: <MdDashboard size={20} />, keywords: ['داشبورد', 'احصائيات', 'مبيعات'] },
+  { label: 'الفروع', path: '/dashboard/branches', icon: <MdStorefront size={20} />, keywords: ['فرع', 'مطعم'] },
+  { label: 'المديرين', path: '/dashboard/admins', icon: <MdAdminPanelSettings size={20} />, keywords: ['ادمن', 'مسؤول', 'صلاحيات'] },
+  { label: 'الكاشير', path: '/dashboard/cashiers', icon: <MdPointOfSale size={20} />, keywords: ['جهاز', 'نقطة بيع', 'pos'] },
+  { label: 'موظفي الكاشير', path: '/dashboard/cashier-men', icon: <MdPeople size={20} />, keywords: ['كاشيرجي', 'كاشير', 'موظف'] },
+  { label: 'الورديات', path: '/dashboard/shifts', icon: <MdSchedule size={20} />, keywords: ['شيفت', 'دوام'] },
+  { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} />, keywords: ['تقارير', 'شيفتات', 'اغلاق'] },
+  { label: 'مناديب التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} />, keywords: ['توصيل', 'دليفري', 'طيار', 'طيارين', 'سائق', 'سائقين', 'مندوب', 'مناديب', 'كابتن', 'كباتن'] },
+  { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} />, keywords: ['مصاريف', 'نفقات'] },
+  { label: 'الحسابات المالية', path: '/dashboard/financial-accounts', icon: <MdAccountBalance size={20} />, keywords: ['خزنة', 'بنك', 'درج', 'مالية'] },
+  { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} />, keywords: ['صالة', 'غرفة'] },
+  { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableRestaurant size={20} />, keywords: ['طاولة', 'ترابيزة'] },
+  { label: 'الطلبات', path: '/dashboard/orders', icon: <MdReceipt size={20} />, keywords: ['اوردر', 'اوردرات', 'فواتير'] },
+  { label: 'المطابخ', path: '/dashboard/kitchens', icon: <MdSoupKitchen size={20} />, keywords: ['مطبخ', 'شيف'] },
+  { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} />, keywords: ['تصنيف', 'قسم', 'منيو'] },
+  { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} />, keywords: ['وجبات', 'اصناف', 'اكل'] },
+  { label: 'منتجات غير منتهية التصنيع', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} />, keywords: ['نصف مصنعة', 'تجهيز'] },
+  { label: 'معايير تصنيع المنتجات', path: '/dashboard/product-manufacturings', icon: <MdSchema size={20} />, keywords: ['معيار', 'وصفة', 'رسبي'] },
+  { label: 'أوامر وقوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} />, keywords: ['تشغيل', 'انتاج'] },
+  { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} />, keywords: ['مخزن', 'خامات'] },
+  { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'تسوية'] },
+  { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} />, keywords: ['فواتير شراء', 'شراء'] },
+  { label: 'المبيعات', path: '/dashboard/sales', icon: <MdPointOfSale size={20} />, keywords: ['فواتير بيع', 'بيع'] },
+  { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} />, keywords: ['تجار', 'توريد'] },
+  { label: 'الموزعين / العملاء', path: '/dashboard/salers', icon: <MdStorefront size={20} />, keywords: ['عميل', 'زبون'] },
+  { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} />, keywords: ['تخفيض', 'كوبون'] },
+  { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} />, keywords: ['ضريبة', 'قيمة مضافة'] },
+  { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} />, keywords: ['هدر', 'تالف'] },
+  { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} />, keywords: ['كاش', 'فيزا', 'دفع'] },
+  { label: 'الإعدادات', path: '/dashboard/settings', icon: <MdSettings size={20} />, keywords: ['ضبط', 'لوجو'] },
 ];
 
 const normalizeArabic = (str: string) =>
@@ -88,17 +89,20 @@ const normalizeArabic = (str: string) =>
     .replace(/[\u064B-\u065F]/g, '')
     .trim();
 
-const matchesSearch = (label: string, query: string) => {
-  const q = normalizeArabic(query);
-  if (!q) return true;
-  const l = normalizeArabic(label);
-
+const matchesArabicText = (text: string, q: string) => {
+  const l = normalizeArabic(text);
   if (l.includes(q)) return true;
-
   const qNoAl = q.startsWith('ال') ? q.slice(2) : q;
   const lNoAl = l.startsWith('ال') ? l.slice(2) : l;
-
   return l.includes(qNoAl) || lNoAl.includes(qNoAl) || lNoAl.includes(q);
+};
+
+const matchesSearch = (item: NavItem, query: string) => {
+  const q = normalizeArabic(query);
+  if (!q) return true;
+  if (matchesArabicText(item.label, q)) return true;
+  if (item.keywords?.some((k) => matchesArabicText(k, q))) return true;
+  return false;
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
@@ -106,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const filteredItems = useMemo(() => {
-    return NAV_ITEMS.filter((item) => matchesSearch(item.label, searchQuery));
+    return NAV_ITEMS.filter((item) => matchesSearch(item, searchQuery));
   }, [searchQuery]);
 
   return (
