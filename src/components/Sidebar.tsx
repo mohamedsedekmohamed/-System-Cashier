@@ -31,6 +31,7 @@ import {
   MdDiscount,
   MdAccountBalance,
   MdSchema,
+  MdExtension,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -62,11 +63,13 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'المطابخ', path: '/dashboard/kitchens', icon: <MdSoupKitchen size={20} />, keywords: ['مطبخ', 'شيف'] },
   { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} />, keywords: ['تصنيف', 'قسم', 'منيو'] },
   { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} />, keywords: ['وجبات', 'اصناف', 'اكل'] },
+  { label: 'الإضافات', path: '/dashboard/addons', icon: <MdExtension size={20} />, keywords: ['اضافات', 'اضافة', 'توبنج', 'جبن', 'صوص', 'addon', 'addons'] },
   { label: 'منتجات غير منتهية التصنيع', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} />, keywords: ['نصف مصنعة', 'تجهيز'] },
   { label: 'معايير تصنيع المنتجات', path: '/dashboard/product-manufacturings', icon: <MdSchema size={20} />, keywords: ['معيار', 'وصفة', 'رسبي'] },
   { label: 'أوامر وقوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} />, keywords: ['تشغيل', 'انتاج'] },
   { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} />, keywords: ['مخزن', 'خامات'] },
   { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'تسوية'] },
+  { label: 'جرد وصفات التصنيع', path: '/dashboard/recipe-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'وصفات', 'نصف مصنعة', 'تجهيز', 'recipe inventory', 'جرد الوصفات'] },
   { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} />, keywords: ['فواتير شراء', 'شراء'] },
   { label: 'المبيعات', path: '/dashboard/sales', icon: <MdPointOfSale size={20} />, keywords: ['فواتير بيع', 'بيع'] },
   { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} />, keywords: ['تجار', 'توريد'] },

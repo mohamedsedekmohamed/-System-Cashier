@@ -277,6 +277,15 @@ export const NAVIGATION_PAGES: NavigationPageItem[] = [
     keywords: ['جرد', 'مخزون', 'جرد المواد الخام', 'حصر المخزن', 'ارصدة الخامات', 'مستودع'],
   },
   {
+    id: 'recipe-inventory',
+    title: 'جرد وصفات التصنيع والمنتجات نصف المصنعة',
+    category: 'المخزون والجرد',
+    actionType: 'inventory',
+    path: '/dashboard/recipe-inventory',
+    description: 'حصر ومطابقة الأرصدة الدفترية والفعلية لتجهيزات المطبخ والوصفات الجاهزة وتسجيل الفروقات',
+    keywords: ['جرد', 'وصفات', 'جرد الوصفات', 'نصف مصنعة', 'تجهيزات', 'حصر الوصفات', 'مطبخ'],
+  },
+  {
     id: 'waste-add',
     title: 'تسجيل هالك وتوالف',
     category: 'الهالك والتوالف',
@@ -491,6 +500,26 @@ export const NAVIGATION_PAGES: NavigationPageItem[] = [
     path: '/dashboard/discounts',
     description: 'استعراض جميع الخصومات والعروض الترويجية، تعديل النسب والقيم وتفعيل أو إيقاف الخصومات',
     keywords: ['خصومات', 'الخصومات', 'تخفيضات', 'عروض', 'discounts', 'discount', 'قائمة الخصومات'],
+  },
+
+  // ── الإضافات ──
+  {
+    id: 'addon-add',
+    title: 'إضافة إضافة جديدة (Addon)',
+    category: 'الإضافات',
+    actionType: 'add',
+    path: '/dashboard/addons/add',
+    description: 'تعريف وتخصيص إضافات الوجبات والأطعمة (جبن، صوصات، مكملات) وتحديد السعر والمطبخ والضريبة',
+    keywords: ['اضافة جديدة', 'اضافات', 'مكملات', 'توبنج', 'صوص', 'جبنة', 'addon', 'addons', 'اضافه'],
+  },
+  {
+    id: 'addon-list',
+    title: 'قائمة وإدارة الإضافات (Addons)',
+    category: 'الإضافات',
+    actionType: 'list',
+    path: '/dashboard/addons',
+    description: 'عرض جميع إضافات الأطعمة والخيارات الإضافية، تعديل الأسعار، ومتابعة المطابخ والضرائب المرتبطة',
+    keywords: ['اضافات', 'قائمة الاضافات', 'مكملات الوجبات', 'توبنج', 'صوصات', 'addon', 'addons'],
   },
 
   // ── الضرائب وطرق الدفع ──

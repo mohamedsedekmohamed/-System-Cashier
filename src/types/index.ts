@@ -30,3 +30,5 @@ export * from './discount';
 export * from './financialAccount';
 export * from './saler';
 export * from './sale';
+export * from './addon';
+export * from './recipeInventory';

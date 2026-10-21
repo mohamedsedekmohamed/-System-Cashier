@@ -98,6 +98,11 @@ import ProductList from './pages/products/ProductList';
 import ProductAdd from './pages/products/ProductAdd';
 import ProductEdit from './pages/products/ProductEdit';
 
+// Addons
+import AddonList from './pages/addons/AddonList';
+import AddonAdd from './pages/addons/AddonAdd';
+import AddonEdit from './pages/addons/AddonEdit';
+
 // Product Recipes
 import ProductRecipeList from './pages/productRecipes/ProductRecipeList';
 import ProductRecipeAdd from './pages/productRecipes/ProductRecipeAdd';
@@ -139,6 +144,10 @@ import SalerEdit from './pages/salers/SalerEdit';
 // Material Inventory
 import MaterialInventoryList from './pages/materialInventory/MaterialInventoryList';
 import MaterialInventoryDetail from './pages/materialInventory/MaterialInventoryDetail';
+
+// Recipe Inventory
+import RecipeInventoryList from './pages/recipeInventory/RecipeInventoryList';
+import RecipeInventoryDetail from './pages/recipeInventory/RecipeInventoryDetail';
 
 // Reports
 import StartShiftReportPage from './pages/reports/StartShiftReportPage';
@@ -242,6 +251,11 @@ function App() {
                   <Route path="material-inventory/:id" element={<MaterialInventoryDetail />} />
                   <Route path="inventory/materials" element={<Navigate to="/dashboard/material-inventory" replace />} />
 
+                  {/* Recipe Inventory — جرد وصفات التصنيع */}
+                  <Route path="recipe-inventory" element={<RecipeInventoryList />} />
+                  <Route path="recipe-inventory/:id" element={<RecipeInventoryDetail />} />
+                  <Route path="inventory/recipes" element={<Navigate to="/dashboard/recipe-inventory" replace />} />
+
                   {/* Payment Methods — full CRUD */}
                   <Route path="payment-methods" element={<PaymentMethodList />} />
                   <Route path="payment-methods/add" element={<PaymentMethodAdd />} />
@@ -256,6 +270,11 @@ function App() {
                   <Route path="products" element={<ProductList />} />
                   <Route path="products/add" element={<ProductAdd />} />
                   <Route path="products/edit/:id" element={<ProductEdit />} />
+
+                  {/* Addons — full CRUD */}
+                  <Route path="addons" element={<AddonList />} />
+                  <Route path="addons/add" element={<AddonAdd />} />
+                  <Route path="addons/edit/:id" element={<AddonEdit />} />
 
                   {/* Product Recipes — full CRUD */}
                   <Route path="product-recipes" element={<ProductRecipeList />} />
