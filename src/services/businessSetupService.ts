@@ -18,6 +18,12 @@ export const formatTimePattern = (time?: string | null): string | null => {
   return trimmed.substring(0, 5);
 };
 
+export const formatIntegerOrNull = (val: any): number | null => {
+  if (val === null || val === undefined || val === '') return null;
+  const num = parseInt(String(val), 10);
+  return isNaN(num) ? null : num;
+};
+
 export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 'PUT'): FormData => {
   const formData = new FormData();
   formData.append('name', payload.name || '');
@@ -40,6 +46,15 @@ export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 
   const endDay = formatTimePattern(payload.end_day);
   if (endDay) {
     formData.append('end_day', endDay);
+  }
+
+  if (payload.has_gift !== undefined && payload.has_gift !== null) {
+    formData.append('has_gift', payload.has_gift ? '1' : '0');
+  }
+
+  const priceGift = formatIntegerOrNull(payload.price_gift);
+  if (priceGift !== null) {
+    formData.append('price_gift', String(priceGift));
   }
 
   if (payload.logo instanceof File) {
@@ -71,6 +86,8 @@ export const toBusinessSetupJson = (payload: BusinessSetupPayload): Record<strin
     start_day: formatTimePattern(payload.start_day),
     end_day: formatTimePattern(payload.end_day),
     logo: typeof payload.logo === 'string' ? payload.logo.trim() : '',
+    has_gift: payload.has_gift !== undefined && payload.has_gift !== null ? Boolean(payload.has_gift) : null,
+    price_gift: formatIntegerOrNull(payload.price_gift),
   };
   return json;
 };

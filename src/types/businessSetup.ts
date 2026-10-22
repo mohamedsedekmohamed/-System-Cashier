@@ -12,6 +12,8 @@ export interface BusinessSetup {
   table_order_url?: string;
   start_day?: string | null;
   end_day?: string | null;
+  has_gift?: boolean | null;
+  price_gift?: number | null;
   is_open?: boolean;
   is_overnight?: boolean;
   working_hours_text?: string;
@@ -31,6 +33,8 @@ export interface BusinessSetupPayload {
   branch_cover?: number | null;
   start_day?: string | null;
   end_day?: string | null;
+  has_gift?: boolean | null;
+  price_gift?: number | null;
 }
 
 export interface BusinessSetupResponse {

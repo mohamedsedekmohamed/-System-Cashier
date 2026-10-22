@@ -25,6 +25,8 @@ import {
   MdRadar,
   MdContentCopy,
   MdTableBar,
+  MdCardGiftcard,
+  MdClose,
 } from 'react-icons/md';
 import { FaFacebook, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
@@ -55,6 +57,8 @@ const BusinessSetupPage: React.FC = () => {
     branch_cover: 0,
     start_day: '09:00',
     end_day: '03:00',
+    has_gift: false,
+    price_gift: null,
   });
 
   // ── File Upload States ─────────────────
@@ -94,6 +98,11 @@ const BusinessSetupPage: React.FC = () => {
         logo: initialLogo,
         start_day: setupData.start_day ? setupData.start_day.substring(0, 5) : '09:00',
         end_day: setupData.end_day ? setupData.end_day.substring(0, 5) : '03:00',
+        has_gift: setupData.has_gift ?? false,
+        price_gift:
+          setupData.price_gift !== null && setupData.price_gift !== undefined
+            ? Number(setupData.price_gift)
+            : null,
       });
 
       setLogoFile(null);
@@ -210,6 +219,11 @@ const BusinessSetupPage: React.FC = () => {
       logo: finalLogo,
       start_day: formData.start_day || '09:00',
       end_day: formData.end_day || '03:00',
+      has_gift: formData.has_gift ?? false,
+      price_gift:
+        typeof formData.price_gift === 'number' && !isNaN(formData.price_gift)
+          ? Math.round(formData.price_gift)
+          : null,
     });
   };
 
@@ -232,6 +246,11 @@ const BusinessSetupPage: React.FC = () => {
         logo: initialLogo,
         start_day: setupData.start_day ? setupData.start_day.substring(0, 5) : '09:00',
         end_day: setupData.end_day ? setupData.end_day.substring(0, 5) : '03:00',
+        has_gift: setupData.has_gift ?? false,
+        price_gift:
+          setupData.price_gift !== null && setupData.price_gift !== undefined
+            ? Number(setupData.price_gift)
+            : null,
       });
 
       setLogoFile(null);
@@ -249,6 +268,8 @@ const BusinessSetupPage: React.FC = () => {
         branch_cover: 0,
         start_day: '09:00',
         end_day: '03:00',
+        has_gift: false,
+        price_gift: null,
       });
       setLogoFile(null);
       setLogoPreviewUrl('');
@@ -563,7 +584,170 @@ const BusinessSetupPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 3. Restaurant Working Hours & Overnight Shifts Section */}
+            {/* 3. Gift Promotion Section (has_gift & price_gift) */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-3 text-slate-800 dark:text-white">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs">
+                    <MdCardGiftcard size={22} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-bold text-base">عروض الهدايا الترويجية للطلبات (Gift Promotion)</h2>
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        has_gift &amp; price_gift
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      تفعيل ميزة تقديم صنف أو وجبة هدية مع الطلبات وتحديد سعرها الرمزي للعملاء
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status Pill */}
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-colors ${
+                    formData.has_gift
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-400 border border-slate-200 dark:border-slate-600'
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      formData.has_gift ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                    }`}
+                  />
+                  <span>{formData.has_gift ? 'عرض الهدية مفعّل' : 'عرض الهدية معطّل'}</span>
+                </span>
+              </div>
+
+              {/* Toggle Switch Card */}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="has_gift_toggle"
+                      className="text-sm font-bold text-slate-800 dark:text-slate-200 cursor-pointer"
+                    >
+                      تفعيل عرض الهدية الترويجي (has_gift)
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-mono">(boolean)</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    عند التفعيل، يتم تمكين إضافة الصنف الهدية للطلبات وإتاحتها للعملاء في السلة وفقاً لقواعد العرض
+                  </p>
+                </div>
+
+                {/* Switch Button */}
+                <button
+                  type="button"
+                  id="has_gift_toggle"
+                  role="switch"
+                  aria-checked={Boolean(formData.has_gift)}
+                  onClick={() =>
+                    setFormData((prev) => {
+                      const nextHasGift = !prev.has_gift;
+                      return {
+                        ...prev,
+                        has_gift: nextHasGift,
+                        price_gift: nextHasGift ? (prev.price_gift ?? 1) : prev.price_gift,
+                      };
+                    })
+                  }
+                  className={`relative flex h-8 w-14 items-center rounded-full p-1 transition-all duration-300 cursor-pointer ${
+                    formData.has_gift ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                  }`}
+                >
+                  <span
+                    className={`absolute flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md transition-all duration-300 ${
+                      formData.has_gift ? 'translate-x-0' : '-translate-x-6'
+                    }`}
+                  >
+                    {formData.has_gift ? (
+                      <MdCheck size={14} className="text-emerald-500" />
+                    ) : (
+                      <MdClose size={14} className="text-slate-400" />
+                    )}
+                  </span>
+                </button>
+              </div>
+
+              {/* Price Gift Field */}
+              <div className={`space-y-3 transition-opacity duration-200 ${formData.has_gift ? 'opacity-100' : 'opacity-60'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      سعر عنصر الهدية (price_gift)
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-mono">(integer or null)</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">قيمة عددية صحيحة (مثال: 1 أو 0)</span>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="price_gift"
+                    min={0}
+                    step={1}
+                    value={formData.price_gift ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        price_gift: val === '' ? null : Math.round(Number(val)),
+                      }));
+                    }}
+                    placeholder="1"
+                    disabled={!formData.has_gift}
+                    className="w-full px-4 py-2.5 pr-10 pl-24 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-mono font-bold text-base disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:cursor-not-allowed"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500 pointer-events-none">
+                    <MdCardGiftcard size={18} />
+                  </div>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">
+                    ج.م / ريال
+                  </span>
+                </div>
+
+                {/* Helper info & Quick Presets */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                  <p className="text-slate-400">
+                    السعر الرمزي لعنصر الهدية (ضع 0 إذا كانت الهدية مجانية بالكامل، أو 1 لسعر رمزي).
+                  </p>
+
+                  {formData.has_gift && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-400">اختيار سريع:</span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, price_gift: 0 }))}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-colors ${
+                          formData.price_gift === 0
+                            ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        مجاني (0)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, price_gift: 1 }))}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-colors ${
+                          formData.price_gift === 1
+                            ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        رمزي (1)
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Restaurant Working Hours & Overnight Shifts Section */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-2 text-slate-800 dark:text-white">
@@ -671,7 +855,7 @@ const BusinessSetupPage: React.FC = () => {
               )}
             </div>
 
-            {/* 4. Social & Communication Channels */}
+            {/* 5. Social & Communication Channels */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-700 text-slate-800 dark:text-white">
                 <MdLink size={20} className="text-primary" />
@@ -1090,6 +1274,30 @@ const BusinessSetupPage: React.FC = () => {
                       >
                         معاينة <MdOpenInNew size={12} />
                       </a>
+                    </div>
+                  )}
+
+                  {/* Gift Promotion Banner in Preview */}
+                  {formData.has_gift && (
+                    <div className="mt-3 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-primary/10 border border-amber-500/30 dark:border-amber-500/20 flex items-center justify-between text-xs animate-in fade-in">
+                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                        <div className="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <MdCardGiftcard size={14} />
+                        </div>
+                        <div>
+                          <span className="font-bold block text-slate-800 dark:text-slate-100">عرض الهدية مفعّل 🎁</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                            {formData.price_gift !== null && formData.price_gift !== undefined
+                              ? Number(formData.price_gift) === 0
+                                ? 'هدية مجانية مع الطلب'
+                                : `سعر الهدية: ${formData.price_gift} ج.م`
+                              : 'هدية مجانية مع الطلب'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/30">
+                        Gift Promo
+                      </span>
                     </div>
                   )}
 
