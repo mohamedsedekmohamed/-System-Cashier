@@ -380,20 +380,17 @@ const BusinessSetupPage: React.FC = () => {
       return;
     }
 
-    // Full current menu (remaining existing images + any new files/paths)
-    const activeMenu = menuItems.map((item) => {
-      if (item.type === 'file' && item.file) {
-        return item.file;
-      }
-      return item.pathOrUrl;
-    });
+    // Separate existing remaining server images from newly uploaded files
+    const existingMenuPaths = menuItems
+      .filter((item) => item.type === 'existing' && item.pathOrUrl)
+      .map((item) => item.pathOrUrl);
 
-    // New menu images (files newly added in this session to append)
-    const newMenuImages = menuItems
+    // Newly uploaded files in this session to append
+    const newMenuFiles = menuItems
       .filter((item) => item.type === 'file' && item.file)
       .map((item) => item.file!);
 
-    // Deleted menu images (paths of existing server images deleted in this session)
+    // Paths of existing server images deleted in this session
     const uniqueDeletedMenu = Array.from(new Set(deletedMenuPaths));
 
     mutation.mutate({
@@ -416,10 +413,11 @@ const BusinessSetupPage: React.FC = () => {
         typeof formData.price_gift === 'number' && !isNaN(formData.price_gift)
           ? Math.round(formData.price_gift)
           : null,
-      menu: activeMenu.length > 0 ? activeMenu : [],
-      new_menu: newMenuImages.length > 0 ? newMenuImages : [],
-      deleted_menu: uniqueDeletedMenu.length > 0 ? uniqueDeletedMenu : [],
-      delete_menu: uniqueDeletedMenu.length > 0 ? uniqueDeletedMenu : [],
+      // In update (تعديل): menu sends ONLY existing paths (never newly uploaded files) to prevent duplicate addition
+      menu: isExisting ? existingMenuPaths : newMenuFiles,
+      new_menu: isExisting ? newMenuFiles : [],
+      deleted_menu: isExisting ? uniqueDeletedMenu : [],
+      delete_menu: isExisting ? uniqueDeletedMenu : [],
     });
   };
 
