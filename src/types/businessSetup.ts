@@ -17,6 +17,10 @@ export interface BusinessSetup {
   is_open?: boolean;
   is_overnight?: boolean;
   working_hours_text?: string;
+  menu?: (string | null)[] | string | null;
+  new_menu?: (string | null)[] | null;
+  deleted_menu?: (string | null)[] | null;
+  delete_menu?: (string | null)[] | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -35,6 +39,10 @@ export interface BusinessSetupPayload {
   end_day?: string | null;
   has_gift?: boolean | null;
   price_gift?: number | null;
+  menu?: (string | File | null)[] | null;
+  new_menu?: (string | File | null)[] | null;
+  deleted_menu?: (string | number | null)[] | null;
+  delete_menu?: (string | number | null)[] | null;
 }
 
 export interface BusinessSetupResponse {

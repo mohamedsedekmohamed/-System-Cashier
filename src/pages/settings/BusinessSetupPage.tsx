@@ -27,6 +27,13 @@ import {
   MdTableBar,
   MdCardGiftcard,
   MdClose,
+  MdRestaurantMenu,
+  MdAddPhotoAlternate,
+  MdZoomIn,
+  MdArrowBack,
+  MdArrowForward,
+  MdChevronLeft,
+  MdChevronRight,
 } from 'react-icons/md';
 import { FaFacebook, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
@@ -37,6 +44,55 @@ const formatFileSize = (bytes: number): string => {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
+export interface MenuItemState {
+  id: string;
+  type: 'file' | 'existing';
+  file?: File;
+  previewUrl: string;
+  pathOrUrl: string;
+  name?: string;
+  size?: number;
+}
+
+const resolveMenuImageUrl = (path: string): string => {
+  if (!path) return '';
+  if (
+    path.startsWith('blob:') ||
+    path.startsWith('data:') ||
+    path.startsWith('http://') ||
+    path.startsWith('https://')
+  ) {
+    return path;
+  }
+  const clean = path.startsWith('/') ? path.slice(1) : path;
+  if (clean.startsWith('storage/')) {
+    return `https://ecommerce.mazoom.online/${clean}`;
+  }
+  return `https://ecommerce.mazoom.online/storage/${clean}`;
+};
+
+const parseMenuData = (rawMenu: any): string[] => {
+  if (!rawMenu) return [];
+  if (Array.isArray(rawMenu)) {
+    return rawMenu.filter(
+      (item): item is string => typeof item === 'string' && item.trim().length > 0
+    );
+  }
+  if (typeof rawMenu === 'string') {
+    try {
+      const parsed = JSON.parse(rawMenu);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item): item is string => typeof item === 'string' && item.trim().length > 0
+        );
+      }
+    } catch {
+      if (rawMenu.trim()) return [rawMenu.trim()];
+    }
+  }
+  return [];
 };
 
 const BusinessSetupPage: React.FC = () => {
@@ -59,6 +115,7 @@ const BusinessSetupPage: React.FC = () => {
     end_day: '03:00',
     has_gift: false,
     price_gift: null,
+    menu: [],
   });
 
   // ── File Upload States ─────────────────
@@ -68,6 +125,13 @@ const BusinessSetupPage: React.FC = () => {
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  // ── Menu Images States ─────────────────
+  const [menuItems, setMenuItems] = useState<MenuItemState[]>([]);
+  const [deletedMenuPaths, setDeletedMenuPaths] = useState<string[]>([]);
+  const [isDraggingMenu, setIsDraggingMenu] = useState(false);
+  const menuFileInputRef = useRef<HTMLInputElement>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   // ── Fetch Business Setup ───────────────
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
@@ -108,8 +172,49 @@ const BusinessSetupPage: React.FC = () => {
       setLogoFile(null);
       setLogoPreviewUrl(initialLogo);
       setImageLoadFailed(false);
+
+      // Populate menu items
+      const parsedMenu = parseMenuData(setupData.menu);
+      const initialMenuItems: MenuItemState[] = parsedMenu.map((path, idx) => ({
+        id: `existing-${idx}-${path}`,
+        type: 'existing',
+        previewUrl: resolveMenuImageUrl(path),
+        pathOrUrl: path,
+        name: path.split('/').pop() || `صورة منيو ${idx + 1}`,
+      }));
+      setMenuItems(initialMenuItems);
+      setDeletedMenuPaths([]);
     }
   }, [setupData]);
+
+  // Clean up menu object URLs when unmounted or changed
+  useEffect(() => {
+    return () => {
+      menuItems.forEach((item) => {
+        if (item.type === 'file' && item.previewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+    };
+  }, [menuItems]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLightboxIndex(null);
+      } else if (e.key === 'ArrowRight') {
+        setLightboxIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
+      } else if (e.key === 'ArrowLeft') {
+        setLightboxIndex((prev) =>
+          prev !== null && prev < menuItems.length - 1 ? prev + 1 : prev
+        );
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex, menuItems.length]);
 
   // Clean up object URLs when unmounted or changed
   useEffect(() => {
@@ -135,6 +240,7 @@ const BusinessSetupPage: React.FC = () => {
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: [BUSINESS_SETUP_KEY] });
+      setDeletedMenuPaths([]);
       setSuccessMessage(
         res.message ||
           (isExisting
@@ -183,6 +289,76 @@ const BusinessSetupPage: React.FC = () => {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  // ── Menu Handlers ─────────────────────
+  const handleMenuFilesSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newItems: MenuItemState[] = Array.from(files).map((file, idx) => ({
+      id: `file-${Date.now()}-${idx}-${file.name}`,
+      type: 'file',
+      file,
+      previewUrl: URL.createObjectURL(file),
+      pathOrUrl: file.name,
+      name: file.name,
+      size: file.size,
+    }));
+    setMenuItems((prev) => [...prev, ...newItems]);
+  };
+
+  const handleRemoveMenuItem = (index: number) => {
+    setMenuItems((prev) => {
+      const target = prev[index];
+      if (target) {
+        if (target.type === 'file' && target.previewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(target.previewUrl);
+        } else if (target.type === 'existing' && target.pathOrUrl) {
+          // Track existing server image for deleted_menu / delete_menu
+          setDeletedMenuPaths((dPrev) => [...dPrev, target.pathOrUrl]);
+        }
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+    if (lightboxIndex !== null) {
+      if (index === lightboxIndex) {
+        setLightboxIndex(null);
+      } else if (index < lightboxIndex) {
+        setLightboxIndex(lightboxIndex - 1);
+      }
+    }
+  };
+
+  const handleMoveMenuItem = (index: number, direction: 'up' | 'down') => {
+    setMenuItems((prev) => {
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[targetIndex];
+      copy[targetIndex] = temp;
+      return copy;
+    });
+  };
+
+  const handleClearAllMenu = () => {
+    if (menuItems.length === 0) return;
+    if (window.confirm('هل أنت متأكد من رغبتك في حذف كافة صور المنيو؟')) {
+      // Track all existing server images for deleted_menu / delete_menu
+      const existingPaths = menuItems
+        .filter((item) => item.type === 'existing' && item.pathOrUrl)
+        .map((item) => item.pathOrUrl);
+      if (existingPaths.length > 0) {
+        setDeletedMenuPaths((prev) => [...prev, ...existingPaths]);
+      }
+
+      menuItems.forEach((item) => {
+        if (item.type === 'file' && item.previewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+      setMenuItems([]);
+      setLightboxIndex(null);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -204,6 +380,22 @@ const BusinessSetupPage: React.FC = () => {
       return;
     }
 
+    // Full current menu (remaining existing images + any new files/paths)
+    const activeMenu = menuItems.map((item) => {
+      if (item.type === 'file' && item.file) {
+        return item.file;
+      }
+      return item.pathOrUrl;
+    });
+
+    // New menu images (files newly added in this session to append)
+    const newMenuImages = menuItems
+      .filter((item) => item.type === 'file' && item.file)
+      .map((item) => item.file!);
+
+    // Deleted menu images (paths of existing server images deleted in this session)
+    const uniqueDeletedMenu = Array.from(new Set(deletedMenuPaths));
+
     mutation.mutate({
       name: formData.name.trim(),
       phone: formData.phone.trim(),
@@ -224,10 +416,23 @@ const BusinessSetupPage: React.FC = () => {
         typeof formData.price_gift === 'number' && !isNaN(formData.price_gift)
           ? Math.round(formData.price_gift)
           : null,
+      menu: activeMenu.length > 0 ? activeMenu : [],
+      new_menu: newMenuImages.length > 0 ? newMenuImages : [],
+      deleted_menu: uniqueDeletedMenu.length > 0 ? uniqueDeletedMenu : [],
+      delete_menu: uniqueDeletedMenu.length > 0 ? uniqueDeletedMenu : [],
     });
   };
 
   const handleReset = () => {
+    // Revoke any newly added file blob URLs
+    menuItems.forEach((item) => {
+      if (item.type === 'file' && item.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+    });
+
+    setDeletedMenuPaths([]);
+
     if (setupData) {
       const initialLogo = setupData.logo || setupData.raw_logo || '';
 
@@ -251,10 +456,23 @@ const BusinessSetupPage: React.FC = () => {
           setupData.price_gift !== null && setupData.price_gift !== undefined
             ? Number(setupData.price_gift)
             : null,
+        menu: [],
       });
 
       setLogoFile(null);
       setLogoPreviewUrl(initialLogo);
+
+      // Reset menu items to saved server state
+      const parsedMenu = parseMenuData(setupData.menu);
+      setMenuItems(
+        parsedMenu.map((path, idx) => ({
+          id: `existing-${idx}-${path}`,
+          type: 'existing',
+          previewUrl: resolveMenuImageUrl(path),
+          pathOrUrl: path,
+          name: path.split('/').pop() || `صورة منيو ${idx + 1}`,
+        }))
+      );
     } else {
       setFormData({
         name: '',
@@ -270,11 +488,14 @@ const BusinessSetupPage: React.FC = () => {
         end_day: '03:00',
         has_gift: false,
         price_gift: null,
+        menu: [],
       });
       setLogoFile(null);
       setLogoPreviewUrl('');
+      setMenuItems([]);
     }
     setImageLoadFailed(false);
+    setLightboxIndex(null);
   };
 
   // ── Render Loading & Error States ──────
@@ -482,7 +703,249 @@ const BusinessSetupPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. Table Orders & Branch Coverage Section */}
+            {/* 2. Menu Images Section (menu: array of files/strings) */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-2.5 text-slate-800 dark:text-white">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-xs">
+                    <MdRestaurantMenu size={22} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-bold text-base">صور قائمة الطعام والمنيو (Menu Images)</h2>
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                        menu
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      رفع وإدارة صور صفحات المنيو (ملفات من الجهاز أو مسارات/روابط بالخادم)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                    {menuItems.length} {menuItems.length === 1 ? 'صورة مرفوعة' : 'صور مرفوعة'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Hidden multi-file input */}
+              <input
+                ref={menuFileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => {
+                  handleMenuFilesSelect(e.target.files);
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+
+              {/* Multi-file Drag & Drop Zone */}
+              <div
+                onClick={() => menuFileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingMenu(true);
+                }}
+                onDragLeave={() => setIsDraggingMenu(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingMenu(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleMenuFilesSelect(e.dataTransfer.files);
+                  }
+                }}
+                className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all ${
+                  isDraggingMenu
+                    ? 'border-primary bg-primary/10 scale-[1.01]'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-primary/60 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                }`}
+              >
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-2.5">
+                  <MdAddPhotoAlternate size={26} />
+                </div>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 text-center">
+                  اضغط لاختيار صور صفحات المنيو من جهازك أو اسحبها وأفلتها هنا
+                </p>
+                <p className="text-xs text-slate-400 mt-1 text-center">
+                  يمكنك تحديد عدة صور دفعة واحدة لصفحات المنيو (PNG, JPG, WEBP بحد أقصى 10MB لكل صورة)
+                </p>
+              </div>
+
+              {/* Gallery Grid */}
+              {menuItems.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      صفحات المنيو الحالية ({menuItems.length})
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => menuFileInputRef.current?.click()}
+                        className="text-primary hover:underline font-medium flex items-center gap-1"
+                      >
+                        <MdCloudUpload size={14} /> إضافة صور أخرى
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleClearAllMenu}
+                        className="text-rose-500 hover:underline font-medium flex items-center gap-1"
+                      >
+                        <MdDeleteOutline size={14} /> مسح الكل
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {menuItems.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="group relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col"
+                      >
+                        {/* Page Number & Type Badges */}
+                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md text-white text-[10px] font-bold shadow-xs">
+                            صفحة {index + 1}
+                          </span>
+                        </div>
+
+                        <div className="absolute top-2 left-2 z-10">
+                          {item.type === 'file' ? (
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold flex items-center gap-0.5 shadow-xs">
+                              <MdCheck size={12} /> جديد
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-lg bg-sky-600/90 text-white text-[10px] font-semibold flex items-center gap-0.5 shadow-xs">
+                              <MdCheckCircle size={12} /> محفوظ
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Image Preview Container */}
+                        <div
+                          onClick={() => setLightboxIndex(index)}
+                          className="relative aspect-[3/4] w-full bg-slate-200/50 dark:bg-slate-800/80 cursor-pointer overflow-hidden flex items-center justify-center"
+                        >
+                          <img
+                            src={item.previewUrl}
+                            alt={item.name || `صفحة ${index + 1}`}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (!target.dataset.triedFallback) {
+                                target.dataset.triedFallback = 'true';
+                                const clean = item.pathOrUrl.startsWith('/') ? item.pathOrUrl.slice(1) : item.pathOrUrl;
+                                if (clean.startsWith('storage/')) {
+                                  target.src = `https://ecommerce.mazoom.online/${clean.replace(/^storage\//, '')}`;
+                                } else {
+                                  target.src = `https://ecommerce.mazoom.online/${clean}`;
+                                }
+                              }
+                            }}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+
+                          {/* Quick Hover Overlay */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLightboxIndex(index);
+                              }}
+                              className="w-8 h-8 rounded-full bg-white/90 text-slate-800 hover:bg-white flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+                              title="تكبير ومعاينة الصفحة"
+                            >
+                              <MdZoomIn size={18} />
+                            </button>
+                            {item.previewUrl && (
+                              <a
+                                href={item.previewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-8 h-8 rounded-full bg-white/90 text-slate-800 hover:bg-white flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+                                title="فتح الصورة الأصلية"
+                              >
+                                <MdOpenInNew size={16} />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Footer Details & Reordering */}
+                        <div className="p-2.5 bg-white dark:bg-slate-800 flex items-center justify-between gap-1 text-xs border-t border-slate-100 dark:border-slate-700/80">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200 truncate text-[11px]" title={item.name || item.pathOrUrl}>
+                              {item.name || item.pathOrUrl}
+                            </p>
+                            {item.size ? (
+                              <span className="text-[10px] text-slate-400 block">
+                                {formatFileSize(item.size)}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 font-mono truncate block" title={item.pathOrUrl}>
+                                {item.pathOrUrl}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {/* Reorder Buttons */}
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => handleMoveMenuItem(index, 'up')}
+                              className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="تحريك للأمام (صفحة سابقة)"
+                            >
+                              <MdArrowForward size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === menuItems.length - 1}
+                              onClick={() => handleMoveMenuItem(index, 'down')}
+                              className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="تحريك للخلف (صفحة تالية)"
+                            >
+                              <MdArrowBack size={14} />
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMenuItem(index)}
+                              className="p-1 rounded-md text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                              title="حذف هذه الصفحة من المنيو"
+                            >
+                              <MdDeleteOutline size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Empty state for menu */
+                <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800 text-center space-y-1.5">
+                  <div className="w-10 h-10 rounded-xl bg-slate-200/60 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                    <MdRestaurantMenu size={22} />
+                  </div>
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    لم تتم إضافة أي صور لقائمة الطعام حتى الآن
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    يمكنك اختيار أو سحب وإفلات صور صفحات المنيو لرفعها مباشرة من جهازك.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Table Orders & Branch Coverage Section */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-700 text-slate-800 dark:text-white">
                 <MdTableBar size={22} className="text-primary" />
@@ -706,7 +1169,7 @@ const BusinessSetupPage: React.FC = () => {
                     <MdCardGiftcard size={18} />
                   </div>
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">
-                    ج.م / ريال
+                    ج.م
                   </span>
                 </div>
 
@@ -1301,6 +1764,65 @@ const BusinessSetupPage: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Menu Images Banner in Preview */}
+                  {menuItems.length > 0 ? (
+                    <div className="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                          <MdRestaurantMenu size={16} className="text-primary" />
+                          <span>قائمة الطعام (المنيو)</span>
+                        </div>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                          {menuItems.length} {menuItems.length === 1 ? 'صفحة' : 'صفحات'}
+                        </span>
+                      </div>
+
+                      {/* Mini Thumbnail Strip in Preview */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                        {menuItems.slice(0, 4).map((item, idx) => (
+                          <div
+                            key={item.id}
+                            onClick={() => setLightboxIndex(idx)}
+                            className="relative w-12 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                            title={`معاينة صفحة ${idx + 1}`}
+                          >
+                            <img
+                              src={item.previewUrl}
+                              alt={`Menu ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[8px] text-center font-bold">
+                              {idx + 1}
+                            </span>
+                          </div>
+                        ))}
+                        {menuItems.length > 4 && (
+                          <button
+                            type="button"
+                            onClick={() => setLightboxIndex(4)}
+                            className="w-12 h-14 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold flex flex-col items-center justify-center shrink-0 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                          >
+                            <span>+{menuItems.length - 4}</span>
+                            <span className="text-[8px]">أخرى</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setLightboxIndex(0)}
+                        className="w-full py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold flex items-center justify-center gap-1"
+                      >
+                        <MdZoomIn size={14} /> تصفح صفحات المنيو ({menuItems.length})
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-400 flex items-center gap-2">
+                      <MdRestaurantMenu size={16} />
+                      <span>لم تتم إضافة صور لقائمة الطعام بعد</span>
+                    </div>
+                  )}
+
                   {/* Connected Social Accounts Footer */}
                   <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
                     <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -1422,6 +1944,125 @@ const BusinessSetupPage: React.FC = () => {
           </div>
         </div>
       </form>
+
+      {/* ── Lightbox Modal for Menu Images ───────── */}
+      {lightboxIndex !== null && menuItems[lightboxIndex] && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setLightboxIndex(null)}
+        >
+          {/* Lightbox Header */}
+          <div
+            className="flex items-center justify-between text-white pb-3 border-b border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                <MdRestaurantMenu size={20} className="text-primary" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm sm:text-base">
+                  معاينة قائمة الطعام (المنيو)
+                </h3>
+                <span className="text-xs text-white/70">
+                  صفحة {lightboxIndex + 1} من {menuItems.length} &bull;{' '}
+                  {menuItems[lightboxIndex].name || menuItems[lightboxIndex].pathOrUrl}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {menuItems[lightboxIndex].previewUrl && (
+                <a
+                  href={menuItems[lightboxIndex].previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <MdOpenInNew size={14} /> فتح في نافذة مستقلة
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(null)}
+                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                title="إغلاق"
+              >
+                <MdClose size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Main Image & Navigation */}
+          <div
+            className="relative flex-1 flex items-center justify-center my-4 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Prev Page Button */}
+            {lightboxIndex > 0 && (
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(lightboxIndex - 1)}
+                className="absolute right-4 z-10 w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+                title="الصفحة السابقة"
+              >
+                <MdChevronRight size={28} />
+              </button>
+            )}
+
+            {/* Current Image */}
+            <img
+              src={menuItems[lightboxIndex].previewUrl}
+              alt={menuItems[lightboxIndex].name || `صفحة ${lightboxIndex + 1}`}
+              className="max-h-[78vh] max-w-full object-contain rounded-2xl shadow-2xl transition-all duration-200"
+            />
+
+            {/* Next Page Button */}
+            {lightboxIndex < menuItems.length - 1 && (
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(lightboxIndex + 1)}
+                className="absolute left-4 z-10 w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+                title="الصفحة التالية"
+              >
+                <MdChevronLeft size={28} />
+              </button>
+            )}
+          </div>
+
+          {/* Lightbox Mini Thumbnails Strip */}
+          {menuItems.length > 1 && (
+            <div
+              className="flex items-center justify-center gap-2 pt-2 overflow-x-auto max-w-full py-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {menuItems.map((item, idx) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setLightboxIndex(idx)}
+                  className={`relative w-14 h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                    idx === lightboxIndex
+                      ? 'border-primary ring-2 ring-primary/50 scale-105 opacity-100'
+                      : 'border-white/20 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={item.previewUrl}
+                    alt={`Thumb ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[9px] text-center font-bold">
+                    {idx + 1}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

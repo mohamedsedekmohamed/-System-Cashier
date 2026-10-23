@@ -63,6 +63,40 @@ export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 
     formData.append('logo', payload.logo.trim());
   }
 
+  // Handle menu images (array of uploaded image files or existing image paths/URLs)
+  if (Array.isArray(payload.menu)) {
+    payload.menu.forEach((item) => {
+      if (item instanceof File) {
+        formData.append('menu[]', item);
+      } else if (typeof item === 'string' && item.trim()) {
+        formData.append('menu[]', item.trim());
+      }
+    });
+  }
+
+  // Handle new_menu (new menu images to append to current menu)
+  if (Array.isArray(payload.new_menu)) {
+    payload.new_menu.forEach((item) => {
+      if (item instanceof File) {
+        formData.append('new_menu[]', item);
+      } else if (typeof item === 'string' && item.trim()) {
+        formData.append('new_menu[]', item.trim());
+      }
+    });
+  }
+
+  // Handle deleted_menu and delete_menu (array of menu image paths, URLs, or indices to delete)
+  const deletedItems = payload.deleted_menu || payload.delete_menu;
+  if (Array.isArray(deletedItems) && deletedItems.length > 0) {
+    deletedItems.forEach((item) => {
+      if (item !== null && item !== undefined && String(item).trim()) {
+        const val = String(item).trim();
+        formData.append('deleted_menu[]', val);
+        formData.append('delete_menu[]', val);
+      }
+    });
+  }
+
   if (method === 'PUT') {
     formData.append('_method', 'PUT');
   }
@@ -71,6 +105,13 @@ export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 
 };
 
 export const toBusinessSetupJson = (payload: BusinessSetupPayload): Record<string, any> => {
+  const deletedItems = payload.deleted_menu || payload.delete_menu;
+  const formattedDeleted = Array.isArray(deletedItems)
+    ? deletedItems
+        .filter((item) => item !== null && item !== undefined && String(item).trim().length > 0)
+        .map((item) => (typeof item === 'number' ? item : String(item).trim()))
+    : null;
+
   const json: Record<string, any> = {
     name: payload.name || '',
     phone: payload.phone || '',
@@ -88,8 +129,27 @@ export const toBusinessSetupJson = (payload: BusinessSetupPayload): Record<strin
     logo: typeof payload.logo === 'string' ? payload.logo.trim() : '',
     has_gift: payload.has_gift !== undefined && payload.has_gift !== null ? Boolean(payload.has_gift) : null,
     price_gift: formatIntegerOrNull(payload.price_gift),
+    menu: Array.isArray(payload.menu)
+      ? payload.menu.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : (payload.menu ?? null),
+    new_menu: Array.isArray(payload.new_menu)
+      ? payload.new_menu.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : (payload.new_menu ?? null),
+    deleted_menu: formattedDeleted,
+    delete_menu: formattedDeleted,
   };
   return json;
+};
+
+const hasFileInPayload = (payload: BusinessSetupPayload): boolean => {
+  if (payload.logo instanceof File) return true;
+  if (Array.isArray(payload.menu) && payload.menu.some((item) => item instanceof File)) {
+    return true;
+  }
+  if (Array.isArray(payload.new_menu) && payload.new_menu.some((item) => item instanceof File)) {
+    return true;
+  }
+  return false;
 };
 
 export const businessSetupApi = {
@@ -101,8 +161,8 @@ export const businessSetupApi = {
 
   /** POST /api/admin/business-setup */
   create: async (payload: BusinessSetupPayload): Promise<{ data: BusinessSetup; message?: string }> => {
-    // If logo is a File, use FormData with multipart
-    if (payload.logo instanceof File) {
+    // If logo or any menu item is a File, use FormData with multipart
+    if (hasFileInPayload(payload)) {
       const formData = toBusinessSetupFormData(payload);
       const { data } = await api.post<{ data: BusinessSetup; message?: string }>(
         '/api/admin/business-setup',
@@ -128,8 +188,8 @@ export const businessSetupApi = {
   ): Promise<{ data: BusinessSetup; message?: string }> => {
     const url = id !== undefined && id !== '' ? `/api/admin/business-setup/${id}` : '/api/admin/business-setup';
 
-    // If logo is a File, send via multipart/form-data
-    if (payload.logo instanceof File) {
+    // If logo or any menu item is a File, send via multipart/form-data
+    if (hasFileInPayload(payload)) {
       const formData = toBusinessSetupFormData(payload, 'PUT');
       try {
         const { data } = await api.post<{ data: BusinessSetup; message?: string }>(
