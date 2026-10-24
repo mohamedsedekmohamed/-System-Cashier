@@ -7,7 +7,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
 import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
-import { DetailsModal } from '../../components/ui/DetailsModal';
+import { OrderDetailsModal } from '../../components/orders/OrderDetailsModal';
 import { UpdateOrderStatusModal } from '../../components/orders/UpdateOrderStatusModal';
 import { getOrderStatusConfig, playNotificationChime } from '../../utils/orderStatus';
 import {
@@ -130,6 +130,15 @@ const OrderList: React.FC = () => {
 
   const filtered = [...orders].sort((a, b) => b.id - a.id);
 
+  // Fetch fresh detailed order data when viewing
+  const { data: singleOrderData } = useQuery({
+    queryKey: ['order-single-details', viewTarget?.id],
+    queryFn: () => orderService.get(viewTarget!.id),
+    enabled: !!viewTarget?.id,
+  });
+
+  const activeViewOrder = singleOrderData?.data || viewTarget;
+
   const columns: ColumnDef<Order>[] = [
     {
       header: '#',
@@ -142,20 +151,30 @@ const OrderList: React.FC = () => {
     {
       header: 'رقم الطلب',
       render: (row) => (
-        <code className="text-sm font-mono bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-md font-bold">
+        <button
+          type="button"
+          onClick={() => setViewTarget(row)}
+          className="text-sm font-mono bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-md font-bold cursor-pointer transition-all hover:scale-105 shadow-sm"
+          title="انقر لعرض تفاصيل الطلب بالكامل"
+        >
           #{row.id}
-        </code>
+        </button>
       ),
     },
     {
       header: 'العميل',
       render: (row) => (
-        <div>
-          <p className="font-semibold text-slate-800 dark:text-white">
+        <button
+          type="button"
+          onClick={() => setViewTarget(row)}
+          className="text-right group cursor-pointer"
+          title="انقر لعرض تفاصيل الطلب بالكامل"
+        >
+          <p className="font-semibold text-slate-800 dark:text-white group-hover:text-primary transition-colors">
             {renderName(row.name) || 'عميل نقدي'}
           </p>
-          {row.phone && <p className="text-xs text-slate-500">{row.phone}</p>}
-        </div>
+          {row.phone && <p className="text-xs text-slate-500 font-mono" dir="ltr">{row.phone}</p>}
+        </button>
       ),
     },
     {
@@ -517,92 +536,12 @@ const OrderList: React.FC = () => {
         onClose={() => setStatusTarget(null)}
       />
 
-      <DetailsModal
-        isOpen={!!viewTarget}
+      <OrderDetailsModal
+        key={activeViewOrder?.id ?? 'none'}
+        order={activeViewOrder}
+        isOpen={Boolean(viewTarget)}
         onClose={() => setViewTarget(null)}
-        title={`تفاصيل الطلب #${viewTarget?.id}`}
-        details={[
-          { label: 'رقم الطلب', value: `#${viewTarget?.id}` },
-          {
-            label: 'حالة الطلب',
-            value: viewTarget ? (
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                  getOrderStatusConfig(viewTarget.status).badgeClass
-                }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    getOrderStatusConfig(viewTarget.status).dotClass
-                  }`}
-                />
-                <span>{getOrderStatusConfig(viewTarget.status).label}</span>
-              </span>
-            ) : null,
-          },
-          { label: 'العميل', value: renderName(viewTarget?.name) || 'عميل نقدي' },
-          { label: 'رقم الهاتف', value: viewTarget?.phone || '—' },
-          { label: 'العنوان', value: viewTarget?.address || '—' },
-          { label: 'النوع', value: viewTarget?.is_pos ? 'نقطة بيع (POS)' : 'أونلاين' },
-          {
-            label: 'حالة الدفع',
-            value: viewTarget ? (
-              viewTarget.paid ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  مدفوع بالكامل
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                  غير مدفوع (مطلوب تحصيل نقدي)
-                </span>
-              )
-            ) : null,
-          },
-          {
-            label: 'طريقة الدفع',
-            value: renderName((viewTarget as any)?.payment_method?.name) || '—',
-          },
-          {
-            label: 'الحساب المالي (الخزينة)',
-            value: renderName((viewTarget as any)?.financial_account?.name) || '—',
-          },
-          {
-            label: 'مندوب التوصيل (Delivery)',
-            value: renderName((viewTarget as any)?.delivery?.name) || '—',
-          },
-          { label: 'طريقة الطلب', value: viewTarget?.module || '—' },
-          { label: 'الوردية', value: renderName((viewTarget as any)?.shift?.name) || '—' },
-          { label: 'الكاشير', value: renderName((viewTarget as any)?.cashier?.name) || '—' },
-          { label: 'موظف الكاشير', value: renderName((viewTarget as any)?.cashier_man?.name) || '—' },
-          { label: 'الطاولة', value: renderName((viewTarget as any)?.hall_table?.name) || '—' },
-          {
-            label: 'عدد المنتجات',
-            value: (viewTarget as any)?.products?.length || 0,
-            fullWidth: false,
-          },
-          { label: 'الإجمالي الفرعي', value: `${viewTarget?.total} ج.م`, fullWidth: false },
-          { label: 'الضريبة', value: `${viewTarget?.total_tax} ج.م`, fullWidth: false },
-          { label: 'الخصم', value: `${viewTarget?.total_discount} ج.م`, fullWidth: false },
-          {
-            label: 'الإجمالي النهائي',
-            value: (
-              <span className="font-bold text-emerald-600 text-lg">
-                {viewTarget?.final_price} ج.م
-              </span>
-            ),
-            fullWidth: false,
-          },
-          { label: 'ملاحظات', value: viewTarget?.note || '—', fullWidth: true },
-          {
-            label: 'تاريخ الإنشاء',
-            value: viewTarget?.created_at
-              ? new Date(viewTarget.created_at).toLocaleString('ar-EG')
-              : '',
-            fullWidth: true,
-          },
-        ]}
+        onOpenStatusModal={(ord) => setStatusTarget(ord)}
       />
     </div>
   );
