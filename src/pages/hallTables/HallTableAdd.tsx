@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hallTableApi, HALL_TABLES_KEY, HALL_TABLES_SELECT_OPTIONS_KEY } from '../../services/hallTableService';
 import type { HallTablePayload } from '../../types';
-import { MdArrowForward, MdSave, MdTableRestaurant, MdLink } from 'react-icons/md';
+import { MdArrowForward, MdSave, MdTableRestaurant } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
@@ -17,7 +17,6 @@ const HallTableAdd: React.FC = () => {
     branch_id: 0,
     hall_id: 0,
     status: true,
-    base_url: '',
   });
 
   // ── Fetch Select Options ───────────────
@@ -80,10 +79,6 @@ const HallTableAdd: React.FC = () => {
       hall_id: Number(formData.hall_id),
       status: Boolean(formData.status),
     };
-
-    if (formData.base_url?.trim()) {
-      payload.base_url = formData.base_url.trim();
-    }
 
     mutation.mutate(payload);
   };
@@ -199,32 +194,6 @@ const HallTableAdd: React.FC = () => {
               )}
             </div>
 
-            {/* Base URL (Optional in POST) */}
-            <div className="md:col-span-2">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <MdLink size={18} className="text-slate-400" />
-                  <span>الرابط الأساسي (Base URL)</span>
-                  <span className="text-xs text-slate-400 font-normal">(اختياري عند الإضافة)</span>
-                </label>
-                <span className="text-xs text-slate-400">
-                  {formData.base_url?.length || 0} / 255
-                </span>
-              </div>
-              <input
-                type="text"
-                name="base_url"
-                maxLength={255}
-                value={formData.base_url || ''}
-                onChange={handleChange}
-                placeholder="https://ecommerce.mazoom.online"
-                dir="ltr"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-left font-mono text-xs sm:text-sm"
-              />
-              <p className="text-xs text-slate-400 mt-1.5">
-                الرابط المستخدم لإنشاء رمز الـ QR وتوجيه العملاء لقائمة طلبات الطاولة (إذا ترك فارغاً سيتم تعيين الرابط الافتراضي للنظام).
-              </p>
-            </div>
 
             {/* Status */}
             <div className="md:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-700">

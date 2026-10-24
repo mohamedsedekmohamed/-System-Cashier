@@ -32,6 +32,8 @@ import {
   MdAccountBalance,
   MdSchema,
   MdExtension,
+  MdAccountBalanceWallet,
+  MdViewCarousel,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -72,12 +74,14 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'جرد وصفات التصنيع', path: '/dashboard/recipe-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'وصفات', 'نصف مصنعة', 'تجهيز', 'recipe inventory', 'جرد الوصفات'] },
   { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} />, keywords: ['فواتير شراء', 'شراء'] },
   { label: 'المبيعات', path: '/dashboard/sales', icon: <MdPointOfSale size={20} />, keywords: ['فواتير بيع', 'بيع'] },
+  { label: 'الأقساط والديون', path: '/dashboard/dues', icon: <MdAccountBalanceWallet size={20} />, keywords: ['اقساط', 'ديون', 'اجل', 'سداد', 'مشتريات', 'مبيعات', 'مديونيات', 'due', 'dues', 'installments'] },
   { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} />, keywords: ['تجار', 'توريد'] },
   { label: 'الموزعين / العملاء', path: '/dashboard/salers', icon: <MdStorefront size={20} />, keywords: ['عميل', 'زبون'] },
   { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} />, keywords: ['تخفيض', 'كوبون'] },
   { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} />, keywords: ['ضريبة', 'قيمة مضافة'] },
   { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} />, keywords: ['هدر', 'تالف'] },
   { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} />, keywords: ['كاش', 'فيزا', 'دفع'] },
+  { label: 'البانرات الإعلانية', path: '/dashboard/banners', icon: <MdViewCarousel size={20} />, keywords: ['بانرات', 'اعلانات', 'سلايدر', 'عروض', 'banners', 'banner'] },
   { label: 'الإعدادات', path: '/dashboard/settings', icon: <MdSettings size={20} />, keywords: ['ضبط', 'لوجو'] },
 ];
 

@@ -136,6 +136,9 @@ import PurchaseAdd from './pages/purchases/PurchaseAdd';
 import SaleList from './pages/sales/SaleList';
 import SaleAdd from './pages/sales/SaleAdd';
 
+// Dues & Installments
+import DuesManagementPage from './pages/dues/DuesManagementPage';
+
 // Salers
 import SalerList from './pages/salers/SalerList';
 import SalerAdd from './pages/salers/SalerAdd';
@@ -154,6 +157,9 @@ import StartShiftReportPage from './pages/reports/StartShiftReportPage';
 
 // Settings / Business Setup
 import BusinessSetupPage from './pages/settings/BusinessSetupPage';
+
+// Banners
+import BannerList from './pages/banners/BannerList';
 
 function App() {
   return (
@@ -289,6 +295,10 @@ function App() {
                   <Route path="sales" element={<SaleList />} />
                   <Route path="sales/add" element={<SaleAdd />} />
 
+                  {/* Dues & Installments */}
+                  <Route path="dues" element={<DuesManagementPage />} />
+                  <Route path="installments" element={<Navigate to="/dashboard/dues" replace />} />
+
                   {/* Suppliers — full CRUD */}
                   <Route path="suppliers" element={<SupplierList />} />
                   <Route path="suppliers/add" element={<SupplierAdd />} />
@@ -321,6 +331,9 @@ function App() {
 
                   {/* Reports */}
                   <Route path="reports/start-shifts" element={<StartShiftReportPage />} />
+
+                  {/* Banners */}
+                  <Route path="banners" element={<BannerList />} />
 
                   {/* Settings / Business Setup */}
                   <Route path="settings" element={<BusinessSetupPage />} />

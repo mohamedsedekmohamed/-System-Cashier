@@ -12,13 +12,17 @@ export interface CashierBranch {
   updated_at: string;
 }
 
+export type CashierStatus = 'active' | 'in_active';
+
 export interface Cashier {
   id: number;
   name: string;
   cashier_man_id?: number | null;
   branch_id: number;
+  cashier_man_name: string;
   branch: CashierBranch;
-  status?: boolean;
+  cashier_man?: string;
+  status?: CashierStatus | string;
   created_at: string;
   updated_at: string;
 }
@@ -27,7 +31,6 @@ export interface CashierFormData {
   name: string;
   cashier_man_id?: number | null;
   branch_id: number;
-  status?: boolean;
 }
 
 export interface CashierSelectOptions {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cashierApi, CASHIERS_KEY } from '../../services/cashierService';
-import type { Cashier, CashierFormData } from '../../types';
+import type { Cashier } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
 import type { ColumnDef } from '../../components/ui/DataTable';
@@ -40,27 +40,28 @@ const CashierList: React.FC = () => {
     },
   });
 
-  // ── Toggle Status mutation ─────────────
-  const toggleStatusMutation = useMutation({
-    mutationFn: (cashier: Cashier) => {
-      const payload: CashierFormData = {
-        name: cashier.name,
-        branch_id: cashier.branch_id,
-        status: !cashier.status,
-      };
-      return cashierApi.update(cashier.id, payload);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [CASHIERS_KEY] });
-    },
-  });
+  const isCashierActive = (status?: string | boolean | null): boolean => {
+    if (typeof status === 'string') {
+      return status.toLowerCase() === 'active';
+    }
+    return Boolean(status);
+  };
+
+
 
   // ── Client-side search filter ──────────
   const filtered = [...(search
-    ? cashiers.filter(c =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        String(c.id).includes(search) ||
-        renderName(c.branch?.name).toLowerCase().includes(search.toLowerCase()))
+    ? cashiers.filter(c => {
+        const q = search.toLowerCase();
+        const active = isCashierActive(c.status);
+        const statusText = active ? 'نشط active مفعل' : 'غير نشط inactive معطل';
+        return (
+          c.name.toLowerCase().includes(q) ||
+          String(c.id).includes(q) ||
+          renderName(c.branch?.name).toLowerCase().includes(q) ||
+          statusText.includes(q)
+        );
+      })
     : cashiers)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
@@ -78,6 +79,12 @@ const CashierList: React.FC = () => {
       render: (row) => <p className="font-semibold text-slate-800 dark:text-white">{typeof row.name === 'object' && row.name !== null ? ((row.name as any)?.ar || (row.name as any)?.en || '') : (row.name || '')}</p>
     },
     {
+      header: 'اسم  الكاشير',
+      render: (row) => <p className="font-semibold text-slate-800 dark:text-white">
+          {renderName(row.cashier_man_name) || 'غير محدد'}
+        </p>
+    },
+    {
       header: 'الفرع',
       render: (row) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
@@ -87,16 +94,17 @@ const CashierList: React.FC = () => {
     },
     {
       header: 'الحالة',
-      render: (row) => (
-        <button 
-          onClick={() => toggleStatusMutation.mutate(row)}
-          disabled={toggleStatusMutation.isPending}
-          className="hover:opacity-80 transition-opacity disabled:opacity-50"
-          title="تغيير الحالة"
-        >
-          <StatusBadge active={!!row.status} />
-        </button>
-      )
+      render: (row) => {
+        const active = isCashierActive(row.status);
+        return (
+          <span 
+            
+            className="hover:opacity-80 transition-opacity disabled:opacity-50"
+          >
+            <StatusBadge active={active} activeText="نشط" inactiveText="غير نشط" />
+          </span>
+        );
+      }
     },
     {
       header: 'الإجراءات',
@@ -164,7 +172,7 @@ const CashierList: React.FC = () => {
           { label: 'اسم الماكينة', value: viewTarget?.name },
           { label: 'الفرع', value: renderName(viewTarget?.branch?.name) || '—' },
           { label: 'الموظف الفاتح حالياً (استرشادي)', value: viewTarget?.cashier_man_id ? `#${viewTarget.cashier_man_id}` : 'لا يوجد موظف فاتح حالياً' },
-          { label: 'الحالة', value: viewTarget ? <StatusBadge active={!!viewTarget.status} /> : null },
+          { label: 'الحالة', value: viewTarget ? <StatusBadge active={isCashierActive(viewTarget.status)} activeText="نشط" inactiveText="غير نشط" /> : null },
           { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
           { label: 'تاريخ آخر تحديث', value: viewTarget?.updated_at ? new Date(viewTarget.updated_at).toLocaleString('ar-EG') : '' }
         ]}
