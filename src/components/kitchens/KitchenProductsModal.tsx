@@ -16,6 +16,8 @@ import {
   MdClear,
   MdRefresh,
   MdLayers,
+  MdDoneAll,
+  MdSelectAll,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
@@ -108,6 +110,18 @@ export const KitchenProductsModal: React.FC<KitchenProductsModalProps> = ({
     });
   };
 
+  // Select all products (entire kitchen list)
+  const selectAll = () => {
+    setSelectedIdsOverride(() => {
+      return new Set(allAvailableProducts.map((p) => p.id));
+    });
+  };
+
+  // Deselect all products
+  const deselectAll = () => {
+    setSelectedIdsOverride(() => new Set());
+  };
+
   // Select / Deselect all filtered
   const selectAllFiltered = () => {
     setSelectedIdsOverride(() => {
@@ -123,6 +137,18 @@ export const KitchenProductsModal: React.FC<KitchenProductsModalProps> = ({
       filteredProducts.forEach((p) => next.delete(p.id));
       return next;
     });
+  };
+
+  const isAllProductsSelected =
+    allAvailableProducts.length > 0 &&
+    allAvailableProducts.every((p) => selectedIds.has(p.id));
+
+  const toggleSelectAll = () => {
+    if (isAllProductsSelected) {
+      deselectAll();
+    } else {
+      selectAll();
+    }
   };
 
   // Assign mutation
@@ -261,33 +287,96 @@ export const KitchenProductsModal: React.FC<KitchenProductsModalProps> = ({
           </div>
 
           {/* Quick Selection Actions */}
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* زر اختيار كل عناصر القائمة مرة واحدة */}
               <button
                 type="button"
-                onClick={selectAllFiltered}
-                className="hover:text-primary transition-colors inline-flex items-center gap-1 font-medium"
+                onClick={selectAll}
+                className="px-3.5 py-1.5 rounded-xl font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                title="تحديد كل عناصر القائمة دفعة واحدة"
               >
-                <MdCheck size={14} /> تحديد المعروض
+                <MdDoneAll size={16} />
+                <span>تحديد كل القائمة ({allAvailableProducts.length})</span>
               </button>
-              <span>•</span>
-              <button
-                type="button"
-                onClick={deselectAllFiltered}
-                className="hover:text-rose-500 transition-colors inline-flex items-center gap-1 font-medium"
-              >
-                <MdClear size={14} /> إلغاء تحديد المعروض
-              </button>
+
+              {/* زر تحديد المعروض حالياً */}
+              {(Boolean(search) || filterMode !== 'all') && (
+                <button
+                  type="button"
+                  onClick={selectAllFiltered}
+                  className="px-2.5 py-1.5 rounded-xl font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-all flex items-center gap-1 cursor-pointer"
+                  title="تحديد العناصر المعروضة حالياً حسب البحث/الفلتر"
+                >
+                  <MdCheck size={14} />
+                  <span>تحديد المعروض ({filteredProducts.length})</span>
+                </button>
+              )}
+
+              {/* زر إلغاء التحديد */}
+              {selectedIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={deselectAll}
+                  className="px-2.5 py-1.5 rounded-xl font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all flex items-center gap-1 cursor-pointer"
+                  title="إلغاء تحديد كل المنتجات"
+                >
+                  <MdClear size={14} />
+                  <span>إلغاء التحديد</span>
+                </button>
+              )}
             </div>
 
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
-              تم تحديد <strong className="text-primary">{selectedIds.size}</strong> منتج
-            </span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span>تم تحديد</span>
+              <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-bold">
+                {selectedIds.size}
+              </span>
+              <span>من أصل {allAvailableProducts.length} منتج</span>
+            </div>
           </div>
         </div>
 
         {/* ── Product List Body ── */}
-        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-1.5 divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-1.5">
+          {/* Master Select All Row directly at top of list */}
+          {!isLoading && allAvailableProducts.length > 0 && (
+            <div
+              onClick={toggleSelectAll}
+              className={`flex items-center justify-between p-3 px-4 rounded-2xl cursor-pointer select-none transition-all border mb-2 shadow-xs ${
+                isAllProductsSelected
+                  ? 'bg-primary/10 border-primary text-primary'
+                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-primary/50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={isAllProductsSelected}
+                  ref={(el) => {
+                    if (el) {
+                      el.indeterminate = !isAllProductsSelected && selectedIds.size > 0;
+                    }
+                  }}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300 cursor-pointer"
+                />
+                <div>
+                  <p className="text-xs font-bold text-slate-800 dark:text-white">
+                    تحديد كل عناصر القائمة ({allAvailableProducts.length} منتج)
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    اضغط لاختيار أو إلغاء اختيار جميع الوجبات والمنتجات دفعة واحدة
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-xs font-bold px-2.5 py-1 rounded-xl bg-white dark:bg-slate-700 text-primary shadow-xs">
+                {selectedIds.size} / {allAvailableProducts.length} محدد
+              </span>
+            </div>
+          )}
+
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2">
               <AiOutlineLoading3Quarters size={26} className="animate-spin text-primary" />

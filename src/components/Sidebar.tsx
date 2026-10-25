@@ -34,6 +34,7 @@ import {
   MdExtension,
   MdAccountBalanceWallet,
   MdViewCarousel,
+  MdSportsMotorsports,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -56,7 +57,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'موظفي الكاشير', path: '/dashboard/cashier-men', icon: <MdPeople size={20} />, keywords: ['كاشيرجي', 'كاشير', 'موظف'] },
   { label: 'الورديات', path: '/dashboard/shifts', icon: <MdSchedule size={20} />, keywords: ['شيفت', 'دوام'] },
   { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} />, keywords: ['تقارير', 'شيفتات', 'اغلاق'] },
-  { label: 'مناديب التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} />, keywords: ['توصيل', 'دليفري', 'طيار', 'طيارين', 'سائق', 'سائقين', 'مندوب', 'مناديب', 'كابتن', 'كباتن'] },
+  { label: 'مناديب التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} />, keywords: ['توصيل', 'دليفري', 'طيار', 'طيارين', 'سائق', 'سائقين', 'مندوب', 'مناديب'] },
+  { label: 'كباتن الطلبات', path: '/dashboard/captain-orders', icon: <MdSportsMotorsports size={20} />, keywords: ['كابتن', 'كباتن', 'كابتن طلبات', 'توصيل', 'captain', 'orders'] },
   { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} />, keywords: ['مصاريف', 'نفقات'] },
   { label: 'الحسابات المالية', path: '/dashboard/financial-accounts', icon: <MdAccountBalance size={20} />, keywords: ['خزنة', 'بنك', 'درج', 'مالية'] },
   { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} />, keywords: ['صالة', 'غرفة'] },

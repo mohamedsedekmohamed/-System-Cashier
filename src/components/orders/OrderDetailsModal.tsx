@@ -768,6 +768,31 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                   </p>
                 )}
 
+                {order.captain_order && (
+                  <div className="border-t border-slate-200/60 dark:border-slate-700/60 pt-1.5 text-xs flex items-center justify-between">
+                    <div>
+                      <span className="text-slate-400">كابتن الطلب: </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {typeof order.captain_order.name === 'object'
+                          ? resolveName(order.captain_order.name)
+                          : order.captain_order.name}
+                      </span>
+                      {order.captain_order.user_name && (
+                        <span className="text-[11px] text-primary font-mono mr-1" dir="ltr">
+                          (@{order.captain_order.user_name})
+                        </span>
+                      )}
+                    </div>
+                    {order.captain_order.images && order.captain_order.images.length > 0 && (
+                      <img
+                        src={order.captain_order.images[0]}
+                        alt="كابتن"
+                        className="w-6 h-6 rounded-full object-cover ring-1 ring-primary/40"
+                      />
+                    )}
+                  </div>
+                )}
+
                 {(order.cashier?.name || order.cashier_man?.name) && (
                   <div className="border-t border-slate-200/60 dark:border-slate-700/60 pt-1 text-xs text-slate-500">
                     <span>الكاشير: </span>

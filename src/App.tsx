@@ -38,6 +38,11 @@ import DeliveryList from './pages/deliveries/DeliveryList';
 import DeliveryAdd from './pages/deliveries/DeliveryAdd';
 import DeliveryEdit from './pages/deliveries/DeliveryEdit';
 
+// Captain Orders
+import CaptainOrderList from './pages/captainOrders/CaptainOrderList';
+import CaptainOrderAdd from './pages/captainOrders/CaptainOrderAdd';
+import CaptainOrderEdit from './pages/captainOrders/CaptainOrderEdit';
+
 // Expense Lists
 import ExpenseListList from './pages/expenseLists/ExpenseListList';
 import ExpenseListAdd from './pages/expenseLists/ExpenseListAdd';
@@ -204,6 +209,13 @@ function App() {
                   <Route path="deliveries/add" element={<DeliveryAdd />} />
                   <Route path="deliveries/edit/:id" element={<DeliveryEdit />} />
                   <Route path="delivery" element={<Navigate to="/dashboard/deliveries" replace />} /> {/* Legacy fallback */}
+
+                  {/* Captain Orders — full CRUD */}
+                  <Route path="captain-orders" element={<CaptainOrderList />} />
+                  <Route path="captain-orders/add" element={<CaptainOrderAdd />} />
+                  <Route path="captain-orders/edit/:id" element={<CaptainOrderEdit />} />
+                  <Route path="captain-order" element={<Navigate to="/dashboard/captain-orders" replace />} /> {/* Fallback */}
+                  <Route path="captains" element={<Navigate to="/dashboard/captain-orders" replace />} /> {/* Fallback */}
 
                   {/* Expense Lists — full CRUD */}
                   <Route path="expense-lists" element={<ExpenseListList />} />

@@ -411,6 +411,26 @@ export const NAVIGATION_PAGES: NavigationPageItem[] = [
     keywords: ['توصيل', 'طيارين', 'سائقين', 'دليفري', 'تعديل طيار', 'مندوب', 'مناديب', 'كابتن', 'كباتن', 'دليفري'],
   },
 
+  // ── كباتن الطلبات ──
+  {
+    id: 'captain-order-add',
+    title: 'إضافة كابتن طلبات جديد',
+    category: 'كباتن الطلبات',
+    actionType: 'add',
+    path: '/dashboard/captain-orders/add',
+    description: 'تسجيل كابتن طلبات جديد وتعيين اسم المستخدم وكلمة المرور ورفع صور الهوية ورخصة القيادة',
+    keywords: ['اضافة كابتن', 'كابتن جديد', 'كابتن طلبات', 'طيار طلبات', 'captain', 'orders', 'سائق', 'توصيل', 'اضافه'],
+  },
+  {
+    id: 'captain-order-list',
+    title: 'قائمة وإدارة كباتن الطلبات',
+    category: 'كباتن الطلبات',
+    actionType: 'list',
+    path: '/dashboard/captain-orders',
+    description: 'عرض جميع كباتن الطلبات، متابعة حالة الحسابات (نشط / غير نشط)، وتعديل البيانات والمستندات',
+    keywords: ['كباتن الطلبات', 'كابتن طلبات', 'كباتن', 'قائمة الكباتن', 'ادارة الكباتن', 'captain orders', 'captains'],
+  },
+
   // ── المصروفات ──
   {
     id: 'expense-add',

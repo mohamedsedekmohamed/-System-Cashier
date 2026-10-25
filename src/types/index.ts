@@ -34,3 +34,4 @@ export * from './addon';
 export * from './recipeInventory';
 export * from './dues';
 export * from './banner';
+export * from './captainOrder';

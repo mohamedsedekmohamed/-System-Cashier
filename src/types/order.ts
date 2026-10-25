@@ -221,6 +221,17 @@ export interface Order {
     created_at?: string;
     updated_at?: string;
   } | null;
+  captain_order_id?: number | null;
+  captain_order?: {
+    id: number;
+    name?: any;
+    user_name?: string;
+    status?: boolean;
+    images?: string[];
+    raw_images?: string[];
+    created_at?: string;
+    updated_at?: string;
+  } | null;
   branch_id?: number | null;
   branch?: {
     id: number;
