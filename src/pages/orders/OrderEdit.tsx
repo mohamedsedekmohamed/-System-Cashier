@@ -527,7 +527,7 @@ const OrderEdit: React.FC = () => {
                             <div className="text-xs text-slate-500 flex flex-wrap gap-2">
                               {p.variations.map((v, vi) => (
                                 <span key={vi} className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                                  خيار: {v.options?.map(o => o.option_id).join(', ')}
+                                  خيار: {v.options?.map((o: any) => o.option_id).join(', ')}
                                 </span>
                               ))}
                             </div>

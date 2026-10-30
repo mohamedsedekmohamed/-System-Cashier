@@ -19,7 +19,6 @@ import {
   MdInfo,
   MdPerson,
   MdUndo,
-  MdLock,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
@@ -178,7 +177,7 @@ const CaptainOrderEdit: React.FC = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner message="جاري تحميل بيانات الكابتن..." />;
+    return <LoadingSpinner text="جاري تحميل بيانات الكابتن..." />;
   }
 
   if (isError) {

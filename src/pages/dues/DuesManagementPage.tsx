@@ -16,7 +16,6 @@ import {
   MdShoppingBag,
   MdPointOfSale,
   MdPayment,
-  MdVisibility,
   MdSearch,
   MdRefresh,
   MdFilterList,

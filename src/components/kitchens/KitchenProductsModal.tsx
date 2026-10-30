@@ -17,7 +17,6 @@ import {
   MdRefresh,
   MdLayers,
   MdDoneAll,
-  MdSelectAll,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
@@ -127,14 +126,6 @@ export const KitchenProductsModal: React.FC<KitchenProductsModalProps> = ({
     setSelectedIdsOverride(() => {
       const next = new Set(selectedIds);
       filteredProducts.forEach((p) => next.add(p.id));
-      return next;
-    });
-  };
-
-  const deselectAllFiltered = () => {
-    setSelectedIdsOverride(() => {
-      const next = new Set(selectedIds);
-      filteredProducts.forEach((p) => next.delete(p.id));
       return next;
     });
   };

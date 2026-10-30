@@ -13,11 +13,8 @@ import {
   MdSportsMotorsports,
   MdVisibility,
   MdVisibilityOff,
-  MdCheckCircle,
   MdInfo,
-  MdLock,
   MdPerson,
-  MdAlternateEmail,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 

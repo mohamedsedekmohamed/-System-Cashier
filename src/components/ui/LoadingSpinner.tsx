@@ -5,6 +5,8 @@ interface LoadingSpinnerProps {
   size?: number;
   /** Text shown below the spinner. Optional. */
   text?: string;
+  /** Alias for text. Optional. */
+  message?: string;
   /** Full-screen centered overlay. Default: false */
   fullScreen?: boolean;
 }
@@ -12,8 +14,11 @@ interface LoadingSpinnerProps {
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 40,
   text,
+  message,
   fullScreen = false,
 }) => {
+  const displayText = text || message;
+
   const inner = (
     <div className="flex flex-col items-center justify-center gap-3">
       {/* Spinner ring */}
@@ -27,9 +32,9 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         role="status"
         aria-label="جاري التحميل"
       />
-      {text && (
+      {displayText && (
         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium animate-pulse">
-          {text}
+          {displayText}
         </p>
       )}
     </div>

@@ -30,7 +30,6 @@ import {
   MdQrCode2,
   MdInfoOutline,
   MdBadge,
-  MdEventSeat,
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 

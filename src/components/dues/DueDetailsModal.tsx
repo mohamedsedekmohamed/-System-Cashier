@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PurchaseDueItem, SaleDueItem } from '../../types';
-import { MdClose, MdReceiptLong, MdPayment, MdCalendarToday, MdPerson, MdStorefront, MdInfo } from 'react-icons/md';
+import { MdClose, MdReceiptLong, MdPayment, MdCalendarToday, MdPerson, MdStorefront } from 'react-icons/md';
 import { renderName } from '../../utils/helpers';
 
 interface DueDetailsModalProps {

@@ -23,7 +23,6 @@ import {
   MdCheckCircle,
   MdCancel,
   MdImage,
-  MdPerson,
   MdOpenInNew,
   MdClose,
   MdFilterList,
