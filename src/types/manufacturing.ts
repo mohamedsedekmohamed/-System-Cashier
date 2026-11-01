@@ -1,5 +1,6 @@
 import type { PaginatedMeta } from './common';
 import type { Branch, BranchOption } from './branch';
+import type { Unit } from './unit';
 
 export interface ManufacturingName {
   ar: string;
@@ -32,6 +33,8 @@ export interface ManufacturingRecipeItem {
   product_recipe_id: number | null;
   product_recipe: ManufacturingProductRecipe | null;
   count: number;
+  unit_id?: number | null;
+  unit?: Unit | null;
   created_at: string;
   updated_at: string;
 }
@@ -54,6 +57,7 @@ export interface ManufacturingRecipePayload {
   material_id: number | null;
   product_recipe_id: number | null;
   count: number;
+  unit_id?: number | null;
 }
 
 export interface ManufacturingFormData {
@@ -69,6 +73,7 @@ export interface ManufacturingSelectOptions {
   products: ManufacturingProduct[];
   product_recipes: ManufacturingProductRecipe[];
   materials: ManufacturingMaterial[];
+  units?: Unit[];
 }
 
 export interface ManufacturingListResponse {
@@ -105,6 +110,8 @@ export interface ProductManufacturingRecipeItem {
   product_recipe_id: number | null;
   product_recipe: ManufacturingProductRecipe | null;
   count: number;
+  unit_id?: number | null;
+  unit?: Unit | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -130,6 +137,7 @@ export interface ProductManufacturingSelectOptions {
   products: ManufacturingProduct[];
   product_recipes: ManufacturingProductRecipe[];
   materials: ManufacturingMaterial[];
+  units?: Unit[];
 }
 
 export interface ProductManufacturingListResponse {

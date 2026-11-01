@@ -121,10 +121,36 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
       zoomControl: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors',
-    }).addTo(map);
+    // Esri World Street Map (100% Free, No API Key, No blocking on local or server)
+    const streetLayer = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri',
+      }
+    );
+
+    // Esri Satellite Imagery
+    const satelliteLayer = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri, Earthstar Geographics',
+      }
+    );
+
+    // Default to Street Map
+    streetLayer.addTo(map);
+
+    // Layer Switcher Control
+    L.control.layers(
+      {
+        'خريطة الشوارع': streetLayer,
+        'أقمار صناعية (Satellite)': satelliteLayer,
+      },
+      undefined,
+      { position: 'topleft' }
+    ).addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -145,7 +171,16 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
       map.invalidateSize();
     }, 250);
 
+    // Watch container resize dynamically
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -383,6 +418,11 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
   // Get Current GPS Location
   const handleGetCurrentLocation = () => {
+    if (typeof window !== 'undefined' && !window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      alert('خدمة تحديد الموقع الجغرافي (GPS) تتطلب اتصالاً آمناً عبر HTTPS. يرجى فتح الموقع برابط https:// لتشغيل الـ GPS، أو تحديد موقع الفرع بالنقر المباشر على الخريطة.');
+      return;
+    }
+
     if (!navigator.geolocation) {
       alert('المتصفح لا يدعم تحديد الموقع الجغرافي.');
       return;

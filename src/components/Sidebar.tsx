@@ -35,6 +35,7 @@ import {
   MdAccountBalanceWallet,
   MdViewCarousel,
   MdSportsMotorsports,
+  MdStraighten,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -74,6 +75,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} />, keywords: ['مخزن', 'خامات'] },
   { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'تسوية'] },
   { label: 'جرد وصفات التصنيع', path: '/dashboard/recipe-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'وصفات', 'نصف مصنعة', 'تجهيز', 'recipe inventory', 'جرد الوصفات'] },
+  { label: 'جرد مخزون الإضافات', path: '/dashboard/addon-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'اضافات', 'مخزون', 'توبنج', 'addon inventory', 'جرد الإضافات'] },
   { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} />, keywords: ['فواتير شراء', 'شراء'] },
   { label: 'المبيعات', path: '/dashboard/sales', icon: <MdPointOfSale size={20} />, keywords: ['فواتير بيع', 'بيع'] },
   { label: 'الأقساط والديون', path: '/dashboard/dues', icon: <MdAccountBalanceWallet size={20} />, keywords: ['اقساط', 'ديون', 'اجل', 'سداد', 'مشتريات', 'مبيعات', 'مديونيات', 'due', 'dues', 'installments'] },
@@ -81,6 +83,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'الموزعين / العملاء', path: '/dashboard/salers', icon: <MdStorefront size={20} />, keywords: ['عميل', 'زبون'] },
   { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} />, keywords: ['تخفيض', 'كوبون'] },
   { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} />, keywords: ['ضريبة', 'قيمة مضافة'] },
+  { label: 'وحدات القياس', path: '/dashboard/units', icon: <MdStraighten size={20} />, keywords: ['وحدات', 'قياس', 'كيلو', 'جرام', 'كرتونة', 'unit', 'units', 'معامل تحويل'] },
   { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} />, keywords: ['هدر', 'تالف'] },
   { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} />, keywords: ['كاش', 'فيزا', 'دفع'] },
   { label: 'البانرات الإعلانية', path: '/dashboard/banners', icon: <MdViewCarousel size={20} />, keywords: ['بانرات', 'اعلانات', 'سلايدر', 'عروض', 'banners', 'banner'] },

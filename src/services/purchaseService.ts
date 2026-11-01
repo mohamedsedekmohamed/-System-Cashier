@@ -51,9 +51,10 @@ const buildPurchaseFormData = (payload: PurchaseFormData): FormData => {
 
 export const purchaseApi = {
   /** GET /api/admin/purchases/select-options */
-  getSelectOptions: async (branch_id?: number): Promise<PurchaseSelectOptionsResponse> => {
+  getSelectOptions: async (branch_id?: number, lang?: string): Promise<PurchaseSelectOptionsResponse> => {
     const params: Record<string, any> = {};
     if (branch_id) params.branch_id = branch_id;
+    if (lang) params.lang = lang;
     const { data } = await api.get<PurchaseSelectOptionsResponse>('/api/admin/purchases/select-options', { params });
     return data;
   },

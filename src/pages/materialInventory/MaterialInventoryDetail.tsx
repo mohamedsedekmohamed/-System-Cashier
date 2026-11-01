@@ -7,6 +7,7 @@ import {
   MATERIAL_INVENTORY_PENDING_KEY,
   MATERIAL_INVENTORY_HISTORY_KEY,
 } from '../../services/materialInventoryService';
+import { unitApi, ALL_UNITS_KEY } from '../../services/unitService';
 import type { MaterialInventoryItem } from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
@@ -19,7 +20,6 @@ import {
   MdCalendarToday,
   MdFactCheck,
   MdSearch,
-  MdWarningAmber,
   MdDoneAll,
   MdTrendingDown,
   MdTrendingUp,
@@ -39,6 +39,7 @@ const MaterialInventoryDetail: React.FC = () => {
 
   // Local state for tracking edited physical actual_stock per item id
   const [actualStockMap, setActualStockMap] = useState<Record<number, number>>({});
+  const [unitMap, setUnitMap] = useState<Record<number, number | null>>({});
   const [savingItemId, setSavingItemId] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -53,6 +54,12 @@ const MaterialInventoryDetail: React.FC = () => {
     enabled: !!id,
   });
 
+  // ── Fetch Units ───────────────────────────
+  const { data: units = [] } = useQuery({
+    queryKey: [ALL_UNITS_KEY],
+    queryFn: () => unitApi.getAll(),
+  });
+
   const inventory = data?.data;
   const items: MaterialInventoryItem[] = inventory?.items ?? [];
 
@@ -60,10 +67,13 @@ const MaterialInventoryDetail: React.FC = () => {
   useEffect(() => {
     if (items.length > 0) {
       const initialMap: Record<number, number> = {};
+      const initialUnitMap: Record<number, number | null> = {};
       items.forEach((item) => {
         initialMap[item.id] = Number(item.actual_stock ?? item.stock ?? 0);
+        initialUnitMap[item.id] = item.unit_id ?? (item.unit ? item.unit.id : null);
       });
       setActualStockMap(initialMap);
+      setUnitMap(initialUnitMap);
     }
   }, [items]);
 
@@ -74,7 +84,7 @@ const MaterialInventoryDetail: React.FC = () => {
 
   // ── Bulk Save Mutation ────────────────────
   const bulkSaveMutation = useMutation({
-    mutationFn: (payload: { items: Array<{ id: number; actual_stock: number }> }) =>
+    mutationFn: (payload: { items: Array<{ id: number; actual_stock: number; unit_id?: number | null }> }) =>
       materialInventoryApi.updateItems(id as string, payload),
     onSuccess: () => {
       setSuccessMessage('تم حفظ كميات الجرد الفعلية بنجاح.');
@@ -92,8 +102,8 @@ const MaterialInventoryDetail: React.FC = () => {
 
   // ── Single Item Save Mutation ─────────────
   const singleItemSaveMutation = useMutation({
-    mutationFn: ({ itemId, actualStock }: { itemId: number; actualStock: number }) =>
-      materialInventoryApi.updateSingleItem(itemId, { actual_stock: actualStock }),
+    mutationFn: ({ itemId, actualStock, unitId }: { itemId: number; actualStock: number; unitId?: number | null }) =>
+      materialInventoryApi.updateSingleItem(itemId, { actual_stock: actualStock, unit_id: unitId }),
     onSuccess: () => {
       setSavingItemId(null);
       setSuccessMessage('تم تحديث البند بنجاح');
@@ -119,7 +129,7 @@ const MaterialInventoryDetail: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [MATERIAL_INVENTORY_HISTORY_KEY] });
       setSuccessMessage(
         status === 'approve'
-          ? 'تم اعتماد الجرد وتسوية أرصدة الخامات في الفرع بنجاح!'
+          ? 'تم اعتماد الجرد وتسوية أرصدة الخامات في الفرع بنجاح مع التحويل الرياضي للوحدات!'
           : 'تم رفض نتائج الجرد الحالية.'
       );
       setTimeout(() => setSuccessMessage(null), 4000);
@@ -154,6 +164,7 @@ const MaterialInventoryDetail: React.FC = () => {
     const payloadItems = items.map((it) => ({
       id: it.id,
       actual_stock: actualStockMap[it.id] !== undefined ? actualStockMap[it.id] : Number(it.stock || 0),
+      unit_id: unitMap[it.id] ?? undefined,
     }));
     bulkSaveMutation.mutate({ items: payloadItems });
   };
@@ -161,8 +172,9 @@ const MaterialInventoryDetail: React.FC = () => {
   // Single row save
   const handleSaveSingleRow = (item: MaterialInventoryItem) => {
     const actualStock = actualStockMap[item.id] !== undefined ? actualStockMap[item.id] : Number(item.stock || 0);
+    const unitId = unitMap[item.id] ?? undefined;
     setSavingItemId(item.id);
-    singleItemSaveMutation.mutate({ itemId: item.id, actualStock });
+    singleItemSaveMutation.mutate({ itemId: item.id, actualStock, unitId });
   };
 
   // Calculate discrepancies
@@ -253,178 +265,134 @@ const MaterialInventoryDetail: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Toast Messages */}
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* Toast Alert */}
       {successMessage && (
-        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm font-bold flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-2">
-            <MdCheckCircle className="text-emerald-500 text-lg" />
-            <span>{successMessage}</span>
-          </div>
-          <button
-            onClick={() => setSuccessMessage(null)}
-            className="text-xs hover:opacity-75"
-          >
-            إغلاق
-          </button>
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-sm font-bold flex items-center gap-2 animate-in fade-in duration-200 shadow-sm">
+          <MdCheckCircle className="text-emerald-500 text-lg shrink-0" />
+          <span>{successMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-sm font-bold flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-2">
-            <MdCancel className="text-rose-500 text-lg" />
-            <span>{errorMessage}</span>
-          </div>
-          <button
-            onClick={() => setErrorMessage(null)}
-            className="text-xs hover:opacity-75"
-          >
-            إغلاق
-          </button>
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-sm font-bold flex items-center gap-2 animate-in fade-in duration-200 shadow-sm">
+          <MdCancel className="text-rose-500 text-lg shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Top Navigation & Info Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700/80 shadow-xs">
-        <div className="flex items-start gap-4">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard/material-inventory')}
-            className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 transition-colors shrink-0 cursor-pointer"
-            title="رجوع لقائمة الجرد"
-          >
-            <MdArrowForward size={22} className="rtl:rotate-0 ltr:rotate-180" />
-          </button>
-
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white">
-                {renderName(inventory.name) || `جلسة جرد #${inventory.id}`}
-              </h1>
-              {renderStatusBadge(inventory.status)}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
-              <span className="flex items-center gap-1.5">
-                <MdStorefront size={16} className="text-primary" />
-                <strong>الفرع:</strong> {renderName(inventory.branch_name) || `فرع #${inventory.branch_id}`}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <MdCalendarToday size={15} />
-                <strong>التاريخ:</strong> {renderName(inventory.date) || renderName(inventory.created_at) || '—'}
-              </span>
-              <span className="font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-600 dark:text-slate-300">
-                ID: {inventory.id}
-              </span>
+      {/* Header Info Card */}
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/dashboard/material-inventory')}
+              className="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              title="رجوع للقائمة"
+            >
+              <MdArrowForward size={20} />
+            </button>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                  {renderName(inventory.name)}
+                </h1>
+                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                  #{inventory.id}
+                </span>
+                {renderStatusBadge(inventory.status)}
+              </div>
+              <div className="flex flex-wrap items-center gap-4 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1">
+                  <MdStorefront size={15} className="text-slate-400" />
+                  {renderName(inventory.branch_name)}
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <MdCalendarToday size={14} className="text-slate-400" />
+                  {inventory.date || inventory.created_at_full || inventory.created_at}
+                </span>
+              </div>
             </div>
           </div>
+
+          {/* Action Buttons */}
+          {isPending && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleBulkSave}
+                disabled={bulkSaveMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                {bulkSaveMutation.isPending ? (
+                  <AiOutlineLoading3Quarters className="animate-spin text-sm" />
+                ) : (
+                  <MdSave size={16} />
+                )}
+                <span>حفظ التعديلات</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfirmStatusModal('approve')}
+                disabled={statusMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <MdCheckCircle size={16} />
+                <span>اعتماد الجرد وتسوية المخزون</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfirmStatusModal('reject')}
+                disabled={statusMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 text-xs font-bold transition-all border border-rose-200 dark:border-rose-900/60 cursor-pointer"
+              >
+                <MdCancel size={16} />
+                <span>رفض الجرد</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Global Action Buttons */}
-        {isPending && (
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={handleBulkSave}
-              disabled={bulkSaveMutation.isPending}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white font-bold text-sm shadow-md transition-all disabled:opacity-50 cursor-pointer"
-            >
-              {bulkSaveMutation.isPending ? (
-                <AiOutlineLoading3Quarters className="animate-spin text-base" />
-              ) : (
-                <MdSave size={18} />
-              )}
-              <span>حفظ الكميات المدخلة</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setConfirmStatusModal('approve')}
-              disabled={statusMutation.isPending}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition-all disabled:opacity-50 cursor-pointer"
-            >
-              <MdCheckCircle size={18} />
-              <span>اعتماد الجرد</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setConfirmStatusModal('reject')}
-              disabled={statusMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300 font-bold text-sm transition-all disabled:opacity-50 cursor-pointer"
-            >
-              <MdCancel size={18} />
-              <span>رفض</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Card 1: Total Items */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              إجمالي الخامات المجرودة
+        {/* Quick Statistics Banner */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700/60">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-0.5">
+              إجمالي الأصناف
             </span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-              <MdFactCheck size={18} />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-slate-800 dark:text-white">
-            {totalItemsCount}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">صنف خامات بالفرع</p>
-        </div>
-
-        {/* Card 2: Matching */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              أصناف مطابقة تماماً
+            <span className="text-xl font-black text-slate-800 dark:text-slate-100">
+              {totalItemsCount}
             </span>
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
-              <MdDoneAll size={18} />
-            </div>
           </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-            {matchingCount}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">لا يوجد أي فارق</p>
-        </div>
 
-        {/* Card 3: Discrepancies Count */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+          <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/40">
+            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 block mb-0.5">
+              مطابق تماماً
+            </span>
+            <span className="text-xl font-black text-emerald-700 dark:text-emerald-300">
+              {matchingCount}
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-800/40">
+            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 block mb-0.5">
               أصناف بها فروقات
             </span>
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
-              <MdWarningAmber size={18} />
-            </div>
+            <span className="text-xl font-black text-amber-700 dark:text-amber-300">
+              {discrepantCount}
+            </span>
           </div>
-          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">
-            {discrepantCount}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">عجز أو زيادة عن الدفتري</p>
-        </div>
 
-        {/* Card 4: Total Deficit */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+          <div className="p-3.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-800/40">
+            <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-300 block mb-0.5">
               إجمالي العجز الكمي
             </span>
-            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-              <MdTrendingDown size={18} />
-            </div>
+            <span className="text-xl font-black text-rose-700 dark:text-rose-300">
+              {totalDeficitQuantity.toFixed(2)}
+            </span>
           </div>
-          <div className="text-2xl font-black text-rose-600 dark:text-rose-400">
-            {totalDeficitQuantity.toFixed(2)}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">وحدات مسجلة كعجز</p>
         </div>
       </div>
 
@@ -519,6 +487,7 @@ const MaterialInventoryDetail: React.FC = () => {
                 <th className="py-4 px-4">المادة الخام</th>
                 <th className="py-4 px-4 text-center">الرصيد الدفتري (النظام)</th>
                 <th className="py-4 px-4 text-center">الرصيد الفعلي (الجرد)</th>
+                <th className="py-4 px-4 text-center">وحدة الجرد (تحويل آلي)</th>
                 <th className="py-4 px-4 text-center">الفارق / العجز</th>
                 {isPending && <th className="py-4 px-4 text-center">إجراء سريع</th>}
               </tr>
@@ -526,7 +495,7 @@ const MaterialInventoryDetail: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-sm">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={isPending ? 6 : 5} className="py-12 text-center text-slate-400">
+                  <td colSpan={isPending ? 7 : 6} className="py-12 text-center text-slate-400">
                     <MdFactCheck size={40} className="mx-auto mb-2 opacity-30" />
                     <p className="font-semibold text-sm">لا توجد مواد مطابقة لخيارات البحث أو الفلترة</p>
                   </td>
@@ -590,6 +559,31 @@ const MaterialInventoryDetail: React.FC = () => {
                         ) : (
                           <span className="font-mono font-black text-slate-800 dark:text-slate-100 text-sm">
                             {Number(item.actual_stock ?? 0)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Unit Selector */}
+                      <td className="py-3.5 px-4 text-center">
+                        {isPending ? (
+                          <select
+                            value={unitMap[item.id] ?? ''}
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : null;
+                              setUnitMap((prev) => ({ ...prev, [item.id]: val }));
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary/40 focus:outline-none"
+                          >
+                            <option value="">الوحدة الأساسية</option>
+                            {units.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                {renderName(u.name)} (x{u.value})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-xs">
+                            {item.unit ? renderName(item.unit.name) : 'الوحدة الأساسية'}
                           </span>
                         )}
                       </td>
@@ -665,7 +659,7 @@ const MaterialInventoryDetail: React.FC = () => {
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {confirmStatusModal === 'approve'
-                    ? 'سيتم تحديث أرصدة الخامات الفعلية في الفرع وفق نتائج هذا الجرد وتسوية الفروقات.'
+                    ? 'سيتم تحديث أرصدة الخامات الفعلية في الفرع وفق نتائج هذا الجرد وتسوية الفروقات مع التحويل الرياضي للوحدات.'
                     : 'سيتم وضع علامة مرفوض على جلسة الجرد دون تعديل الأرصدة الحالية.'}
                 </p>
               </div>

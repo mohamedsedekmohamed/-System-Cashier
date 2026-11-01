@@ -5,6 +5,7 @@ import { MATERIALS_KEY } from '../../services/materialService';
 import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
 import { SUPPLIERS_KEY } from '../../services/supplierService';
 import { MATERIAL_INVENTORY_KEY } from '../../services/materialInventoryService';
+import { ADDON_INVENTORY_KEY } from '../../services/addonInventoryService';
 import type { Purchase } from '../../types';
 import ErrorFallback from '../../components/ui/ErrorFallback';
 import { DataTable } from '../../components/ui/DataTable';
@@ -15,7 +16,7 @@ import { PurchaseDetailsModal } from '../../components/purchases/PurchaseDetails
 import { MdShoppingBag, MdDelete, MdVisibility, MdReceipt, MdImageNotSupported } from 'react-icons/md';
 import { renderName } from '../../utils/helpers';
 
-const PurchaseList: React.FC = () => {
+export const PurchaseList: React.FC = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -41,6 +42,8 @@ const PurchaseList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [PURCHASES_SELECT_OPTIONS_KEY] });
       queryClient.invalidateQueries({ queryKey: [MATERIALS_KEY] });
       queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['addons'] });
+      queryClient.invalidateQueries({ queryKey: [ADDON_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: [SUPPLIERS_KEY] });
       queryClient.invalidateQueries({ queryKey: [MATERIAL_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
@@ -57,7 +60,12 @@ const PurchaseList: React.FC = () => {
         const itemsMatch = p.items?.some((it) => {
           const matName = renderName(it.material?.name) || it.material_name;
           const recName = renderName(it.product_recipe?.name) || it.product_recipe_name;
-          return (matName && matName.toLowerCase().includes(s)) || (recName && recName.toLowerCase().includes(s));
+          const addonName = renderName(it.addon?.name) || it.addon_name;
+          return (
+            (matName && matName.toLowerCase().includes(s)) ||
+            (recName && recName.toLowerCase().includes(s)) ||
+            (addonName && addonName.toLowerCase().includes(s))
+          );
         });
         const suppName = renderName(p.supplier?.name);
         const suppMatch = suppName ? suppName.toLowerCase().includes(s) : false;
@@ -90,7 +98,7 @@ const PurchaseList: React.FC = () => {
         return url ? (
           <button
             onClick={() => setViewTarget(row)}
-            className="flex items-center gap-1.5 group p-1 pr-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 transition-colors"
+            className="flex items-center gap-1.5 group p-1 pr-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 transition-colors cursor-pointer"
             title="معاينة الإيصال"
           >
             <img
@@ -98,52 +106,45 @@ const PurchaseList: React.FC = () => {
               alt="Receipt"
               className="w-7 h-7 rounded object-cover border border-slate-200 dark:border-slate-700 group-hover:scale-105 transition-transform"
             />
-            <span className="text-xs text-primary font-medium">عرض</span>
+            <span className="text-xs text-primary font-medium flex items-center gap-0.5">
+              <MdReceipt size={14} /> عرض
+            </span>
           </button>
         ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-            <MdImageNotSupported size={14} />
-            بدون
+          <span className="text-xs text-slate-400 flex items-center gap-1">
+            <MdImageNotSupported size={14} /> لا يوجد
           </span>
         );
       },
     },
     {
-      header: 'الفرع المستلم',
+      header: 'المورد',
       render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
-          {renderName(row.branch?.name) || (row.branch_id ? `فرع #${row.branch_id}` : '—')}
+        <span className="font-semibold text-slate-800 dark:text-slate-100 text-xs">
+          {renderName(row.supplier?.name) || '—'}
         </span>
       ),
     },
     {
-      header: 'المورد',
+      header: 'الفرع المستلم',
       render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
-          {renderName(row.supplier?.name) || (row.supplier_id ? `مورد #${row.supplier_id}` : '—')}
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          {renderName(row.branch?.name) || 'الفرع الرئيسي'}
         </span>
       ),
     },
     {
       header: 'عدد الأصناف',
       render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200">
+        <span className="font-mono text-xs text-slate-600 dark:text-slate-300">
           {row.items?.length || 0} صنف
-        </span>
-      ),
-    },
-    {
-      header: 'إجمالي الكمية',
-      render: (row) => (
-        <span className="font-semibold text-slate-700 dark:text-slate-300">
-          {Number(row.total_quantity || row.quantity || 0).toLocaleString('ar-EG')}
         </span>
       ),
     },
     {
       header: 'إجمالي التكلفة',
       render: (row) => (
-        <span className="font-black text-slate-800 dark:text-white">
+        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-sm">
           {Number(row.total_cost || row.cost || 0).toLocaleString('ar-EG')} ج.م
         </span>
       ),
@@ -151,110 +152,91 @@ const PurchaseList: React.FC = () => {
     {
       header: 'المدفوع',
       render: (row) => (
-        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-          {Number(row.paid_amount ?? (row.total_cost || row.cost || 0)).toLocaleString('ar-EG')} ج.م
+        <span className="font-semibold text-blue-600 dark:text-blue-400 font-mono text-xs">
+          {Number(row.paid_amount || 0).toLocaleString('ar-EG')} ج.م
         </span>
       ),
     },
     {
-      header: 'المتبقي (الآجل)',
-      render: (row) => {
-        const rem = Number(row.remaining_amount || 0);
-        return (
-          <span
-            className={`font-bold ${
-              rem > 0
-                ? 'text-rose-600 dark:text-rose-400'
-                : 'text-slate-400 dark:text-slate-500'
-            }`}
-          >
-            {rem > 0 ? `${rem.toLocaleString('ar-EG')} ج.م` : 'مكتمل الدفع'}
-          </span>
-        );
-      },
-    },
-    {
-      header: 'الملاحظات',
+      header: 'تاريخ الإنشاء',
       render: (row) => (
-        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[200px] truncate" title={row.notes || ''}>
-          {row.notes || '—'}
-        </p>
-      ),
-    },
-    {
-      header: 'تاريخ الفاتورة',
-      render: (row) => (
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {row.created_at ? new Date(row.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' }) : '—'}
+        <span className="text-xs text-slate-500 font-mono" dir="ltr">
+          {row.created_at ? new Date(row.created_at).toLocaleDateString('ar-EG') : '—'}
         </span>
       ),
     },
     {
       header: 'الإجراءات',
       render: (row) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-1.5">
           <button
             onClick={() => setViewTarget(row)}
-            className="p-2 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+            className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all cursor-pointer"
             title="عرض التفاصيل"
           >
-            <MdVisibility size={16} />
+            <MdVisibility size={18} />
           </button>
           <button
             onClick={() => setDeleteTarget(row)}
-            className="p-2 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 transition-all shadow-sm border border-rose-100 dark:border-rose-800/50"
-            title="حذف"
+            className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-all cursor-pointer"
+            title="حذف الفاتورة"
           >
-            <MdDelete size={16} />
+            <MdDelete size={18} />
           </button>
         </div>
       ),
     },
   ];
 
-  if (isError) return <ErrorFallback error={error} onRetry={refetch} />;
-
   return (
-    <div className="space-y-5 flex flex-col h-full">
+    <div className="space-y-6">
+      {/* Header */}
       <CrudHeader
-        title="إدارة المشتريات"
+        title="فواتير المشتريات"
+        subtitle="إدارة ومتابعة فواتير شراء المواد الخام والوصفات والإضافات وتحديث أرصدة المخزون"
         icon={<MdShoppingBag size={28} />}
         totalCount={meta?.total}
         search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="ابحث برقم الفاتورة أو اسم الصنف أو الملاحظات..."
+        onSearchChange={(val: string) => {
+          setSearch(val);
+          setPage(1);
+        }}
+        searchPlaceholder="ابحث برقم الفاتورة، اسم المورد..."
         onRefresh={() => refetch()}
         addLink="/dashboard/purchases/add"
-        addText="فاتورة مشتريات جديدة"
+        addText="تسجيل فاتورة شراء جديدة"
       />
 
-      <div className="flex-1">
+      {/* Main Table */}
+      {isError ? (
+        <ErrorFallback error={error} onRetry={refetch} />
+      ) : (
         <DataTable
-          data={filtered}
           columns={columns}
+          data={filtered}
           meta={meta}
           onPageChange={setPage}
-          isLoading={isLoading && !data}
-          emptyIcon={<MdReceipt size={48} />}
-          emptyText="لا توجد فواتير مشتريات مسجلة"
+          isLoading={isLoading && !purchases.length}
+          emptyIcon={<MdShoppingBag size={48} className="text-slate-300 dark:text-slate-600" />}
+          emptyText="لا توجد فواتير مشتريات مسجلة."
         />
-      </div>
-
-      {/* Delete Modal */}
-      <DeleteModal
-        isOpen={!!deleteTarget}
-        itemName={`فاتورة المشتريات #${deleteTarget?.id}`}
-        isDeleting={deleteMutation.isPending}
-        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-        onCancel={() => setDeleteTarget(null)}
-        descriptionPrefix="هل أنت متأكد من حذف"
-      />
+      )}
 
       {/* Details Modal */}
       <PurchaseDetailsModal
         isOpen={!!viewTarget}
         onClose={() => setViewTarget(null)}
         purchase={viewTarget}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="حذف فاتورة المشتريات"
+        message={`هل أنت متأكد من حذف فاتورة المشتريات رقم #${deleteTarget?.id}؟ سيتم استرجاع وخصم كميات الأصناف المشتراة من رصيد مخزون الفرع تلقائياً.`}
+        isDeleting={deleteMutation.isPending}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        onClose={() => setDeleteTarget(null)}
       />
     </div>
   );

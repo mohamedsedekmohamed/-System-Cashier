@@ -1,8 +1,10 @@
 import type { PaginatedMeta } from './common';
 import type { BranchOption } from './branch';
+import type { Unit } from './unit';
 
 export interface RecipeInventorySelectOptions {
   branches: BranchOption[];
+  units?: Unit[];
 }
 
 export interface RecipeInventorySelectOptionsResponse {
@@ -41,6 +43,8 @@ export interface RecipeInventoryItem {
   deficit: number;
   shortage?: number;
   difference?: number;
+  unit_id?: number | null;
+  unit?: Unit | null;
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +78,7 @@ export interface UpdateRecipeInventoryItemsPayload {
   items: Array<{
     id: number;
     actual_stock: number;
+    unit_id?: number | null;
   }>;
 }
 
@@ -83,4 +88,5 @@ export interface UpdateRecipeInventoryStatusPayload {
 
 export interface UpdateSingleRecipeItemPayload {
   actual_stock: number;
+  unit_id?: number | null;
 }

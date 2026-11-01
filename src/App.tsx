@@ -157,6 +157,13 @@ import MaterialInventoryDetail from './pages/materialInventory/MaterialInventory
 import RecipeInventoryList from './pages/recipeInventory/RecipeInventoryList';
 import RecipeInventoryDetail from './pages/recipeInventory/RecipeInventoryDetail';
 
+// Addon Inventory
+import AddonInventoryList from './pages/addonInventory/AddonInventoryList';
+import AddonInventoryDetail from './pages/addonInventory/AddonInventoryDetail';
+
+// Units
+import UnitList from './pages/units/UnitList';
+
 // Reports
 import StartShiftReportPage from './pages/reports/StartShiftReportPage';
 
@@ -274,6 +281,11 @@ function App() {
                   <Route path="recipe-inventory/:id" element={<RecipeInventoryDetail />} />
                   <Route path="inventory/recipes" element={<Navigate to="/dashboard/recipe-inventory" replace />} />
 
+                  {/* Addon Inventory — جرد مخزون الإضافات */}
+                  <Route path="addon-inventory" element={<AddonInventoryList />} />
+                  <Route path="addon-inventory/:id" element={<AddonInventoryDetail />} />
+                  <Route path="inventory/addons" element={<Navigate to="/dashboard/addon-inventory" replace />} />
+
                   {/* Payment Methods — full CRUD */}
                   <Route path="payment-methods" element={<PaymentMethodList />} />
                   <Route path="payment-methods/add" element={<PaymentMethodAdd />} />
@@ -335,6 +347,9 @@ function App() {
                   <Route path="wastes" element={<WasteList />} />
                   <Route path="wastes/add" element={<WasteAdd />} />
                   <Route path="wastes/edit/:id" element={<WasteEdit />} />
+
+                  {/* Units — وحدات القياس */}
+                  <Route path="units" element={<UnitList />} />
 
                   {/* Shifts — full CRUD */}
                   <Route path="shifts" element={<ShiftList />} />

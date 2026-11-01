@@ -1,8 +1,10 @@
 import type { PaginatedMeta } from './common';
 import type { BranchOption } from './branch';
+import type { Unit } from './unit';
 
 export interface MaterialInventorySelectOptions {
   branches: BranchOption[];
+  units?: Unit[];
 }
 
 export interface MaterialInventorySelectOptionsResponse {
@@ -38,6 +40,8 @@ export interface MaterialInventoryItem {
   deficit: number;
   shortage: number;
   difference: number;
+  unit_id?: number | null;
+  unit?: Unit | null;
   created_at: string;
   updated_at: string;
 }
@@ -71,6 +75,7 @@ export interface UpdateMaterialInventoryItemsPayload {
   items: Array<{
     id: number;
     actual_stock: number;
+    unit_id?: number | null;
   }>;
 }
 
@@ -80,4 +85,5 @@ export interface UpdateMaterialInventoryStatusPayload {
 
 export interface UpdateSingleMaterialItemPayload {
   actual_stock: number;
+  unit_id?: number | null;
 }

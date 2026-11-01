@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import type { 
   ManufacturingMaterial, 
   ManufacturingProductRecipe, 
-  ManufacturingRecipePayload 
+  ManufacturingRecipePayload,
+  Unit
 } from '../../types';
 import { renderName } from '../../utils/helpers';
 import { 
@@ -21,6 +22,7 @@ import {
 export interface ConsumedMaterialsCardsProps {
   materials?: ManufacturingMaterial[];
   productRecipes?: ManufacturingProductRecipe[];
+  units?: Unit[];
   recipes: ManufacturingRecipePayload[];
   onChange: (recipes: ManufacturingRecipePayload[]) => void;
   disabled?: boolean;
@@ -34,6 +36,7 @@ type TabType = 'all' | 'materials' | 'recipes' | 'selected';
 export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
   materials = [],
   productRecipes = [],
+  units = [],
   recipes = [],
   onChange,
   disabled = false,
@@ -81,6 +84,19 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
         map.set(`m_${r.material_id}`, r.count);
       } else if (r.product_recipe_id) {
         map.set(`r_${r.product_recipe_id}`, r.count);
+      }
+    });
+    return map;
+  }, [recipes]);
+
+  // Selected items unit map for quick lookup
+  const selectedUnitMap = useMemo(() => {
+    const map = new Map<string, number | null>();
+    recipes.forEach(r => {
+      if (r.material_id) {
+        map.set(`m_${r.material_id}`, r.unit_id ?? null);
+      } else if (r.product_recipe_id) {
+        map.set(`r_${r.product_recipe_id}`, r.unit_id ?? null);
       }
     });
     return map;
@@ -143,12 +159,14 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
       });
       onChange(updated);
     } else {
-      // Add with default count 1
+      // Add with default count 1 and first unit if available
       const initialCount = 1;
+      const defaultUnitId = units && units.length > 0 ? units[0].id : null;
       const newItem: ManufacturingRecipePayload = {
         material_id: item.itemType === 'material' ? item.id : null,
         product_recipe_id: item.itemType === 'recipe' ? item.id : null,
         count: initialCount,
+        unit_id: defaultUnitId,
       };
       onChange([...recipes, newItem]);
     }
@@ -161,6 +179,18 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
       const matchKey = r.material_id ? `m_${r.material_id}` : `r_${r.product_recipe_id}`;
       if (matchKey === uniqueKey) {
         return { ...r, count: countVal };
+      }
+      return r;
+    });
+    onChange(updated);
+  };
+
+  const handleUpdateUnit = (uniqueKey: string, unitId: number | null) => {
+    if (disabled) return;
+    const updated = recipes.map(r => {
+      const matchKey = r.material_id ? `m_${r.material_id}` : `r_${r.product_recipe_id}`;
+      if (matchKey === uniqueKey) {
+        return { ...r, unit_id: unitId };
       }
       return r;
     });
@@ -188,7 +218,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-3">
           <MdWarning size={20} className="text-amber-500 shrink-0" />
           <p className="font-semibold leading-relaxed">
-            تنبيه: لتحضير الوصفة، يجب اختيار الخامات والمواد المستهلكة من الكروت أدناه وتحديد الكمية المستهلكة.
+            تنبيه: لتحضير الوصفة، يجب اختيار الخامات والمواد المستهلكة من الكروت أدناه وتحديد الكمية المستهلكة والوحدة.
           </p>
         </div>
       )}
@@ -230,6 +260,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
               const item = allItems.find(i => i.uniqueKey === uniqueKey);
               if (!item) return null;
               const isOver = r.count > item.stockNumber;
+              const unitObj = units.find(u => u.id === r.unit_id);
 
               return (
                 <div
@@ -242,7 +273,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                 >
                   <span className="truncate max-w-[140px]">{renderName(item.name)}</span>
                   <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 font-mono text-[11px]">
-                    × {r.count}
+                    × {r.count} {unitObj ? renderName(unitObj.name) : ''}
                   </span>
                   <button
                     type="button"
@@ -367,6 +398,7 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
           {filteredItems.map(item => {
             const isSelected = selectedMap.has(item.uniqueKey);
             const currentCount = selectedMap.get(item.uniqueKey) || 1;
+            const currentUnitId = selectedUnitMap.get(item.uniqueKey);
             const hasStock = isStandardBOM || item.stockNumber > 0;
             const isExceeded = !isStandardBOM && isSelected && currentCount > item.stockNumber;
             const remaining = Math.max(0, item.stockNumber - currentCount);
@@ -533,13 +565,13 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
 
                         <input
                           type="number"
-                          min="1"
-                          step="1"
+                          min="0.0001"
+                          step="any"
                           disabled={disabled}
                           value={currentCount === 0 ? '' : currentCount}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => {
-                            const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                            const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
                             handleUpdateCount(item.uniqueKey, isNaN(val) ? 0 : Math.max(0, val));
                           }}
                           className={`flex-1 py-1.5 px-2 rounded-xl border-2 text-center font-mono font-bold text-base bg-white dark:bg-slate-900 focus:outline-none transition-all shadow-2xs ${
@@ -564,6 +596,39 @@ export const ConsumedMaterialsCards: React.FC<ConsumedMaterialsCardsProps> = ({
                           <MdAdd size={16} />
                         </button>
                       </div>
+
+                      {/* Unit Selector */}
+                      {units && units.length > 0 && (
+                        <div className="space-y-1 pt-1">
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                            <span>وحدة القياس:</span>
+                            {isStandardBOM && !currentUnitId && (
+                              <span className="text-rose-500 font-bold">* إلزامي</span>
+                            )}
+                          </div>
+                          <select
+                            disabled={disabled}
+                            value={currentUnitId ?? ''}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : null;
+                              handleUpdateUnit(item.uniqueKey, val);
+                            }}
+                            className={`w-full py-1.5 px-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border transition-all ${
+                              isStandardBOM && !currentUnitId
+                                ? 'border-rose-400 text-rose-600 dark:text-rose-400 ring-2 ring-rose-400/20'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary/30'
+                            }`}
+                          >
+                            <option value="">-- اختر الوحدة --</option>
+                            {units.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                {renderName(u.name)} (x{u.value})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
 
                       {/* Stock Remaining / Exceeded feedback (Only in branch execution mode) */}
                       {!isStandardBOM && (

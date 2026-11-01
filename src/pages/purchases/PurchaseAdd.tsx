@@ -7,6 +7,7 @@ import { PRODUCT_RECIPES_KEY } from '../../services/productRecipeService';
 import { SUPPLIERS_KEY } from '../../services/supplierService';
 import { SALES_SELECT_OPTIONS_KEY } from '../../services/saleService';
 import { MATERIAL_INVENTORY_KEY } from '../../services/materialInventoryService';
+import { ADDON_INVENTORY_KEY } from '../../services/addonInventoryService';
 import type { PurchaseFormData, PurchaseItemPayload } from '../../types';
 import {
   MdArrowForward,
@@ -24,14 +25,17 @@ import {
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
+import { renderName } from '../../utils/helpers';
 
 interface ItemFormRow {
   id: string; // local unique key
-  type: 'material' | 'recipe';
+  type: 'material' | 'recipe' | 'addon';
   material_id: number;
   product_recipe_id: number;
+  addon_id: number;
   quantity: number;
   cost: number;
+  unit_id: number;
 }
 
 interface InstallmentRow {
@@ -58,8 +62,10 @@ export const PurchaseAdd: React.FC = () => {
       type: 'material',
       material_id: 0,
       product_recipe_id: 0,
+      addon_id: 0,
       quantity: 1,
       cost: 0,
+      unit_id: 0,
     },
   ]);
 
@@ -72,7 +78,6 @@ export const PurchaseAdd: React.FC = () => {
     d.setMonth(d.getMonth() + 1);
     return d.toISOString().split('T')[0];
   }, []);
-
 
   const [installments, setInstallments] = useState<InstallmentRow[]>([
     {
@@ -87,7 +92,6 @@ export const PurchaseAdd: React.FC = () => {
     },
   ]);
 
-
   // ── Fetch Select Options (Guarded by Purchase permissions) ───────────────
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery({
     queryKey: [PURCHASES_SELECT_OPTIONS_KEY, selectedBranchId],
@@ -98,6 +102,8 @@ export const PurchaseAdd: React.FC = () => {
   const suppliers = optionsData?.data?.suppliers ?? [];
   const materials = optionsData?.data?.materials ?? [];
   const productRecipes = optionsData?.data?.product_recipes ?? [];
+  const addons = optionsData?.data?.addons ?? [];
+  const units = optionsData?.data?.units ?? [];
 
   // Auto-select first branch when branches are loaded
   React.useEffect(() => {
@@ -114,6 +120,8 @@ export const PurchaseAdd: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [PURCHASES_SELECT_OPTIONS_KEY] });
       queryClient.invalidateQueries({ queryKey: [MATERIALS_KEY] });
       queryClient.invalidateQueries({ queryKey: [PRODUCT_RECIPES_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['addons'] });
+      queryClient.invalidateQueries({ queryKey: [ADDON_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: [SUPPLIERS_KEY] });
       queryClient.invalidateQueries({ queryKey: [MATERIAL_INVENTORY_KEY] });
       queryClient.invalidateQueries({ queryKey: ['recipe_inventory'] });
@@ -165,8 +173,10 @@ export const PurchaseAdd: React.FC = () => {
         type: 'material',
         material_id: 0,
         product_recipe_id: 0,
+        addon_id: 0,
         quantity: 1,
         cost: 0,
+        unit_id: 0,
       },
     ]);
   };
@@ -180,8 +190,10 @@ export const PurchaseAdd: React.FC = () => {
           type: 'material',
           material_id: 0,
           product_recipe_id: 0,
+          addon_id: 0,
           quantity: 1,
           cost: 0,
+          unit_id: 0,
         },
       ]);
       return;
@@ -189,7 +201,7 @@ export const PurchaseAdd: React.FC = () => {
     setItems((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleTypeChange = (index: number, newType: 'material' | 'recipe') => {
+  const handleTypeChange = (index: number, newType: 'material' | 'recipe' | 'addon') => {
     setItems((prev) => {
       const updated = [...prev];
       updated[index] = {
@@ -197,6 +209,8 @@ export const PurchaseAdd: React.FC = () => {
         type: newType,
         material_id: 0,
         product_recipe_id: 0,
+        addon_id: 0,
+        cost: 0,
       };
       return updated;
     });
@@ -205,11 +219,30 @@ export const PurchaseAdd: React.FC = () => {
   const handleItemSelectChange = (index: number, val: number) => {
     setItems((prev) => {
       const updated = [...prev];
-      if (updated[index].type === 'material') {
-        updated[index] = { ...updated[index], material_id: val, product_recipe_id: 0 };
+      const row = updated[index];
+      if (row.type === 'material') {
+        updated[index] = { ...row, material_id: val, product_recipe_id: 0, addon_id: 0 };
+      } else if (row.type === 'recipe') {
+        updated[index] = { ...row, product_recipe_id: val, material_id: 0, addon_id: 0 };
       } else {
-        updated[index] = { ...updated[index], product_recipe_id: val, material_id: 0 };
+        const foundAddon = addons.find((a) => a.id === val);
+        const suggestedCost = foundAddon ? Number(foundAddon.price) || 0 : row.cost;
+        updated[index] = {
+          ...row,
+          addon_id: val,
+          material_id: 0,
+          product_recipe_id: 0,
+          cost: row.cost === 0 ? suggestedCost : row.cost,
+        };
       }
+      return updated;
+    });
+  };
+
+  const handleUnitChange = (index: number, unitId: number) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], unit_id: unitId };
       return updated;
     });
   };
@@ -336,7 +369,13 @@ export const PurchaseAdd: React.FC = () => {
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const hasSelection = item.type === 'material' ? item.material_id > 0 : item.product_recipe_id > 0;
+      const hasSelection =
+        item.type === 'material'
+          ? item.material_id > 0
+          : item.type === 'recipe'
+          ? item.product_recipe_id > 0
+          : item.addon_id > 0;
+
       if (!hasSelection) {
         setErrorMessage(`يرجى تحديد الصنف في البند رقم #${i + 1}`);
         return;
@@ -375,8 +414,10 @@ export const PurchaseAdd: React.FC = () => {
     const payloadItems: PurchaseItemPayload[] = items.map((item) => ({
       material_id: item.type === 'material' ? item.material_id : null,
       product_recipe_id: item.type === 'recipe' ? item.product_recipe_id : null,
+      addon_id: item.type === 'addon' ? item.addon_id : null,
       quantity: Number(item.quantity),
       cost: Number(item.cost),
+      unit_id: item.unit_id ? Number(item.unit_id) : null,
     }));
 
     if (!selectedBranchId) {
@@ -404,7 +445,6 @@ export const PurchaseAdd: React.FC = () => {
       paid_amount: actualPaid,
       due_date: remainingAmount > 0 ? (payloadDues?.[0]?.date || defaultDueDate) : undefined,
       dues: payloadDues,
-
       receipt: receiptFile,
       notes: notes.trim() || undefined,
       items: payloadItems,
@@ -412,7 +452,6 @@ export const PurchaseAdd: React.FC = () => {
 
     mutation.mutate(payload);
   };
-
 
   return (
     <div className="w-full space-y-6 pb-20">
@@ -433,7 +472,7 @@ export const PurchaseAdd: React.FC = () => {
               تسجيل فاتورة مشتريات جديدة
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              إدخال مشتريات المواد الخام والمنتجات غير منتهية التصنيع وتحديث المخزون
+              شراء المواد الخام، وصفات المنتجات، والإضافات (Addons) مع التحويل الرياضي التلقائي لوحدات المخزون
             </p>
           </div>
         </div>
@@ -442,7 +481,7 @@ export const PurchaseAdd: React.FC = () => {
           type="button"
           onClick={handleSubmit}
           disabled={mutation.isPending || isLoadingOptions}
-          className="hidden sm:inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
+          className="hidden sm:inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 cursor-pointer"
         >
           {mutation.isPending ? (
             <AiOutlineLoading3Quarters size={18} className="animate-spin" />
@@ -507,55 +546,61 @@ export const PurchaseAdd: React.FC = () => {
               </div>
             </div>
 
+            {/* Notes textarea */}
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                ملاحظات أو رقم مرجع المورد (اختياري)
+                ملاحظات أو بيان الفاتورة (اختياري)
               </label>
               <textarea
+                rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-                placeholder="أدخل أي تفاصيل خاصة بالفاتورة، اسم المورد، رقم الفاتورة الورقية..."
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none focus:ring-2 ring-primary/20 text-slate-800 dark:text-slate-100 text-sm transition-all resize-none"
+                placeholder="أدخل أي ملاحظات بخصوص شحنة المشتريات أو رقم إيصال المورد..."
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none text-slate-800 dark:text-slate-100 text-sm resize-none"
               />
             </div>
           </div>
 
-          {/* Receipt Upload Box */}
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3 flex flex-col">
-            <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <MdCloudUpload size={20} className="text-primary" />
-              إرفاق صورة الإيصال
-            </h3>
+          {/* Receipt Upload Section */}
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-1">
+                <MdCloudUpload size={20} className="text-primary" />
+                صورة الإيصال / الفاتورة
+              </h3>
+              <p className="text-xs text-slate-400">
+                يمكنك رفع صورة واضحة من الفاتورة الورقية أو إيصال الدفع
+              </p>
+            </div>
 
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/*"
-              className="hidden"
+              accept="image/jpeg,image/png,image/webp"
               onChange={(e) => handleReceiptSelect(e.target.files?.[0] || null)}
+              className="hidden"
             />
 
             {receiptPreview ? (
-              <div className="relative flex-1 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex items-center justify-center min-h-[140px]">
+              <div className="relative mt-4 group rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 aspect-video flex items-center justify-center">
                 <img
                   src={receiptPreview}
                   alt="Receipt Preview"
-                  className="w-full h-full max-h-48 object-contain"
+                  className="w-full h-full object-cover"
                 />
                 <button
                   type="button"
                   onClick={handleRemoveReceipt}
-                  className="absolute top-2 left-2 p-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 shadow-md transition-colors"
-                  title="إلغاء الإيصال"
+                  className="absolute top-2 left-2 p-1.5 rounded-xl bg-rose-600 text-white shadow-md hover:bg-rose-700 transition-colors"
+                  title="حذف الصورة"
                 >
-                  <MdClose size={16} />
+                  <MdClose size={18} />
                 </button>
               </div>
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary hover:bg-primary/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[140px]"
+                className="mt-4 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-900/40"
               >
                 <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-2">
                   <MdCloudUpload size={24} />
@@ -581,14 +626,14 @@ export const PurchaseAdd: React.FC = () => {
                 بنود المشتريات
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                حدد المادة أو الوصفة والكمية وسعر التكلفة لكل وحدة
+                حدد المادة الخام، أو وصفة المنتج، أو الإضافة، والكمية، والوحدة، وسعر التكلفة
               </p>
             </div>
 
             <button
               type="button"
               onClick={handleAddItem}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-primary/10 hover:text-primary text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-primary/10 hover:text-primary text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
             >
               <MdAdd size={18} />
               إضافة صنف آخر
@@ -607,18 +652,18 @@ export const PurchaseAdd: React.FC = () => {
                 >
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                     
-                    {/* Index & Type Selector */}
+                    {/* Index & Type Selector (3 options: material, recipe, addon) */}
                     <div className="md:col-span-3">
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                           بند #{index + 1} نوع الصنف
                         </label>
                       </div>
-                      <div className="grid grid-cols-2 gap-1 p-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <div className="grid grid-cols-3 gap-1 p-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                         <button
                           type="button"
                           onClick={() => handleTypeChange(index, 'material')}
-                          className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
+                          className={`py-1.5 text-[11px] font-bold rounded-lg transition-all ${
                             row.type === 'material'
                               ? 'bg-primary text-white shadow-sm'
                               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
@@ -629,36 +674,86 @@ export const PurchaseAdd: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleTypeChange(index, 'recipe')}
-                          className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
+                          className={`py-1.5 text-[11px] font-bold rounded-lg transition-all ${
                             row.type === 'recipe'
                               ? 'bg-primary text-white shadow-sm'
                               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
                           }`}
                         >
-                          وصفة منتج
+                          وصفة
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleTypeChange(index, 'addon')}
+                          className={`py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                            row.type === 'addon'
+                              ? 'bg-primary text-white shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          إضافة
                         </button>
                       </div>
                     </div>
 
                     {/* Item Select */}
-                    <div className="md:col-span-4">
+                    <div className="md:col-span-3">
                       <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                        {row.type === 'material' ? 'اختر المادة الخام' : 'اختر وصفة المنتج'}
+                        {row.type === 'material'
+                          ? 'اختر المادة الخام'
+                          : row.type === 'recipe'
+                          ? 'اختر وصفة المنتج'
+                          : 'اختر الإضافة (Addon)'}
                       </label>
                       <SearchableSelect
                         id={`item-select-${index}`}
-                        value={row.type === 'material' ? row.material_id : row.product_recipe_id}
+                        value={
+                          row.type === 'material'
+                            ? row.material_id
+                            : row.type === 'recipe'
+                            ? row.product_recipe_id
+                            : row.addon_id
+                        }
                         onChange={(val) => handleItemSelectChange(index, Number(val))}
-                        options={row.type === 'material' ? materials : productRecipes}
-                        labelExtractor={(item) => `${item.name}${item.stock !== undefined ? ` (المخزون الحالي: ${item.stock})` : ''}`}
+                        options={
+                          row.type === 'material'
+                            ? materials
+                            : row.type === 'recipe'
+                            ? productRecipes
+                            : addons
+                        }
+                        labelExtractor={(item) =>
+                          `${renderName(item.name)}${
+                            item.stock !== undefined ? ` (المخزون الحالي: ${item.stock})` : ''
+                          }${item.price !== undefined ? ` - سعر: ${item.price} ج.م` : ''}`
+                        }
                         placeholder={isLoadingOptions ? 'جاري التحميل...' : '-- اختر الصنف --'}
                         searchPlaceholder="ابحث عن الصنف..."
                         disabled={isLoadingOptions}
                       />
                     </div>
 
-                    {/* Quantity */}
+                    {/* Purchasing Unit (Optional conversion unit) */}
                     <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+                        وحدة الشراء (تحويل آلي)
+                      </label>
+                      <select
+                        value={row.unit_id || ''}
+                        onChange={(e) => handleUnitChange(index, Number(e.target.value) || 0)}
+                        className="w-full px-2.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none text-slate-800 dark:text-slate-100 text-xs font-semibold"
+                      >
+                        <option value="">الوحدة الافتراضية (1x)</option>
+                        {units.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {renderName(u.name)} (x{u.value})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Quantity */}
+                    <div className="md:col-span-1">
                       <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
                         الكمية
                       </label>
@@ -668,7 +763,7 @@ export const PurchaseAdd: React.FC = () => {
                         step="0.01"
                         value={row.quantity || ''}
                         onChange={(e) => handleQuantityChange(index, parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none text-slate-800 dark:text-slate-100 text-xs font-bold text-center"
+                        className="w-full px-2 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-primary focus:outline-none text-slate-800 dark:text-slate-100 text-xs font-bold text-center"
                         placeholder="1"
                       />
                     </div>
@@ -689,7 +784,7 @@ export const PurchaseAdd: React.FC = () => {
                       />
                     </div>
 
-                    {/* Subtotal & Delete */}
+                    {/* Delete */}
                     <div className="md:col-span-1 flex items-center justify-between md:justify-end gap-2">
                       <div className="text-left md:hidden">
                         <span className="text-[10px] text-slate-400 block">الإجمالي:</span>
@@ -760,14 +855,14 @@ export const PurchaseAdd: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setPaidAmount(totalCost)}
-                    className="text-[11px] font-bold text-primary hover:underline"
+                    className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
                   >
                     دفع بالكامل
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaidAmount(0)}
-                    className="text-[11px] font-bold text-rose-600 hover:underline"
+                    className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
                   >
                     آجل بالكامل
                   </button>
@@ -789,7 +884,6 @@ export const PurchaseAdd: React.FC = () => {
             </div>
 
             {/* Installment Schedule Builder (when remainingAmount > 0) */}
-
             {remainingAmount > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -813,35 +907,35 @@ export const PurchaseAdd: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleSplitInstallments(2)}
-                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       قسطين
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSplitInstallments(3)}
-                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       3 أقساط
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSplitInstallments(4)}
-                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       4 أقساط
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSplitInstallments(6)}
-                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors"
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-primary/10 hover:text-primary dark:bg-slate-700 dark:hover:bg-primary/20 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       6 أقساط
                     </button>
                     <button
                       type="button"
                       onClick={handleAddInstallment}
-                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
                     >
                       <MdAdd size={14} />
                       إضافة قسط
@@ -915,7 +1009,7 @@ export const PurchaseAdd: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveInstallment(idx)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                             title="حذف القسط"
                           >
                             <MdDelete size={18} />
@@ -956,7 +1050,7 @@ export const PurchaseAdd: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleAdjustRemainingInLastInstallment}
-                          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
+                          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer"
                         >
                           إضافة الفارق للقسط الأخير
                         </button>
@@ -969,7 +1063,7 @@ export const PurchaseAdd: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleAdjustRemainingInLastInstallment}
-                          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors"
+                          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors cursor-pointer"
                         >
                           خصم الزيادة من القسط الأخير
                         </button>
@@ -1035,7 +1129,7 @@ export const PurchaseAdd: React.FC = () => {
               <button
                 type="submit"
                 disabled={mutation.isPending || isLoadingOptions}
-                className="inline-flex items-center gap-2 px-8 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-8 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {mutation.isPending ? (
                   <AiOutlineLoading3Quarters size={18} className="animate-spin" />

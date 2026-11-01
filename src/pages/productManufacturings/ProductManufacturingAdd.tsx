@@ -6,6 +6,7 @@ import {
   PRODUCT_MANUFACTURING_KEY, 
   PRODUCT_MANUFACTURING_SELECT_OPTIONS_KEY 
 } from '../../services/productManufacturingService';
+import { unitApi, ALL_UNITS_KEY } from '../../services/unitService';
 import type { 
   ProductManufacturingFormData, 
   ProductManufacturingSelectOptionsResponse,
@@ -19,8 +20,7 @@ import {
   MdSave, 
   MdSchema, 
   MdFastfood, 
-  MdLayers,
-  MdInfoOutline
+  MdLayers
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
@@ -48,6 +48,12 @@ const ProductManufacturingAdd: React.FC = () => {
   const { data: optionsData, isLoading: isLoadingOptions } = useQuery<ProductManufacturingSelectOptionsResponse>({
     queryKey: [PRODUCT_MANUFACTURING_SELECT_OPTIONS_KEY, targetType],
     queryFn: () => productManufacturingApi.getSelectOptions(targetType === 'product' ? 'finished' : 'unfinished'),
+  });
+
+  // ── Fetch Units ─────────────────────────
+  const { data: units = [] } = useQuery({
+    queryKey: [ALL_UNITS_KEY],
+    queryFn: () => unitApi.getAll(),
   });
 
   const products: ManufacturingProduct[] = optionsData?.data?.products ?? [];
@@ -106,25 +112,44 @@ const ProductManufacturingAdd: React.FC = () => {
       return;
     }
 
-    if (targetType === 'product') {
-      const payload: any = {
-        product_id: Number(formData.product_id),
-        recipes: formData.recipes.map(r => ({
-          product_recipe_id: Number(r.product_recipe_id),
-          count: Number(r.count) || 1,
-        }))
-      };
-      mutation.mutate(payload);
-    } else {
-      const payload: any = {
-        product_recipe_id: Number(formData.product_recipe_id),
-        recipes: formData.recipes.map(r => ({
-          material_id: Number(r.material_id),
-          count: Number(r.count) || 1,
-        }))
-      };
-      mutation.mutate(payload);
+    // Validate that unit_id is set for every recipe/material
+    const missingUnit = formData.recipes.some(r => !r.unit_id);
+    if (missingUnit) {
+      alert('⚠️ حقل وحدة القياس (unit_id) إلزامي لكل مادة خام أو وصفة تدخل في تكوين المنتج. يرجى اختيار الوحدة لكل العناصر المحددة.');
+      return;
     }
+
+    const materialsPayload = formData.recipes
+      .filter(r => r.material_id)
+      .map(r => ({
+        material_id: Number(r.material_id),
+        count: Number(r.count) || 1,
+        unit_id: Number(r.unit_id),
+      }));
+
+    const productRecipesPayload = formData.recipes
+      .filter(r => r.product_recipe_id)
+      .map(r => ({
+        product_recipe_id: Number(r.product_recipe_id),
+        count: Number(r.count) || 1,
+        unit_id: Number(r.unit_id),
+      }));
+
+    const payload: any = {
+      ...(targetType === 'product'
+        ? { product_id: Number(formData.product_id) }
+        : { product_recipe_id: Number(formData.product_recipe_id) }),
+      materials: materialsPayload,
+      product_recipes: productRecipesPayload,
+      recipes: formData.recipes.map(r => ({
+        material_id: r.material_id ? Number(r.material_id) : null,
+        product_recipe_id: r.product_recipe_id ? Number(r.product_recipe_id) : null,
+        count: Number(r.count) || 1,
+        unit_id: Number(r.unit_id),
+      })),
+    };
+
+    mutation.mutate(payload);
   };
 
   const productOptions = products.map(p => ({
@@ -150,7 +175,7 @@ const ProductManufacturingAdd: React.FC = () => {
               إضافة معيار تصنيع لمنتج (BOM)
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              تحديد المكونات والخامات القياسية اللازمة لتصنيع وحدة واحدة من المنتج
+              تحديد المكونات والخامات القياسية ووحداتها اللازمة لتصنيع وحدة واحدة من المنتج
             </p>
           </div>
         </div>
@@ -160,65 +185,62 @@ const ProductManufacturingAdd: React.FC = () => {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700"
         >
           <MdArrowForward size={18} />
-          العودة للقائمة
+          <span>العودة للقائمة</span>
         </Link>
       </div>
 
-      {/* Info Alert */}
-      <div className="p-4 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-3">
-        <MdInfoOutline className="text-indigo-600 dark:text-indigo-400 mt-0.5 shrink-0" size={20} />
-        <div className="text-xs sm:text-sm text-indigo-900 dark:text-indigo-200 leading-relaxed">
-          <strong>ملاحظة:</strong> هنا تقوم بتعريف <strong>المعيار القياسي العام</strong> للمنتج (المكونات والنسب الثابتة). 
-          هذا الحفظ لا يؤثر على المخزون الفعلي، وعندما يقوم أي فرع ببدء أمر تصنيع وتشغيل، سيقوم النظام تلقائياً باقتراح هذه المكونات التي تسجلها هنا.
-        </div>
-      </div>
-
-      {/* Main Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Step 1: Type Selection & Target Selection */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-3">
-            1. تحديد الصنف المستهدف
-          </h2>
-
-          {/* Type Toggle Tabs */}
+          {/* Target Type Selector */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400">
-              نوع الصنف المراد ضبط معيار تصنيعه
+            <label className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span>نوع الصنف المراد تحديد معيار تصنيعه:</span>
             </label>
-            <div className="grid grid-cols-2 gap-3 max-w-md">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
               <button
                 type="button"
                 onClick={() => handleTargetTypeChange('product')}
-                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold border transition-all ${
+                className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-start transition-all ${
                   targetType === 'product'
-                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <MdFastfood size={18} />
-                منتج نهائي جاهز
+                <div className={`p-2 rounded-lg ${targetType === 'product' ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  <MdFastfood size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">منتج جاهز للبيع (Finished Product)</p>
+                  <p className="text-xs opacity-75">يتكون من وصفات تصنيع شبه مصنعة</p>
+                </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleTargetTypeChange('recipe')}
-                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold border transition-all ${
+                className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-start transition-all ${
                   targetType === 'recipe'
-                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <MdLayers size={18} />
-                منتج غير منتهي التصنيع
+                <div className={`p-2 rounded-lg ${targetType === 'recipe' ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  <MdLayers size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">منتج غير منتهي (Recipe / Semi-finished)</p>
+                  <p className="text-xs opacity-75">يتكون من مواد خام أساسية</p>
+                </div>
               </button>
             </div>
           </div>
 
-          {/* Target Select Dropdown */}
-          <div className="max-w-md">
+          {/* Select Target (Product or Recipe) */}
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
             {targetType === 'product' ? (
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <div className="max-w-xl space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   اختر المنتج الجاهز <span className="text-rose-500">*</span>
                 </label>
                 <SearchableSelect
@@ -230,9 +252,9 @@ const ProductManufacturingAdd: React.FC = () => {
                 />
               </div>
             ) : (
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  اختر الصنف التحضيري (غير منتهي التصنيع) <span className="text-rose-500">*</span>
+              <div className="max-w-xl space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  اختر المنتج غير المنتهي / الوصفة <span className="text-rose-500">*</span>
                 </label>
                 <SearchableSelect
                   options={recipeOptions}
@@ -248,15 +270,21 @@ const ProductManufacturingAdd: React.FC = () => {
 
         {/* Consumed Materials Component */}
         <div className="space-y-3">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 px-1">
-            {targetType === 'product'
-              ? '2. تحديد الوصفات التحضيرية الداخلة في التصنيع (لكل 1 قطعة / وحدة)'
-              : '2. تحديد المواد الخام الداخلة في التصنيع (لكل 1 قطعة / وحدة)'}
-          </h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-base font-bold text-slate-800 dark:text-slate-200">
+              {targetType === 'product'
+                ? '2. تحديد الوصفات التحضيرية الداخلة في التصنيع ووحداتها (لكل 1 قطعة / وحدة)'
+                : '2. تحديد المواد الخام الداخلة في التصنيع ووحداتها (لكل 1 قطعة / وحدة)'}
+            </h2>
+            <span className="text-xs text-rose-500 font-semibold">
+              * اختيار وحدة القياس إلزامي لجميع العناصر
+            </span>
+          </div>
           
           <ConsumedMaterialsCards
             materials={targetType === 'recipe' ? materials : []}
             productRecipes={targetType === 'product' ? productRecipes : []}
+            units={units}
             recipes={formData.recipes}
             onChange={handleRecipesChange}
             isStandardBOM={true}
@@ -275,7 +303,7 @@ const ProductManufacturingAdd: React.FC = () => {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/95 transition-all shadow-md shadow-primary/20 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/95 transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
           >
             {mutation.isPending ? (
               <>

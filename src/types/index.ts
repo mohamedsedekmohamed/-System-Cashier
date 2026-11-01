@@ -35,3 +35,5 @@ export * from './recipeInventory';
 export * from './dues';
 export * from './banner';
 export * from './captainOrder';
+export * from './unit';
+export * from './addonInventory';

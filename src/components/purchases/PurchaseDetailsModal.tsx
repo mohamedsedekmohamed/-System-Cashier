@@ -1,5 +1,5 @@
 import React from 'react';
-import { MdClose, MdReceipt, MdReceiptLong, MdAttachMoney, MdCalendarToday, MdNotes, MdOpenInNew, MdHourglassTop, MdCheckCircle } from 'react-icons/md';
+import { MdClose, MdReceipt, MdAttachMoney, MdCalendarToday, MdNotes, MdOpenInNew, MdHourglassTop } from 'react-icons/md';
 import type { Purchase } from '../../types';
 import { renderName } from '../../utils/helpers';
 
@@ -10,6 +10,12 @@ interface PurchaseDetailsModalProps {
 }
 
 const renderItemName = (item: any): string => {
+  if (item.addon_name) return item.addon_name;
+  if (item.addon?.name) {
+    return typeof item.addon.name === 'object'
+      ? item.addon.name.ar || item.addon.name.en || 'إضافة'
+      : String(item.addon.name);
+  }
   if (item.material_name) return item.material_name;
   if (item.product_recipe_name) return item.product_recipe_name;
   if (item.material?.name) {
@@ -22,7 +28,13 @@ const renderItemName = (item: any): string => {
       ? item.product_recipe.name.ar || item.product_recipe.name.en || 'وصفة منتج'
       : String(item.product_recipe.name);
   }
-  return item.material_id ? `مادة #${item.material_id}` : item.product_recipe_id ? `وصفة #${item.product_recipe_id}` : 'صنف غير محدد';
+  return item.addon_id
+    ? `إضافة #${item.addon_id}`
+    : item.material_id
+    ? `مادة #${item.material_id}`
+    : item.product_recipe_id
+    ? `وصفة #${item.product_recipe_id}`
+    : 'صنف غير محدد';
 };
 
 export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
@@ -90,43 +102,69 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
                 <MdAttachMoney size={16} />
                 إجمالي التكلفة
               </span>
-              <p className="text-xl font-black text-emerald-700 dark:text-emerald-300">
-                {Number(purchase.total_cost || purchase.cost || 0).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
+              <p className="text-lg font-black text-emerald-700 dark:text-emerald-300">
+                {Number(purchase.total_cost || 0).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/40">
               <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1 mb-1">
-                <MdCheckCircle size={16} />
-                المدفوع نقداً
+                <MdAttachMoney size={16} />
+                المدفوع
               </span>
-              <p className="text-xl font-black text-blue-700 dark:text-blue-300">
-                {Number(purchase.paid_amount ?? (purchase.total_cost || purchase.cost || 0)).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
+              <p className="text-lg font-black text-blue-700 dark:text-blue-300">
+                {Number(purchase.paid_amount || 0).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-rose-50/80 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-800/40">
               <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mb-1">
-                <MdHourglassTop size={16} />
-                المتبقي (الآجل)
+                <MdAttachMoney size={16} />
+                المتبقي (آجل)
               </span>
-              <p className="text-xl font-black text-rose-700 dark:text-rose-300">
-                {Number(purchase.remaining_amount || 0).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
+              <p className="text-lg font-black text-rose-700 dark:text-rose-300">
+                {Number(purchase.remaining_amount ?? (Number(purchase.total_cost || 0) - Number(purchase.paid_amount || 0))).toLocaleString('ar-EG')} <span className="text-xs font-normal">ج.م</span>
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-purple-50/80 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-800/40">
-              <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1 mb-1">
-                <MdReceiptLong size={16} />
-                عدد البنود
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-700">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                إجمالي الكمية
               </span>
-              <p className="text-xl font-black text-purple-700 dark:text-purple-300">
-                {items.length} <span className="text-xs font-normal">أصناف</span>
+              <p className="text-lg font-black text-slate-700 dark:text-slate-200">
+                {Number(purchase.total_quantity || 0).toLocaleString('ar-EG')}
               </p>
             </div>
           </div>
 
-          {/* Dues Section */}
+          {/* Receipt Image Preview */}
+          {receiptUrl && (
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-700 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  صورة الإيصال / الفاتورة الورقية
+                </span>
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold"
+                >
+                  <MdOpenInNew size={14} />
+                  فتح بالحجم الكامل
+                </a>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600 max-h-60 bg-black/5 flex items-center justify-center">
+                <img
+                  src={receiptUrl}
+                  alt="Receipt Full"
+                  className="max-h-60 w-auto object-contain"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Dues / Installments list */}
           {(purchase.dues && purchase.dues.length > 0) && (
             <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50">
               <h4 className="font-bold text-amber-800 dark:text-amber-300 text-sm mb-2 flex items-center gap-2">
@@ -200,7 +238,9 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
                   ) : (
                     items.map((item, idx) => {
                       const isRecipe = !!item.product_recipe_id;
+                      const isAddon = !!item.addon_id || (!item.material_id && !item.product_recipe_id);
                       const subtotal = Number(item.quantity || 0) * Number(item.cost || 0);
+                      const unitLabel = item.unit ? renderName(item.unit.name) : '';
 
                       return (
                         <tr key={item.id || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
@@ -211,7 +251,11 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
                             {renderItemName(item)}
                           </td>
                           <td className="py-3.5 px-4">
-                            {isRecipe ? (
+                            {isAddon ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200/50 dark:border-purple-800/40">
+                                إضافة (Addon)
+                              </span>
+                            ) : isRecipe ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40">
                                 وصفة منتج
                               </span>
@@ -221,13 +265,13 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
                               </span>
                             )}
                           </td>
-                          <td className="py-3.5 px-4 text-center font-bold text-slate-700 dark:text-slate-200">
-                            {Number(item.quantity).toLocaleString('ar-EG')}
+                          <td className="py-3.5 px-4 text-center font-mono font-bold text-slate-700 dark:text-slate-200">
+                            {item.quantity} {unitLabel ? <span className="text-xs font-normal text-slate-500">({unitLabel})</span> : ''}
                           </td>
-                          <td className="py-3.5 px-4 text-center text-slate-600 dark:text-slate-300">
-                            {Number(item.cost).toLocaleString('ar-EG')} ج.م
+                          <td className="py-3.5 px-4 text-center font-mono text-slate-600 dark:text-slate-300">
+                            {Number(item.cost || 0).toLocaleString('ar-EG')} ج.م
                           </td>
-                          <td className="py-3.5 px-4 text-left font-bold text-emerald-600 dark:text-emerald-400">
+                          <td className="py-3.5 px-4 text-left font-mono font-black text-emerald-600 dark:text-emerald-400">
                             {subtotal.toLocaleString('ar-EG')} ج.م
                           </td>
                         </tr>
@@ -235,62 +279,17 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
                     })
                   )}
                 </tbody>
-                {items.length > 0 && (
-                  <tfoot className="bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 font-bold text-sm">
-                    <tr>
-                      <td colSpan={3} className="py-3 px-4 text-slate-700 dark:text-slate-300">
-                        المجموع الكلي:
-                      </td>
-                      <td className="py-3 px-4 text-center text-blue-600 dark:text-blue-400">
-                        {Number(purchase.total_quantity || purchase.quantity || 0).toLocaleString('ar-EG')}
-                      </td>
-                      <td className="py-3 px-4"></td>
-                      <td className="py-3 px-4 text-left text-emerald-600 dark:text-emerald-400 text-base">
-                        {Number(purchase.total_cost || purchase.cost || 0).toLocaleString('ar-EG')} ج.م
-                      </td>
-                    </tr>
-                  </tfoot>
-                )}
               </table>
             </div>
-          </div>
-
-          {/* Receipt Preview */}
-          <div>
-            <h4 className="font-bold text-slate-800 dark:text-white text-base mb-2">
-              صورة الإيصال / الفاتورة
-            </h4>
-            {receiptUrl ? (
-              <div className="relative group rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 max-h-72 flex items-center justify-center">
-                <img
-                  src={receiptUrl}
-                  alt="Receipt"
-                  className="w-full max-h-72 object-contain group-hover:scale-[1.02] transition-transform duration-300"
-                />
-                <a
-                  href={receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/75 hover:bg-black text-white text-xs font-medium shadow-lg transition-all"
-                >
-                  <MdOpenInNew size={14} />
-                  فتح بحجم كامل
-                </a>
-              </div>
-            ) : (
-              <div className="p-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-slate-400 text-sm">
-                لا يوجد صورة إيصال مرفقة مع هذه الفاتورة
-              </div>
-            )}
           </div>
 
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex justify-end bg-slate-50/50 dark:bg-slate-800/50">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors"
           >
             إغلاق
           </button>
@@ -300,3 +299,4 @@ export const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
     </div>
   );
 };
+export default PurchaseDetailsModal;

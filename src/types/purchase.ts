@@ -1,5 +1,6 @@
 import type { PaginatedMeta, DueItemPayload } from './common';
 import type { Branch, BranchOption } from './branch';
+import type { Unit } from './unit';
 
 export interface PurchaseSelectMaterial {
   id: number;
@@ -13,6 +14,13 @@ export interface PurchaseSelectRecipe {
   stock: number;
 }
 
+export interface PurchaseSelectAddon {
+  id: number;
+  name: string | { ar: string; en: string };
+  price: number;
+  stock: number;
+}
+
 export interface PurchaseSelectSupplier {
   id: number;
   name: any;
@@ -23,6 +31,8 @@ export interface PurchaseSelectOptions {
   suppliers?: PurchaseSelectSupplier[];
   materials: PurchaseSelectMaterial[];
   product_recipes: PurchaseSelectRecipe[];
+  addons?: PurchaseSelectAddon[];
+  units?: Unit[];
 }
 
 export interface PurchaseSelectOptionsResponse {
@@ -55,6 +65,16 @@ export interface PurchaseItemDetail {
     created_at?: string;
     updated_at?: string;
   } | null;
+  addon_id?: number | null;
+  addon_name?: string | null;
+  addon?: {
+    id: number;
+    name: any;
+    price: number;
+    image?: string | null;
+  } | null;
+  unit_id?: number | null;
+  unit?: Unit | null;
   quantity: number;
   cost: number;
   created_at?: string;
@@ -117,8 +137,10 @@ export interface SinglePurchaseResponse {
 export interface PurchaseItemPayload {
   material_id?: number | null;
   product_recipe_id?: number | null;
+  addon_id?: number | null;
   quantity: number;
   cost: number;
+  unit_id?: number | null;
 }
 
 export interface PurchaseFormData {

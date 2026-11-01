@@ -6,6 +6,7 @@ import {
   PRODUCT_MANUFACTURING_KEY, 
   PRODUCT_MANUFACTURING_SELECT_OPTIONS_KEY 
 } from '../../services/productManufacturingService';
+import { unitApi, ALL_UNITS_KEY } from '../../services/unitService';
 import type { 
   ProductManufacturingFormData, 
   ProductManufacturingSelectOptionsResponse,
@@ -60,6 +61,12 @@ const ProductManufacturingEdit: React.FC = () => {
     queryFn: () => productManufacturingApi.getSelectOptions(targetType === 'product' ? 'finished' : 'unfinished'),
   });
 
+  // ── Fetch Units ─────────────────────────
+  const { data: units = [] } = useQuery({
+    queryKey: [ALL_UNITS_KEY],
+    queryFn: () => unitApi.getAll(),
+  });
+
   const item = itemData?.data;
   const products: ManufacturingProduct[] = optionsData?.data?.products ?? [];
   const productRecipes: ManufacturingProductRecipe[] = optionsData?.data?.product_recipes ?? [];
@@ -74,9 +81,10 @@ const ProductManufacturingEdit: React.FC = () => {
         product_id: item.product_id || 0,
         product_recipe_id: item.product_recipe_id || 0,
         recipes: (item.recipes || []).map(r => ({
-          material_id: r.material_id || 0,
-          product_recipe_id: r.product_recipe_id || 0,
+          material_id: r.material_id || null,
+          product_recipe_id: r.product_recipe_id || null,
           count: r.count || 1,
+          unit_id: r.unit_id || (r.unit ? r.unit.id : null),
         })),
       });
     }
@@ -84,7 +92,7 @@ const ProductManufacturingEdit: React.FC = () => {
 
   // ── Update Mutation ────────────────────
   const mutation = useMutation({
-    mutationFn: (payload: ProductManufacturingFormData) => 
+    mutationFn: (payload: any) => 
       productManufacturingApi.update(id as string, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PRODUCT_MANUFACTURING_KEY] });
@@ -135,25 +143,44 @@ const ProductManufacturingEdit: React.FC = () => {
       return;
     }
 
-    if (targetType === 'product') {
-      const payload: any = {
-        product_id: Number(formData.product_id),
-        recipes: formData.recipes.map(r => ({
-          product_recipe_id: Number(r.product_recipe_id),
-          count: Number(r.count) || 1,
-        }))
-      };
-      mutation.mutate(payload);
-    } else {
-      const payload: any = {
-        product_recipe_id: Number(formData.product_recipe_id),
-        recipes: formData.recipes.map(r => ({
-          material_id: Number(r.material_id),
-          count: Number(r.count) || 1,
-        }))
-      };
-      mutation.mutate(payload);
+    // Validate unit_id is set
+    const missingUnit = formData.recipes.some(r => !r.unit_id);
+    if (missingUnit) {
+      alert('⚠️ حقل وحدة القياس (unit_id) إلزامي لكل مادة خام أو وصفة تدخل في تكوين المنتج. يرجى اختيار الوحدة لكل العناصر المحددة.');
+      return;
     }
+
+    const materialsPayload = formData.recipes
+      .filter(r => r.material_id)
+      .map(r => ({
+        material_id: Number(r.material_id),
+        count: Number(r.count) || 1,
+        unit_id: Number(r.unit_id),
+      }));
+
+    const productRecipesPayload = formData.recipes
+      .filter(r => r.product_recipe_id)
+      .map(r => ({
+        product_recipe_id: Number(r.product_recipe_id),
+        count: Number(r.count) || 1,
+        unit_id: Number(r.unit_id),
+      }));
+
+    const payload: any = {
+      ...(targetType === 'product'
+        ? { product_id: Number(formData.product_id) }
+        : { product_recipe_id: Number(formData.product_recipe_id) }),
+      materials: materialsPayload,
+      product_recipes: productRecipesPayload,
+      recipes: formData.recipes.map(r => ({
+        material_id: r.material_id ? Number(r.material_id) : null,
+        product_recipe_id: r.product_recipe_id ? Number(r.product_recipe_id) : null,
+        count: Number(r.count) || 1,
+        unit_id: Number(r.unit_id),
+      })),
+    };
+
+    mutation.mutate(payload);
   };
 
   const productOptions = products.map(p => ({
@@ -182,7 +209,7 @@ const ProductManufacturingEdit: React.FC = () => {
               تعديل معيار تصنيع #{id}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              تعديل مكونات ونسب الخامات لإنتاج وحدة واحدة من الصنف
+              تعديل مكونات ونسب الخامات ووحدات القياس لإنتاج وحدة واحدة من الصنف
             </p>
           </div>
         </div>
@@ -271,15 +298,21 @@ const ProductManufacturingEdit: React.FC = () => {
 
         {/* Consumed Materials Component */}
         <div className="space-y-3">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 px-1">
-            {targetType === 'product'
-              ? '2. تحديد الوصفات التحضيرية الداخلة في التصنيع (لكل 1 قطعة / وحدة)'
-              : '2. تحديد المواد الخام الداخلة في التصنيع (لكل 1 قطعة / وحدة)'}
-          </h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-base font-bold text-slate-800 dark:text-slate-200">
+              {targetType === 'product'
+                ? '2. تحديد الوصفات التحضيرية الداخلة في التصنيع ووحداتها (لكل 1 قطعة / وحدة)'
+                : '2. تحديد المواد الخام الداخلة في التصنيع ووحداتها (لكل 1 قطعة / وحدة)'}
+            </h2>
+            <span className="text-xs text-rose-500 font-semibold">
+              * اختيار وحدة القياس إلزامي لجميع العناصر
+            </span>
+          </div>
           
           <ConsumedMaterialsCards
             materials={targetType === 'recipe' ? materials : []}
             productRecipes={targetType === 'product' ? productRecipes : []}
+            units={units}
             recipes={formData.recipes}
             onChange={handleRecipesChange}
             isStandardBOM={true}
@@ -298,7 +331,7 @@ const ProductManufacturingEdit: React.FC = () => {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/95 transition-all shadow-md shadow-primary/20 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/95 transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
           >
             {mutation.isPending ? (
               <>
