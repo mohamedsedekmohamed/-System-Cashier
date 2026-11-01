@@ -10,6 +10,7 @@ export interface BusinessSetup {
   description: string;
   branch_cover?: number | null;
   table_order_url?: string;
+  dinein_tax?: number | null;
   start_day?: string | null;
   end_day?: string | null;
   has_gift?: boolean | null;
@@ -35,6 +36,7 @@ export interface BusinessSetupPayload {
   logo: string | File;
   table_order_url: string;
   branch_cover?: number | null;
+  dinein_tax?: number | null;
   start_day?: string | null;
   end_day?: string | null;
   has_gift?: boolean | null;
@@ -50,4 +52,3 @@ export interface BusinessSetupResponse {
   data: BusinessSetup | null;
   message?: string;
 }
-

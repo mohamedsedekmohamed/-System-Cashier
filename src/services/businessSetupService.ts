@@ -38,6 +38,10 @@ export const toBusinessSetupFormData = (payload: BusinessSetupPayload, method?: 
     formData.append('branch_cover', String(payload.branch_cover));
   }
 
+  if (payload.dinein_tax !== null && payload.dinein_tax !== undefined && !isNaN(Number(payload.dinein_tax))) {
+    formData.append('dinein_tax', String(payload.dinein_tax));
+  }
+
   const startDay = formatTimePattern(payload.start_day);
   if (startDay) {
     formData.append('start_day', startDay);
@@ -123,6 +127,10 @@ export const toBusinessSetupJson = (payload: BusinessSetupPayload): Record<strin
     branch_cover:
       payload.branch_cover !== null && payload.branch_cover !== undefined
         ? Number(payload.branch_cover)
+        : 0,
+    dinein_tax:
+      payload.dinein_tax !== null && payload.dinein_tax !== undefined && !isNaN(Number(payload.dinein_tax))
+        ? Number(payload.dinein_tax)
         : 0,
     start_day: formatTimePattern(payload.start_day),
     end_day: formatTimePattern(payload.end_day),

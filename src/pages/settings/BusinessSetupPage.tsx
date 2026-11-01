@@ -34,6 +34,7 @@ import {
   MdArrowForward,
   MdChevronLeft,
   MdChevronRight,
+  MdPercent,
 } from 'react-icons/md';
 import { FaFacebook, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
@@ -116,6 +117,7 @@ const BusinessSetupPage: React.FC = () => {
     has_gift: false,
     price_gift: null,
     menu: [],
+    dinein_tax: 0,
   });
 
   // ── File Upload States ─────────────────
@@ -167,6 +169,10 @@ const BusinessSetupPage: React.FC = () => {
           setupData.price_gift !== null && setupData.price_gift !== undefined
             ? Number(setupData.price_gift)
             : null,
+        dinein_tax:
+          setupData.dinein_tax !== null && setupData.dinein_tax !== undefined
+            ? Number(setupData.dinein_tax)
+            : 0,
       });
 
       setLogoFile(null);
@@ -405,6 +411,10 @@ const BusinessSetupPage: React.FC = () => {
         formData.branch_cover !== null && formData.branch_cover !== undefined
           ? Number(formData.branch_cover)
           : 0,
+      dinein_tax:
+        formData.dinein_tax !== null && formData.dinein_tax !== undefined && !isNaN(Number(formData.dinein_tax))
+          ? Number(formData.dinein_tax)
+          : 0,
       logo: finalLogo,
       start_day: formData.start_day || '09:00',
       end_day: formData.end_day || '03:00',
@@ -455,6 +465,10 @@ const BusinessSetupPage: React.FC = () => {
             ? Number(setupData.price_gift)
             : null,
         menu: [],
+        dinein_tax:
+          setupData.dinein_tax !== null && setupData.dinein_tax !== undefined
+            ? Number(setupData.dinein_tax)
+            : 0,
       });
 
       setLogoFile(null);
@@ -1040,6 +1054,38 @@ const BusinessSetupPage: React.FC = () => {
                   </div>
                   <p className="text-xs text-slate-400 mt-1">
                     أقصى مسافة بالكيلومتر لتغطية وتوصيل طلبات الفروع المحيطة (ضع 0 في حالة عدم وجود حد أقصى).
+                  </p>
+                </div>
+
+                {/* Dine-in Tax (dinein_tax) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      نسبة ضريبة الصالة / الطلب المحلي (dinein_tax)
+                    </label>
+                    <span className="text-[11px] text-slate-400">نسبة مئوية &gt;= 0</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      name="dinein_tax"
+                      min={0}
+                      max={100}
+                      step={0.01}
+                      value={formData.dinein_tax ?? 0}
+                      onChange={handleChange}
+                      placeholder="مثال: 14.0"
+                      className="w-full px-4 py-2.5 pr-10 pl-10 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-mono font-bold"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                      <MdPercent size={18} />
+                    </div>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary pointer-events-none">
+                      %
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    النسبة المئوية لضريبة الصالة التي تُطبق تلقائياً على المنتجات في شاشة الكاشير عند اختيار نوع الطلب محلي / صالة (Dine-in). ضع 0 إذا كانت معفاة من الضريبة.
                   </p>
                 </div>
               </div>
@@ -1758,6 +1804,19 @@ const BusinessSetupPage: React.FC = () => {
                       </div>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/30">
                         Gift Promo
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Dine-in Tax Badge in Preview */}
+                  {Number(formData.dinein_tax) > 0 && (
+                    <div className="mt-3 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 flex items-center justify-between text-xs animate-in fade-in">
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                        <MdPercent size={16} />
+                        <span className="font-bold">ضريبة الصالة (Dine-in):</span>
+                      </div>
+                      <span className="font-bold font-mono px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                        {formData.dinein_tax}%
                       </span>
                     </div>
                   )}
