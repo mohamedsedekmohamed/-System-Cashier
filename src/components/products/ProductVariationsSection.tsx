@@ -10,7 +10,11 @@ import {
   MdLayers,
   MdStar,
   MdAttachMoney,
-  MdLocalFireDepartment
+  MdLocalFireDepartment,
+  MdArrowUpward,
+  MdArrowDownward,
+  MdUnfoldMore,
+  MdUnfoldLess,
 } from 'react-icons/md';
 
 interface ProductVariationsSectionProps {
@@ -34,6 +38,57 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
 
   const isExpanded = (index: number) => {
     return expandedIndices[index] === undefined ? true : expandedIndices[index];
+  };
+
+  const collapseAll = () => {
+    const next: Record<number, boolean> = {};
+    variations.forEach((_, i) => {
+      next[i] = false;
+    });
+    setExpandedIndices(next);
+  };
+
+  const expandAll = () => {
+    const next: Record<number, boolean> = {};
+    variations.forEach((_, i) => {
+      next[i] = true;
+    });
+    setExpandedIndices(next);
+  };
+
+  // ── Move Variation Up / Down ───────────────
+  const moveVariationUp = (index: number) => {
+    if (index <= 0) return;
+    const updated = [...variations];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(index - 1, 0, moved);
+    onChange(updated);
+
+    setExpandedIndices(prev => {
+      const next = { ...prev };
+      const current = isExpanded(index);
+      const target = isExpanded(index - 1);
+      next[index - 1] = current;
+      next[index] = target;
+      return next;
+    });
+  };
+
+  const moveVariationDown = (index: number) => {
+    if (index >= variations.length - 1) return;
+    const updated = [...variations];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(index + 1, 0, moved);
+    onChange(updated);
+
+    setExpandedIndices(prev => {
+      const next = { ...prev };
+      const current = isExpanded(index);
+      const target = isExpanded(index + 1);
+      next[index + 1] = current;
+      next[index] = target;
+      return next;
+    });
   };
 
   // ── Group Operations ───────────────────────
@@ -181,6 +236,31 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
     onChange(updated);
   };
 
+  // ── Move Option Up / Down ──────────────────
+  const moveOptionUp = (vIndex: number, oIndex: number) => {
+    if (oIndex <= 0) return;
+    const updated = variations.map((v, i) => {
+      if (i !== vIndex) return v;
+      const opts = [...v.options];
+      const [moved] = opts.splice(oIndex, 1);
+      opts.splice(oIndex - 1, 0, moved);
+      return { ...v, options: opts };
+    });
+    onChange(updated);
+  };
+
+  const moveOptionDown = (vIndex: number, oIndex: number) => {
+    const updated = variations.map((v, i) => {
+      if (i !== vIndex) return v;
+      if (oIndex >= v.options.length - 1) return v;
+      const opts = [...v.options];
+      const [moved] = opts.splice(oIndex, 1);
+      opts.splice(oIndex + 1, 0, moved);
+      return { ...v, options: opts };
+    });
+    onChange(updated);
+  };
+
   return (
     <div className="bg-white dark:bg-slate-800/95 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm p-6 space-y-6">
       
@@ -207,6 +287,33 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {variations.length > 1 && (
+            <button
+              type="button"
+              onClick={() => {
+                const allExpanded = variations.every((_, i) => isExpanded(i));
+                if (allExpanded) {
+                  collapseAll();
+                } else {
+                  expandAll();
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all text-xs font-semibold border border-slate-200/80 dark:border-slate-600/80 shadow-2xs"
+              title="طي أو فتح جميع المجموعات معاً"
+            >
+              {variations.every((_, i) => isExpanded(i)) ? (
+                <>
+                  <MdUnfoldLess size={16} className="text-primary" />
+                  طي الكل
+                </>
+              ) : (
+                <>
+                  <MdUnfoldMore size={16} className="text-primary" />
+                  فتح الكل
+                </>
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={addEmptyVariation}
@@ -351,6 +458,28 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
 
                 {/* Header Action Buttons */}
                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  {/* Reorder Group Up/Down */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-700/80 rounded-lg p-0.5 border border-slate-200/80 dark:border-slate-600">
+                    <button
+                      type="button"
+                      disabled={vIndex === 0}
+                      onClick={() => moveVariationUp(vIndex)}
+                      className="p-1 rounded-md text-slate-500 hover:text-primary hover:bg-white dark:hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      title="تحريك المجموعة لأعلى"
+                    >
+                      <MdArrowUpward size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={vIndex === variations.length - 1}
+                      onClick={() => moveVariationDown(vIndex)}
+                      className="p-1 rounded-md text-slate-500 hover:text-primary hover:bg-white dark:hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      title="تحريك المجموعة لأسفل"
+                    >
+                      <MdArrowDownward size={15} />
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => duplicateVariation(vIndex)}
@@ -483,8 +612,9 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
                     <div className="hidden md:grid md:grid-cols-12 gap-3 px-3 py-2 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-[11px] font-bold">
                       <div className="col-span-1 text-center">#</div>
                       <div className="col-span-4">اسم الخيار (عربي)</div>
-                      <div className="col-span-4">اسم الخيار (إنجليزي)</div>
                       <div className="col-span-2">السعر الإضافي</div>
+                      <div className="col-span-3">اسم الخيار (إنجليزي)</div>
+                      <div className="col-span-1 text-center">ترتيب</div>
                       <div className="col-span-1 text-center">إجراء</div>
                     </div>
 
@@ -502,7 +632,7 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
                             </span>
                           </div>
 
-                          {/* Arabic Name */}
+                          {/* 1. Arabic Name */}
                           <div className="w-full md:col-span-4 space-y-1">
                             <label className="block md:hidden text-[11px] font-semibold text-slate-500">
                               اسم الخيار (عربي) <span className="text-red-500">*</span>
@@ -517,23 +647,7 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
                             />
                           </div>
 
-                          {/* English Name */}
-                          <div className="w-full md:col-span-4 space-y-1">
-                            <label className="block md:hidden text-[11px] font-semibold text-slate-500">
-                              اسم الخيار (إنجليزي) <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={option.name.en}
-                              onChange={(e) => updateOptionField(vIndex, oIndex, 'name.en', e.target.value)}
-                              placeholder="e.g. Medium, Cheddar, Spicy..."
-                              dir="ltr"
-                              className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-left"
-                            />
-                          </div>
-
-                          {/* Additional Price */}
+                          {/* 2. Additional Price (Next to Arabic name for fast entry) */}
                           <div className="w-full md:col-span-2 space-y-1">
                             <label className="block md:hidden text-[11px] font-semibold text-slate-500">
                               السعر الإضافي
@@ -557,8 +671,46 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
                             </div>
                           </div>
 
-                          {/* Delete Option */}
-                          <div className="w-full md:col-span-1 flex items-center justify-end md:justify-center pt-2 md:pt-0">
+                          {/* 3. English Name */}
+                          <div className="w-full md:col-span-3 space-y-1">
+                            <label className="block md:hidden text-[11px] font-semibold text-slate-500">
+                              اسم الخيار (إنجليزي) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={option.name.en}
+                              onChange={(e) => updateOptionField(vIndex, oIndex, 'name.en', e.target.value)}
+                              placeholder="e.g. Medium, Cheddar, Spicy..."
+                              dir="ltr"
+                              className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-left"
+                            />
+                          </div>
+
+                          {/* Reorder Up/Down (Desktop) */}
+                          <div className="hidden md:flex col-span-1 items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              disabled={oIndex === 0}
+                              onClick={() => moveOptionUp(vIndex, oIndex)}
+                              className="p-1 rounded text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                              title="تحريك الخيار لأعلى"
+                            >
+                              <MdArrowUpward size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={oIndex === variation.options.length - 1}
+                              onClick={() => moveOptionDown(vIndex, oIndex)}
+                              className="p-1 rounded text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                              title="تحريك الخيار لأسفل"
+                            >
+                              <MdArrowDownward size={14} />
+                            </button>
+                          </div>
+
+                          {/* Delete Option (Desktop) */}
+                          <div className="hidden md:flex col-span-1 items-center justify-center">
                             <button
                               type="button"
                               onClick={() => removeOption(vIndex, oIndex)}
@@ -567,6 +719,37 @@ export const ProductVariationsSection: React.FC<ProductVariationsSectionProps> =
                               title={variation.options.length <= 1 ? 'يجب أن تحتوي المجموعة على خيار واحد على الأقل' : 'حذف هذا الخيار'}
                             >
                               <MdDelete size={18} />
+                            </button>
+                          </div>
+
+                          {/* Mobile Action Bar */}
+                          <div className="flex md:hidden w-full items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[11px] text-slate-400 ml-1">ترتيب:</span>
+                              <button
+                                type="button"
+                                disabled={oIndex === 0}
+                                onClick={() => moveOptionUp(vIndex, oIndex)}
+                                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-25 disabled:cursor-not-allowed"
+                              >
+                                <MdArrowUpward size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={oIndex === variation.options.length - 1}
+                                onClick={() => moveOptionDown(vIndex, oIndex)}
+                                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-25 disabled:cursor-not-allowed"
+                              >
+                                <MdArrowDownward size={14} />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeOption(vIndex, oIndex)}
+                              disabled={variation.options.length <= 1}
+                              className="flex items-center gap-1 text-xs text-rose-500 font-semibold disabled:opacity-30"
+                            >
+                              <MdDelete size={16} /> حذف
                             </button>
                           </div>
                         </div>

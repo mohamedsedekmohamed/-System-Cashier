@@ -47,6 +47,42 @@ export interface ProductVariation {
   options: ProductVariationOption[];
 }
 
+export interface ProductRecipePayloadItem {
+  id?: number;
+  material_id?: number | null;
+  product_recipe_id?: number | null;
+  count: number;
+  unit_id: number;
+}
+
+export interface ProductRecipeResponseItem {
+  id: number;
+  product_manufact_id?: number;
+  material_id: number | null;
+  material: { id: number; name: LocalizedName | string } | null;
+  product_recipe_id: number | null;
+  product_recipe: { id: number; name: LocalizedName | string } | null;
+  count: number;
+  unit_id: number;
+  unit: { id: number; name: LocalizedName | string; value?: number } | null;
+}
+
+export interface ProductSelectOptionMaterial {
+  id: number;
+  name: LocalizedName | string;
+}
+
+export interface ProductSelectOptionRecipe {
+  id: number;
+  name: LocalizedName | string;
+}
+
+export interface ProductSelectOptionUnit {
+  id: number;
+  name: LocalizedName | string;
+  value: number;
+}
+
 export interface Product {
   id: number;
   name: LocalizedName;
@@ -62,6 +98,12 @@ export interface Product {
   sub_category_id: number | null;
   sub_category: ProductCategory | null;
   variations: ProductVariation[];
+  recipes?: ProductRecipeResponseItem[];
+  product_manufacturing?: {
+    id: number;
+    product_id: number;
+    recipes: ProductRecipeResponseItem[];
+  } | null;
   created_at: string;
   updated_at: string;
 }
@@ -76,6 +118,7 @@ export interface ProductFormData {
   category_id: number;
   sub_category_id: number | null;
   variations: ProductVariation[];
+  recipes?: ProductRecipePayloadItem[];
 }
 
 export interface ProductSelectOptions {
@@ -83,6 +126,9 @@ export interface ProductSelectOptions {
   discount: ProductDiscount[];
   parent_categories: ProductCategory[];
   sub_categories: ProductCategory[];
+  materials?: ProductSelectOptionMaterial[];
+  product_recipes?: ProductSelectOptionRecipe[];
+  units?: ProductSelectOptionUnit[];
 }
 
 export interface ProductListResponse {

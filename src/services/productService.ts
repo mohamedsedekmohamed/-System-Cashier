@@ -66,6 +66,27 @@ export const toProductFormData = (payload: ProductFormData, method: 'POST' | 'PU
     });
   }
 
+  // Handle Product Recipes / Manufacturing Ingredients
+  if (payload.recipes !== undefined) {
+    if (payload.recipes.length > 0) {
+      payload.recipes.forEach((recipe, rIndex) => {
+        if (recipe.id) {
+          formData.append(`recipes[${rIndex}][id]`, String(recipe.id));
+        }
+        if (recipe.material_id) {
+          formData.append(`recipes[${rIndex}][material_id]`, String(recipe.material_id));
+        }
+        if (recipe.product_recipe_id) {
+          formData.append(`recipes[${rIndex}][product_recipe_id]`, String(recipe.product_recipe_id));
+        }
+        formData.append(`recipes[${rIndex}][count]`, String(recipe.count));
+        formData.append(`recipes[${rIndex}][unit_id]`, String(recipe.unit_id));
+      });
+    } else {
+      formData.append('recipes', '[]');
+    }
+  }
+
   if (method === 'PUT') {
     formData.append('_method', 'PUT');
   }
@@ -80,18 +101,24 @@ export const productApi = {
     return data;
   },
 
-  /** GET /api/admin/products?page=&per_page= */
-  list: async (page = 1, perPage = 15): Promise<ProductListResponse> => {
+  /** GET /api/admin/products?page=&per_page=&id=&include_recipes= */
+  list: async (page = 1, perPage = 15, id?: number | string, include_recipes?: boolean): Promise<ProductListResponse> => {
+    const params: Record<string, any> = { page, per_page: perPage };
+    if (id) params.id = id;
+    if (include_recipes) params.include_recipes = 1;
+
     const { data } = await api.get<ProductListResponse>(
       '/api/admin/products',
-      { params: { page, per_page: perPage } }
+      { params }
     );
     return data;
   },
 
   /** GET /api/admin/products/:id */
-  get: async (id: number | string): Promise<SingleProductResponse> => {
-    const { data } = await api.get<SingleProductResponse>(`/api/admin/products/${id}`);
+  get: async (id: number | string, include_recipes = true): Promise<SingleProductResponse> => {
+    const params: Record<string, any> = {};
+    if (include_recipes) params.include_recipes = 1;
+    const { data } = await api.get<SingleProductResponse>(`/api/admin/products/${id}`, { params });
     return data;
   },
 

@@ -10,6 +10,8 @@ import { CrudHeader } from '../../components/ui/CrudHeader';
 import { DeleteModal } from '../../components/ui/DeleteModal';
 import { DetailsModal } from '../../components/ui/DetailsModal';
 import { MdFastfood, MdEdit, MdDelete, MdVisibility } from 'react-icons/md';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { renderName } from '../../utils/helpers';
 
 const ProductList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -18,6 +20,16 @@ const ProductList: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [viewTarget, setViewTarget] = useState<Product | null>(null);
   const perPage = 15;
+
+  // ── Fetch Details for viewTarget (includes BOM recipes) ──
+  const { data: detailData, isLoading: isLoadingDetail } = useQuery({
+    queryKey: [PRODUCTS_KEY, 'detail', viewTarget?.id],
+    queryFn: () => productApi.get(viewTarget!.id, true),
+    enabled: !!viewTarget?.id,
+  });
+
+  const detailedProduct = detailData?.data || viewTarget;
+  const productRecipes = detailedProduct?.recipes || detailedProduct?.product_manufacturing?.recipes || [];
 
   // ── Fetch (paginated) ──────────────────
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -166,24 +178,58 @@ const ProductList: React.FC = () => {
         onClose={() => setViewTarget(null)}
         title="تفاصيل المنتج"
         details={[
-          { label: 'الرقم التعريفي', value: viewTarget?.id },
-          { label: 'الاسم (عربي)', value: viewTarget?.name?.ar },
-          { label: 'الاسم (إنجليزي)', value: viewTarget?.name?.en },
+          { label: 'الرقم التعريفي', value: detailedProduct?.id },
+          { label: 'الاسم (عربي)', value: detailedProduct?.name?.ar },
+          { label: 'الاسم (إنجليزي)', value: detailedProduct?.name?.en },
           { 
             label: 'صورة المنتج', 
-            value: viewTarget?.image && viewTarget.image !== 'string' ? (
+            value: detailedProduct?.image && detailedProduct.image !== 'string' ? (
               <div className="flex items-center gap-2">
-                <img src={viewTarget.image} alt={viewTarget.name?.ar} className="w-12 h-12 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm" />
+                <img src={detailedProduct.image} alt={detailedProduct.name?.ar} className="w-12 h-12 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm" />
               </div>
             ) : 'لا توجد صورة' 
           },
-          { label: 'الوصف (عربي)', value: viewTarget?.description?.ar || '—' },
-          { label: 'الوصف (إنجليزي)', value: viewTarget?.description?.en || '—' },
-          { label: 'القسم الرئيسي', value: viewTarget?.category?.name?.ar || '—' },
-          { label: 'السعر الأساسي', value: `${viewTarget?.price} ج.م` },
-          { label: 'الضريبة المطبقة', value: viewTarget?.tax?.name?.ar || 'لا يوجد' },
-          { label: 'الخصم المطبق', value: viewTarget?.discount?.name?.ar || 'لا يوجد' },
-          { label: 'تاريخ الإنشاء', value: viewTarget?.created_at ? new Date(viewTarget.created_at).toLocaleString('ar-EG') : '' },
+          { label: 'الوصف (عربي)', value: detailedProduct?.description?.ar || '—' },
+          { label: 'الوصف (إنجليزي)', value: detailedProduct?.description?.en || '—' },
+          { label: 'القسم الرئيسي', value: detailedProduct?.category?.name?.ar || '—' },
+          { label: 'السعر الأساسي', value: `${detailedProduct?.price} ج.م` },
+          { label: 'الضريبة المطبقة', value: detailedProduct?.tax?.name?.ar || 'لا يوجد' },
+          { label: 'الخصم المطبق', value: detailedProduct?.discount?.name?.ar || 'لا يوجد' },
+          {
+            label: 'مكونات التصنيع والوصفة (BOM)',
+            fullWidth: true,
+            value: isLoadingDetail ? (
+              <div className="flex items-center gap-2 text-xs text-slate-500 py-1">
+                <AiOutlineLoading3Quarters className="animate-spin text-primary" />
+                <span>جاري تحميل المكونات...</span>
+              </div>
+            ) : productRecipes.length > 0 ? (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {productRecipes.map((r, i) => {
+                  const isMat = !!r.material;
+                  const name = isMat ? renderName(r.material?.name) : renderName(r.product_recipe?.name);
+                  const unitName = r.unit ? renderName(r.unit.name) : '';
+                  return (
+                    <span
+                      key={i}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                        isMat
+                          ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40'
+                          : 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40'
+                      }`}
+                    >
+                      <span>{isMat ? 'خامة:' : 'وصفة:'}</span>
+                      <span className="font-bold">{name}</span>
+                      <span className="opacity-80">({r.count} {unitName})</span>
+                    </span>
+                  );
+                })}
+              </div>
+            ) : (
+              <span className="text-slate-400 text-xs italic">لا توجد مكونات تصنيع مرتبطة بهذا المنتج</span>
+            ),
+          },
+          { label: 'تاريخ الإنشاء', value: detailedProduct?.created_at ? new Date(detailedProduct.created_at).toLocaleString('ar-EG') : '' },
         ]}
       />
     </div>

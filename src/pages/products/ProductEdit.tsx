@@ -6,9 +6,10 @@ import type { ProductFormData } from '../../types';
 import SingleImageUpload from '../../components/ui/SingleImageUpload';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
-import { MdArrowForward, MdSave, MdEdit } from 'react-icons/md';
+import { MdArrowForward, MdArrowBack, MdSave, MdEdit, MdFastfood, MdSchema, MdTune } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { ProductVariationsSection } from '../../components/products/ProductVariationsSection';
+import { ProductRecipesSection } from '../../components/products/ProductRecipesSection';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const ProductEdit: React.FC = () => {
@@ -27,7 +28,10 @@ const ProductEdit: React.FC = () => {
     category_id: 0,
     sub_category_id: 0,
     variations: [],
+    recipes: [],
   });
+
+  const [activeTab, setActiveTab] = useState<'basic' | 'recipes' | 'variations'>('basic');
 
   // ── Fetch Data ─────────────────────────
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -46,10 +50,22 @@ const ProductEdit: React.FC = () => {
   const subCategories = optionsData?.data?.sub_categories ?? [];
   const taxes = optionsData?.data?.tax ?? [];
   const discounts = optionsData?.data?.discount ?? [];
+  const materials = optionsData?.data?.materials ?? [];
+  const productRecipes = optionsData?.data?.product_recipes ?? [];
+  const units = optionsData?.data?.units ?? [];
 
   // Populate form
   useEffect(() => {
     if (product) {
+      // Extract existing recipes from product.recipes or product.product_manufacturing.recipes
+      const existingRecipes = (product.recipes || product.product_manufacturing?.recipes || []).map((r) => ({
+        id: r.id,
+        material_id: r.material_id,
+        product_recipe_id: r.product_recipe_id,
+        count: Number(r.count) || 1,
+        unit_id: r.unit_id || (r.unit ? r.unit.id : 1),
+      }));
+
       setFormData({
         name: { ar: product.name?.ar || '', en: product.name?.en || '' },
         description: { ar: product.description?.ar || '', en: product.description?.en || '' },
@@ -63,6 +79,7 @@ const ProductEdit: React.FC = () => {
           ...v,
           options: v.options || []
         })),
+        recipes: existingRecipes,
       });
     }
   }, [product]);
@@ -101,24 +118,41 @@ const ProductEdit: React.FC = () => {
     }
   };
 
-
-
   // ── Submit ─────────────────────────────
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.ar || !formData.name.en || !formData.category_id || formData.price < 0) return;
+    if (!formData.name.ar || !formData.name.en || !formData.category_id || formData.price < 0) {
+      setActiveTab('basic');
+      return;
+    }
     
     const payload: ProductFormData = {
       ...formData,
       tax_id: formData.tax_id || null,
       discount_id: formData.discount_id || null,
       sub_category_id: formData.sub_category_id || null,
+      recipes: formData.recipes || [],
     };
     mutation.mutate(payload);
   };
 
-  if (isLoading) return <LoadingSpinner text="جاري تحميل بيانات المنتج..." />;
-  if (isError) return <ErrorFallback error={error} onRetry={refetch} />;
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+        <p className="mt-4 text-sm text-slate-500">جاري تحميل بيانات المنتج...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorFallback
+        error={error}
+        onRetry={refetch}
+      />
+    );
+  }
 
   return (
     <div className="w-full space-y-6 pb-24">
@@ -132,131 +166,268 @@ const ProductEdit: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <MdEdit size={24} className="text-primary" />
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل بيانات المنتج</h1>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">تعديل المنتج: {product?.name?.ar}</h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">تعديل {product?.name?.ar}</p>
+            <p className="text-sm text-slate-500 mt-1">تحديث معلومات المنتج، الأسعار، مكونات التصنيع والإضافات</p>
           </div>
         </div>
       </div>
 
+      {/* ── Tabs Navigation Bar ── */}
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 rounded-2xl shadow-xs">
+        {/* Tab 1: Basic */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('basic')}
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs md:text-sm transition-all cursor-pointer ${
+            activeTab === 'basic'
+              ? 'bg-primary text-white shadow-sm shadow-primary/30'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+          }`}
+        >
+          <MdFastfood size={18} />
+          <span>البيانات الأساسية والتسعير</span>
+          {(!formData.name.ar || !formData.name.en || !formData.category_id) && (
+            <span className="w-2 h-2 rounded-full bg-amber-400" title="يوجد حقول إلزامية مطلوب تعبئتها" />
+          )}
+        </button>
+
+        {/* Tab 2: Variations & Addons (Moved up to 2nd position) */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('variations')}
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs md:text-sm transition-all cursor-pointer ${
+            activeTab === 'variations'
+              ? 'bg-primary text-white shadow-sm shadow-primary/30'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+          }`}
+        >
+          <MdTune size={18} />
+          <span>الإضافات والمتغيرات</span>
+          {(formData.variations?.length ?? 0) > 0 && (
+            <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+              activeTab === 'variations' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              {formData.variations?.length}
+            </span>
+          )}
+        </button>
+
+        {/* Tab 3: BOM / Recipes */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('recipes')}
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs md:text-sm transition-all cursor-pointer ${
+            activeTab === 'recipes'
+              ? 'bg-primary text-white shadow-sm shadow-primary/30'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+          }`}
+        >
+          <MdSchema size={18} />
+          <span>مكونات التصنيع (BOM)</span>
+          {(formData.recipes?.length ?? 0) > 0 && (
+            <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+              activeTab === 'recipes' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              {formData.recipes?.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* Basic Info Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
-            المعلومات الأساسية
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اسم المنتج (عربي) *</label>
-              <input type="text" name="name.ar" required value={formData.name.ar} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اسم المنتج (إنجليزي) *</label>
-              <input type="text" name="name.en" required value={formData.name.en} onChange={handleChange} dir="ltr"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 text-left" />
+        {/* ── TAB 1: Basic Info & Pricing ── */}
+        {activeTab === 'basic' && (
+          <div className="space-y-6">
+            {/* Basic Info Section */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
+                المعلومات الأساسية
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اسم المنتج (عربي) *</label>
+                  <input type="text" name="name.ar" required value={formData.name.ar} onChange={handleChange}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اسم المنتج (إنجليزي) *</label>
+                  <input type="text" name="name.en" required value={formData.name.en} onChange={handleChange} dir="ltr"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 text-left" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الوصف (عربي)</label>
+                  <textarea name="description.ar" rows={2} value={formData.description.ar} onChange={handleChange}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الوصف (إنجليزي)</label>
+                  <textarea name="description.en" rows={2} value={formData.description.en} onChange={handleChange} dir="ltr"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none text-left" />
+                </div>
+
+                {/* Product Image Upload */}
+                <div className="md:col-span-2">
+                  <SingleImageUpload
+                    value={formData.image}
+                    onChange={(fileOrUrl) => setFormData(prev => ({ ...prev, image: fileOrUrl }))}
+                    label="صورة المنتج"
+                    hint="اضغط لاختيار صورة المنتج من جهازك أو اسحبها هنا (PNG, JPG, WEBP)"
+                    disabled={mutation.isPending}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الوصف (عربي)</label>
-              <textarea name="description.ar" rows={2} value={formData.description.ar} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الوصف (إنجليزي)</label>
-              <textarea name="description.en" rows={2} value={formData.description.en} onChange={handleChange} dir="ltr"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none text-left" />
+            {/* Pricing and Categorization */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
+                التسعير والتصنيف
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">السعر الأساسي (ج.م) *</label>
+                  <input type="number" name="price" required min="0" step="0.01" value={formData.price} onChange={handleChange}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+                
+                {/* Categories */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">القسم الرئيسي *</label>
+                  <SearchableSelect
+                    name="category_id"
+                    required
+                    disabled={isLoadingOptions}
+                    value={formData.category_id || ''}
+                    onChange={(val) => setFormData((prev) => ({ ...prev, category_id: Number(val) || 0 }))}
+                    options={categories}
+                    placeholder="اختر القسم الرئيسي..."
+                    searchPlaceholder="ابحث في الأقسام..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">القسم الفرعي</label>
+                  <SearchableSelect
+                    name="sub_category_id"
+                    disabled={isLoadingOptions}
+                    value={formData.sub_category_id || ''}
+                    onChange={(val) => setFormData((prev) => ({ ...prev, sub_category_id: Number(val) || 0 }))}
+                    options={subCategories}
+                    placeholder="بدون قسم فرعي..."
+                    searchPlaceholder="ابحث في الأقسام الفرعية..."
+                    isClearable
+                  />
+                </div>
+
+                {/* Taxes and Discounts */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الضريبة المطبقة</label>
+                  <SearchableSelect
+                    name="tax_id"
+                    disabled={isLoadingOptions}
+                    value={formData.tax_id || ''}
+                    onChange={(val) => setFormData((prev) => ({ ...prev, tax_id: Number(val) || 0 }))}
+                    options={taxes}
+                    placeholder="بدون ضريبة..."
+                    searchPlaceholder="ابحث في الضرائب..."
+                    isClearable
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الخصم المطبق</label>
+                  <SearchableSelect
+                    name="discount_id"
+                    disabled={isLoadingOptions}
+                    value={formData.discount_id || ''}
+                    onChange={(val) => setFormData((prev) => ({ ...prev, discount_id: Number(val) || 0 }))}
+                    options={discounts}
+                    placeholder="بدون خصم..."
+                    searchPlaceholder="ابحث في الخصومات..."
+                    isClearable
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Product Image Upload */}
-            <div className="md:col-span-2">
-              <SingleImageUpload
-                value={formData.image}
-                onChange={(fileOrUrl) => setFormData(prev => ({ ...prev, image: fileOrUrl }))}
-                label="صورة المنتج"
-                hint="اضغط لاختيار صورة المنتج من جهازك أو اسحبها هنا (PNG, JPG, WEBP)"
-                disabled={mutation.isPending}
-              />
+            {/* Tab Footer Navigation */}
+            <div className="flex items-center justify-between pt-2">
+              <div />
+              <button
+                type="button"
+                onClick={() => setActiveTab('variations')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-xs transition-colors cursor-pointer border border-slate-200/80 dark:border-slate-600"
+              >
+                <span>التالي: الإضافات والمتغيرات</span>
+                <MdArrowBack size={16} />
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Pricing and Categorization */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-3">
-            التسعير والتصنيف
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">السعر الأساسي (ج.م) *</label>
-              <input type="number" name="price" required min="0" step="0.01" value={formData.price} onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            </div>
-            
-            {/* Categories */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">القسم الرئيسي *</label>
-              <SearchableSelect
-                name="category_id"
-                required
-                disabled={isLoadingOptions}
-                value={formData.category_id || ''}
-                onChange={(val) => setFormData((prev) => ({ ...prev, category_id: Number(val) || 0 }))}
-                options={categories}
-                placeholder="اختر القسم الرئيسي..."
-                searchPlaceholder="ابحث في الأقسام..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">القسم الفرعي</label>
-              <SearchableSelect
-                name="sub_category_id"
-                disabled={isLoadingOptions}
-                value={formData.sub_category_id || ''}
-                onChange={(val) => setFormData((prev) => ({ ...prev, sub_category_id: Number(val) || 0 }))}
-                options={subCategories}
-                placeholder="بدون قسم فرعي..."
-                searchPlaceholder="ابحث في الأقسام الفرعية..."
-                isClearable
-              />
-            </div>
+        {/* ── TAB 2: Variations & Addons ── */}
+        {activeTab === 'variations' && (
+          <div className="space-y-6">
+            <ProductVariationsSection
+              variations={formData.variations}
+              onChange={(newVariations) => setFormData(prev => ({ ...prev, variations: newVariations }))}
+            />
 
-            {/* Taxes and Discounts */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الضريبة المطبقة</label>
-              <SearchableSelect
-                name="tax_id"
-                disabled={isLoadingOptions}
-                value={formData.tax_id || ''}
-                onChange={(val) => setFormData((prev) => ({ ...prev, tax_id: Number(val) || 0 }))}
-                options={taxes}
-                placeholder="بدون ضريبة..."
-                searchPlaceholder="ابحث في الضرائب..."
-                isClearable
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">الخصم المطبق</label>
-              <SearchableSelect
-                name="discount_id"
-                disabled={isLoadingOptions}
-                value={formData.discount_id || ''}
-                onChange={(val) => setFormData((prev) => ({ ...prev, discount_id: Number(val) || 0 }))}
-                options={discounts}
-                placeholder="بدون خصم..."
-                searchPlaceholder="ابحث في الخصومات..."
-                isClearable
-              />
+            {/* Tab Footer Navigation */}
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('basic')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-xs transition-colors cursor-pointer border border-slate-200/80 dark:border-slate-600"
+              >
+                <MdArrowForward size={16} />
+                <span>السابق: البيانات الأساسية والتسعير</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('recipes')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-xs transition-colors cursor-pointer border border-slate-200/80 dark:border-slate-600"
+              >
+                <span>التالي: مكونات التصنيع والوصفة (BOM)</span>
+                <MdArrowBack size={16} />
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Variations & Addons Section */}
-        <ProductVariationsSection
-          variations={formData.variations}
-          onChange={(newVariations) => setFormData(prev => ({ ...prev, variations: newVariations }))}
-        />
+        {/* ── TAB 3: Manufacturing Recipes (BOM) ── */}
+        {activeTab === 'recipes' && (
+          <div className="space-y-6">
+            <ProductRecipesSection
+              materials={materials}
+              productRecipes={productRecipes}
+              units={units}
+              recipes={formData.recipes || []}
+              onChange={(newRecipes) => setFormData(prev => ({ ...prev, recipes: newRecipes }))}
+              disabled={mutation.isPending}
+            />
+
+            {/* Tab Footer Navigation */}
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('variations')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-xs transition-colors cursor-pointer border border-slate-200/80 dark:border-slate-600"
+              >
+                <MdArrowForward size={16} />
+                <span>السابق: الإضافات والمتغيرات</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('basic')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+              >
+                الرجوع للبيانات الأساسية
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Error message */}
         {mutation.isError && (
@@ -272,7 +443,7 @@ const ProductEdit: React.FC = () => {
             إلغاء
           </Link>
           <button type="submit" disabled={mutation.isPending || !formData.name.ar || !formData.name.en || !formData.category_id}
-            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+            className="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
             {mutation.isPending ? (
               <><AiOutlineLoading3Quarters size={18} className="animate-spin" /> جاري الحفظ...</>
             ) : (
