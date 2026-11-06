@@ -23,14 +23,18 @@ export const unitApi = {
   },
 
   /**
-   * GET /api/admin/units?per_page=-1
-   * Fetches all units for dropdown selects
+   * GET /api/admin/inventory/addons/select-options
+   * Fetches all units for dropdown selects from select-options endpoint
    */
   getAll: async (): Promise<Unit[]> => {
-    const { data } = await api.get<UnitListResponse | { data: Unit[] }>('/api/admin/units', {
-      params: { per_page: -1 },
-    });
-    return data?.data ?? [];
+    const { data } = await api.get<{
+      status: boolean;
+      data: {
+        units: Unit[];
+        branches?: any[];
+      };
+    }>('/api/admin/inventory/addons/select-options');
+    return data?.data?.units ?? [];
   },
 
   /**
@@ -64,4 +68,3 @@ export const unitApi = {
     await api.delete(`/api/admin/units/${id}`);
   },
 };
-

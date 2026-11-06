@@ -6,8 +6,8 @@ import {
   ADDON_INVENTORY_DETAIL_KEY,
   ADDON_INVENTORY_PENDING_KEY,
   ADDON_INVENTORY_HISTORY_KEY,
+  ADDON_INVENTORY_OPTIONS_KEY,
 } from '../../services/addonInventoryService';
-import { unitApi, ALL_UNITS_KEY } from '../../services/unitService';
 import type { InventoryAddonItem } from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorFallback from '../../components/ui/ErrorFallback';
@@ -54,11 +54,12 @@ export const AddonInventoryDetail: React.FC = () => {
     enabled: !!id,
   });
 
-  // ── Fetch Units ───────────────────────────
-  const { data: units = [] } = useQuery({
-    queryKey: [ALL_UNITS_KEY],
-    queryFn: () => unitApi.getAll(),
+  // ── Fetch Select Options (Units & Branches) ───────────────
+  const { data: optionsData } = useQuery({
+    queryKey: [ADDON_INVENTORY_OPTIONS_KEY],
+    queryFn: () => addonInventoryApi.getSelectOptions(),
   });
+  const units = optionsData?.data?.units ?? [];
 
   const inventory = data?.data;
   const items: InventoryAddonItem[] = inventory?.items ?? [];

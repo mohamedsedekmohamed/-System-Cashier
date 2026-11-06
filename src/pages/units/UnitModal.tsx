@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { unitApi, UNITS_KEY, ALL_UNITS_KEY } from '../../services/unitService';
+import { ADDON_INVENTORY_OPTIONS_KEY } from '../../services/addonInventoryService';
 import type { Unit, UnitFormData } from '../../types';
 import { MdClose, MdSave, MdStraighten } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
@@ -49,6 +50,7 @@ export const UnitModal: React.FC<UnitModalProps> = ({ isOpen, onClose, unit }) =
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [UNITS_KEY] });
       queryClient.invalidateQueries({ queryKey: [ALL_UNITS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [ADDON_INVENTORY_OPTIONS_KEY] });
       onClose();
     },
     onError: (err: any) => {

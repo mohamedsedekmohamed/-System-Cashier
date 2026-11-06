@@ -24,6 +24,7 @@ import {
   MdAccessTime,
   MdClose,
   MdSearch,
+  MdVisibility,
 } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
@@ -230,17 +231,38 @@ export const AddonInventoryList: React.FC = () => {
     },
     {
       header: 'الإجراءات',
-      render: (row) => (
-        <div className="flex items-center justify-end">
-          <Link
-            to={`/dashboard/addon-inventory/${row.id}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white text-xs font-bold transition-all shadow-2xs"
-          >
-            <span>{row.status === 'pending' ? 'إدخال ومراجعة الجرد' : 'عرض التفاصيل'}</span>
-            <MdArrowForward size={14} />
-          </Link>
-        </div>
-      ),
+      render: (row) => {
+        const isPending =
+          activeTab === 'pending' ||
+          row.status === 'pending' ||
+          !row.status ||
+          row.status === 'قيد الجرد والمراجعة';
+
+        return (
+          <div className="flex items-center justify-end">
+            <Link
+              to={`/dashboard/addon-inventory/${row.id}`}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                isPending
+                  ? 'bg-primary hover:bg-primary-dark text-white shadow-sm shadow-primary/25 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              {isPending ? (
+                <>
+                  <span>إدخال ومراجعة الجرد</span>
+                  <MdArrowForward size={14} className="rtl:rotate-180" />
+                </>
+              ) : (
+                <>
+                  <MdVisibility size={14} />
+                  <span>عرض التفاصيل</span>
+                </>
+              )}
+            </Link>
+          </div>
+        );
+      },
     },
   ];
 

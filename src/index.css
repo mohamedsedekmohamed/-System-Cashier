@@ -16,6 +16,7 @@
   --color-slate-950: #000000;
   --color-primary: #3b82f6;
   --color-primary-dark: #2563eb;
+  --color-primary-hover: #2563eb;
 }
 @layer base {
   :root {
