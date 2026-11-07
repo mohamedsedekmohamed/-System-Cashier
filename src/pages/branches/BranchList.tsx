@@ -60,8 +60,19 @@ const BranchList: React.FC = () => {
         locArray = [{ lat: 0, lng: 0 }];
       }
 
+      let arName = '';
+      let enName = '';
+      if (typeof branch.name === 'object' && branch.name !== null) {
+        arName = (branch.name as any).ar || '';
+        enName = (branch.name as any).en || '';
+      } else if (typeof branch.name === 'string') {
+        arName = branch.name;
+        enName = branch.name;
+      }
+
       const payload: BranchFormData = {
-        name: typeof branch.name === 'object' && branch.name !== null ? ((branch.name as any)?.ar || (branch.name as any)?.en || '') : (branch.name || ''),
+        name: { ar: arName, en: enName },
+        user_name: branch.user_name || '',
         address: branch.address,
         location: locArray,
         watts: branch.watts ? String(branch.watts).replace(/\D/g, '') : '',
@@ -190,6 +201,7 @@ const BranchList: React.FC = () => {
         details={[
           { label: 'الرقم التعريفي', value: viewTarget?.id },
           { label: 'اسم الفرع', value: typeof viewTarget?.name === 'object' && viewTarget?.name !== null ? ((viewTarget?.name as any)?.ar || (viewTarget?.name as any)?.en || '') : (viewTarget?.name || '') },
+          { label: 'اسم المستخدم (الكاشير)', value: viewTarget?.user_name || '—' },
           { label: 'العنوان', value: viewTarget?.address },
           { 
             label: 'الموقع الجغرافي ونطاق الفرع', 

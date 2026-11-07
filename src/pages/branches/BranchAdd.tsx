@@ -31,7 +31,7 @@ const Field: React.FC<{
   </div>
 );
 
-type FormErrors = Partial<Record<keyof BranchFormData | 'location', string>>;
+type FormErrors = Record<string, string | undefined>;
 
 /* ══════════════════════════════════════════
    Main Component
@@ -40,8 +40,22 @@ const BranchAdd: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [form, setForm] = useState<Omit<BranchFormData, 'location'>>({
-    name: '', address: '', watts: '', facebook: '', status: true, password: '',
+  const [form, setForm] = useState<{
+    name: { ar: string; en: string };
+    user_name: string;
+    address: string;
+    watts: string;
+    facebook: string;
+    status: boolean;
+    password: string;
+  }>({
+    name: { ar: '', en: '' },
+    user_name: '',
+    address: '',
+    watts: '',
+    facebook: '',
+    status: true,
+    password: '',
   });
   const [locationPoints, setLocationPoints] = useState<LocationPoint[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -60,11 +74,7 @@ const BranchAdd: React.FC = () => {
         const fieldErrors: FormErrors = {};
         for (const [key, msgs] of Object.entries(resData.errors)) {
           if (Array.isArray(msgs) && msgs.length > 0) {
-            if (key.startsWith('location')) {
-              fieldErrors.location = msgs[0] as string;
-            } else {
-              fieldErrors[key as keyof BranchFormData] = msgs[0] as string;
-            }
+            fieldErrors[key] = msgs[0] as string;
           }
         }
         setErrors(prev => ({ ...prev, ...fieldErrors }));
@@ -77,7 +87,10 @@ const BranchAdd: React.FC = () => {
   // ── Validation ─────────────────────────
   const validate = (): boolean => {
     const e: FormErrors = {};
-    if (!form.name.trim()) e.name = 'اسم الفرع مطلوب';
+    if (!form.name.ar.trim()) e['name.ar'] = 'اسم الفرع باللغة العربية مطلوب';
+    if (!form.name.en.trim()) e['name.en'] = 'اسم الفرع باللغة الإنجليزية مطلوب';
+    if (!form.user_name.trim()) e.user_name = 'اسم المستخدم (user_name) مطلوب';
+    if (!form.password.trim()) e.password = 'كلمة المرور مطلوبة';
     if (!form.address.trim()) e.address = 'العنوان مطلوب';
     
     if (!form.watts.trim()) {
@@ -88,7 +101,7 @@ const BranchAdd: React.FC = () => {
       e.watts = 'رقم الواتساب يجب ألا يقل عن 8 أرقام';
     }
 
-    const validLocPoints = locationPoints.filter(p => p.lat && p.lng && !isNaN(p.lat) && !isNaN(p.lng));
+    const validLocPoints = locationPoints.filter(p => p.lat !== undefined && p.lng !== undefined && !isNaN(p.lat) && !isNaN(p.lng));
     if (validLocPoints.length < 3) {
       e.location = `يلزم تحديد 3 نقاط على الأقل على الخريطة لتكوين نطاق مغلق لموقع الفرع (مثلث، مربع، أو مضلع) — المحدد حالياً: ${validLocPoints.length} من 3 نقاط مطلوبة`;
     }
@@ -103,11 +116,20 @@ const BranchAdd: React.FC = () => {
     const { name, value } = e.target;
     let finalValue = value;
     if (name === 'watts') {
-      // إجبار الإدخال على أرقام فقط
       finalValue = value.replace(/\D/g, '');
     }
-    setForm(prev => ({ ...prev, [name]: finalValue }));
-    if (errors[name as keyof BranchFormData]) setErrors(prev => ({ ...prev, [name]: undefined }));
+
+    if (name.startsWith('name.')) {
+      const lang = name.split('.')[1] as 'ar' | 'en';
+      setForm(prev => ({
+        ...prev,
+        name: { ...prev.name, [lang]: finalValue }
+      }));
+      setErrors(prev => ({ ...prev, [name]: undefined, name: undefined }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: finalValue }));
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
     setApiError(null);
   };
 
@@ -115,11 +137,25 @@ const BranchAdd: React.FC = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    const cleanPoints = locationPoints.filter(p => p.lat && p.lng && !isNaN(p.lat) && !isNaN(p.lng));
-    createMutation.mutate({
-      ...form,
-      location: cleanPoints
-    });
+    const cleanPoints = locationPoints.filter(p => p.lat !== undefined && p.lng !== undefined && !isNaN(p.lat) && !isNaN(p.lng));
+    const payload: BranchFormData = {
+      name: {
+        en: form.name.en.trim(),
+        ar: form.name.ar.trim(),
+      },
+      user_name: form.user_name.trim(),
+      address: form.address.trim(),
+      location: cleanPoints.map(p => ({
+        lat: Number(p.lat),
+        lng: Number(p.lng),
+      })),
+      watts: form.watts.trim(),
+      facebook: form.facebook.trim(),
+      status: form.status,
+      password: form.password,
+    };
+
+    createMutation.mutate(payload);
   };
 
   const isPending = createMutation.isPending;
@@ -164,11 +200,69 @@ const BranchAdd: React.FC = () => {
           </div>
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Name */}
-            <div className="md:col-span-2">
-              <Field id="name" label="اسم الفرع" required error={typeof errors.name === 'object' && errors.name !== null ? ((errors.name as any)?.ar || (errors.name as any)?.en || '') : (errors.name || '')}>
-                <input id="name" name="name" type="text" value={typeof form.name === 'object' && form.name !== null ? ((form.name as any)?.ar || (form.name as any)?.en || '') : (form.name || '')} onChange={handleChange}
-                  placeholder="مثال: فرع الرياض الرئيسي" disabled={isPending} className={inputClass(!!errors.name)} />
+            {/* Name Arabic */}
+            <div>
+              <Field id="name_ar" label="اسم الفرع (باللغة العربية)" required error={errors['name.ar'] || errors.name}>
+                <input
+                  id="name_ar"
+                  name="name.ar"
+                  type="text"
+                  value={form.name.ar}
+                  onChange={handleChange}
+                  placeholder="مثال: فرع الرياض الرئيسي"
+                  disabled={isPending}
+                  className={inputClass(!!(errors['name.ar'] || errors.name))}
+                />
+              </Field>
+            </div>
+
+            {/* Name English */}
+            <div>
+              <Field id="name_en" label="اسم الفرع (باللغة الإنجليزية)" required error={errors['name.en']}>
+                <input
+                  id="name_en"
+                  name="name.en"
+                  type="text"
+                  value={form.name.en}
+                  onChange={handleChange}
+                  placeholder="Example: Main Riyadh Branch"
+                  dir="ltr"
+                  disabled={isPending}
+                  className={`${inputClass(!!errors['name.en'])} text-left`}
+                />
+              </Field>
+            </div>
+
+            {/* Username (user_name) */}
+            <div>
+              <Field id="user_name" label="اسم المستخدم (Username)" required error={errors.user_name} hint="يُستخدم لتسجيل دخول كاشير الفرع">
+                <input
+                  id="user_name"
+                  name="user_name"
+                  type="text"
+                  value={form.user_name}
+                  onChange={handleChange}
+                  placeholder="مثال: riyadh_branch"
+                  dir="ltr"
+                  disabled={isPending}
+                  className={`${inputClass(!!errors.user_name)} text-left font-mono`}
+                />
+              </Field>
+            </div>
+
+            {/* Password */}
+            <div>
+              <Field id="password" label="كلمة المرور (Password)" required error={errors.password} hint="كلمة مرور تسجيل الدخول لحساب الفرع">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="أدخل كلمة المرور"
+                  disabled={isPending}
+                  className={inputClass(!!errors.password)}
+                />
               </Field>
             </div>
 
@@ -224,25 +318,21 @@ const BranchAdd: React.FC = () => {
                 placeholder="رابط صفحة الفيسبوك" dir="ltr" disabled={isPending} className={`${inputClass(false)} text-left`} />
             </Field>
 
-            {/* Password */}
-            <Field id="password" label="كلمة المرور" hint="اختياري — كلمة مرور الفرع">
-              <input id="password" name="password" type="password" value={form.password ?? ''} onChange={handleChange}
-                placeholder="كلمة المرور" disabled={isPending} className={inputClass(false)} />
-            </Field>
-
             {/* Status */}
-            <Field id="status" label="حالة الفرع">
-              <div className="flex gap-4 mt-1.5">
-                {[{ v: true, l: 'نشط' }, { v: false, l: 'معطل' }].map(({ v, l }) => (
-                  <label key={String(v)} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="status" value={String(v)} checked={form.status === v}
-                      onChange={() => setForm(p => ({ ...p, status: v }))}
-                      disabled={isPending} className="w-4 h-4 accent-primary" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">{l}</span>
-                  </label>
-                ))}
-              </div>
-            </Field>
+            <div className="md:col-span-2">
+              <Field id="status" label="حالة الفرع">
+                <div className="flex gap-4 mt-1.5">
+                  {[{ v: true, l: 'نشط' }, { v: false, l: 'معطل' }].map(({ v, l }) => (
+                    <label key={String(v)} className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="status" value={String(v)} checked={form.status === v}
+                        onChange={() => setForm(p => ({ ...p, status: v }))}
+                        disabled={isPending} className="w-4 h-4 accent-primary" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{l}</span>
+                    </label>
+                  ))}
+                </div>
+              </Field>
+            </div>
           </div>
 
           {/* Footer */}

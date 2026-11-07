@@ -12,6 +12,7 @@ export interface BranchOption {
 export interface Branch {
   id: number;
   name: { en: string; ar: string } | string;
+  user_name?: string;
   address: string;
   location?: BranchLocationPoint[] | string;
   watts: string;
@@ -23,7 +24,11 @@ export interface Branch {
 }
 
 export interface BranchFormData {
-  name: string;
+  name: {
+    en: string;
+    ar: string;
+  } | string;
+  user_name: string;
   address: string;
   location: BranchLocationPoint[];
   watts: string;
