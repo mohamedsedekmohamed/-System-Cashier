@@ -37,3 +37,4 @@ export * from './banner';
 export * from './captainOrder';
 export * from './unit';
 export * from './addonInventory';
+export * from './role';

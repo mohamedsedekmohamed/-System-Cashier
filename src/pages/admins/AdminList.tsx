@@ -43,7 +43,7 @@ const AdminList: React.FC = () => {
     ? admins.filter(a =>
         a.name.toLowerCase().includes(search.toLowerCase()) ||
         String(a.id).includes(search) ||
-        a.role.toLowerCase().includes(search.toLowerCase()))
+        (a.role ? a.role.toLowerCase().includes(search.toLowerCase()) : false))
     : admins)].sort((a, b) => b.id - a.id);
 
   // ── Columns ────────────────────────────
@@ -63,8 +63,12 @@ const AdminList: React.FC = () => {
     {
       header: 'الصلاحية',
       render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-          {row.role}
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+          row.role_id === null || row.role_id === undefined
+            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+        }`}>
+          {row.role || (row.role_id ? `دور #${row.role_id}` : 'سوبر أدمن (Super Admin)')}
         </span>
       )
     },

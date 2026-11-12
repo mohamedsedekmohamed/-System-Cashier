@@ -1,15 +1,11 @@
 import type { PaginatedMeta } from './common';
-
-export interface Role {
-  id: number;
-  name: string;
-}
+import type { Role } from './role';
 
 export interface Admin {
   id: number;
   name: string;
-  role_id: number;
-  role: string;
+  role_id: number | null;
+  role: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -17,7 +13,7 @@ export interface Admin {
 export interface AdminFormData {
   name: string;
   password?: string;
-  role_id: number;
+  role_id?: number | null;
 }
 
 export interface AdminListResponse {
@@ -42,3 +38,4 @@ export interface SelectOptionsResponse {
     roles: Role[];
   };
 }
+

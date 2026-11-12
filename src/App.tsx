@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import DashboardLayout from './components/DashboardLayout';
+import RequirePermission from './components/auth/RequirePermission';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -22,6 +23,11 @@ import ProfilePage from './pages/profile/ProfilePage';
 import AdminList from './pages/admins/AdminList';
 import AdminAdd from './pages/admins/AdminAdd';
 import AdminEdit from './pages/admins/AdminEdit';
+
+// Roles & Permissions
+import RoleList from './pages/roles/RoleList';
+import RoleAdd from './pages/roles/RoleAdd';
+import RoleEdit from './pages/roles/RoleEdit';
 
 // Cashiers
 import CashierList from './pages/cashiers/CashierList';
@@ -195,9 +201,14 @@ function App() {
                   <Route path="branches/edit/:id" element={<BranchEdit />} />
 
                   {/* Admins — full CRUD */}
-                  <Route path="admins" element={<AdminList />} />
-                  <Route path="admins/add" element={<AdminAdd />} />
-                  <Route path="admins/edit/:id" element={<AdminEdit />} />
+                  <Route path="admins" element={<RequirePermission permission="admin" action="view"><AdminList /></RequirePermission>} />
+                  <Route path="admins/add" element={<RequirePermission permission="admin" action="add"><AdminAdd /></RequirePermission>} />
+                  <Route path="admins/edit/:id" element={<RequirePermission permission="admin" action="update"><AdminEdit /></RequirePermission>} />
+
+                  {/* Roles & Permissions — full CRUD */}
+                  <Route path="roles" element={<RequirePermission permission="role" action="view"><RoleList /></RequirePermission>} />
+                  <Route path="roles/add" element={<RequirePermission permission="role" action="add"><RoleAdd /></RequirePermission>} />
+                  <Route path="roles/edit/:id" element={<RequirePermission permission="role" action="update"><RoleEdit /></RequirePermission>} />
 
                   {/* Cashiers — full CRUD */}
                   <Route path="cashiers" element={<CashierList />} />

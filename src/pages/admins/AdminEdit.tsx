@@ -18,7 +18,7 @@ const AdminEdit: React.FC = () => {
   const [formData, setFormData] = useState<AdminFormData>({
     name: '',
     password: '', // Optional for edit
-    role_id: 0,
+    role_id: null,
   });
 
   // ── Fetch Admin Data ───────────────────
@@ -30,6 +30,10 @@ const AdminEdit: React.FC = () => {
 
   const admin = data?.data;
   const roles = data?.select_options?.roles ?? [];
+  const roleOptions = [
+    { id: '', name: 'بدون دور (سوبر أدمن - كامل الصلاحيات)' },
+    ...roles,
+  ];
 
   // Populate form when data arrives
   useEffect(() => {
@@ -56,16 +60,19 @@ const AdminEdit: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'role_id' ? Number(value) : value,
+      [name]: name === 'role_id' ? (value ? Number(value) : null) : value,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.role_id) return; // Name and Role are required
+    if (!formData.name) return; // Name is required
     
     // Only send password if it's provided
-    const payload = { ...formData };
+    const payload: AdminFormData = {
+      ...formData,
+      role_id: formData.role_id ? Number(formData.role_id) : null,
+    };
     if (!payload.password) {
       delete payload.password;
     }
@@ -129,18 +136,21 @@ const AdminEdit: React.FC = () => {
             {/* Role */}
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                الدور (الرتبة) <span className="text-red-500">*</span>
+                الدور (الرتبة) <span className="text-slate-400 font-normal text-xs">(اختياري - اختر سوبر أدمن لمنح كامل الصلاحيات)</span>
               </label>
               <SearchableSelect
                 id="role_id"
                 name="role_id"
                 value={formData.role_id || ''}
-                onChange={(val) => setFormData(prev => ({ ...prev, role_id: Number(val) }))}
-                options={roles}
-                placeholder="-- اختر الدور --"
+                onChange={(val) => setFormData(prev => ({ ...prev, role_id: val ? Number(val) : null }))}
+                options={roleOptions}
+                placeholder="-- اختر الدور أو اتركه فارغاً كسوبر أدمن --"
                 searchPlaceholder="ابحث عن الدور..."
-                required
+                isClearable
               />
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                حساب السوبر أدمن (Super Admin) يمتلك صلاحيات مطلقة وكاملة على كافة أجزاء النظام بدون قيود.
+              </p>
             </div>
           </div>
         </div>

@@ -36,7 +36,10 @@ import {
   MdViewCarousel,
   MdSportsMotorsports,
   MdStraighten,
+  MdSecurity,
 } from 'react-icons/md';
+import { usePermissions } from '../hooks/usePermissions';
+import type { PermissionAction } from '../types';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -48,46 +51,49 @@ interface NavItem {
   path: string;
   icon: React.ReactElement;
   keywords?: string[];
+  permission?: string;
+  action?: PermissionAction;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'الرئيسية', path: '/dashboard', icon: <MdDashboard size={20} />, keywords: ['داشبورد', 'احصائيات', 'مبيعات'] },
-  { label: 'الفروع', path: '/dashboard/branches', icon: <MdStorefront size={20} />, keywords: ['فرع', 'مطعم'] },
-  { label: 'المديرين', path: '/dashboard/admins', icon: <MdAdminPanelSettings size={20} />, keywords: ['ادمن', 'مسؤول', 'صلاحيات'] },
-  { label: 'الكاشير', path: '/dashboard/cashiers', icon: <MdPointOfSale size={20} />, keywords: ['جهاز', 'نقطة بيع', 'pos'] },
-  { label: 'موظفي الكاشير', path: '/dashboard/cashier-men', icon: <MdPeople size={20} />, keywords: ['كاشيرجي', 'كاشير', 'موظف'] },
-  { label: 'الورديات', path: '/dashboard/shifts', icon: <MdSchedule size={20} />, keywords: ['شيفت', 'دوام'] },
-  { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} />, keywords: ['تقارير', 'شيفتات', 'اغلاق'] },
-  { label: 'مناديب التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} />, keywords: ['توصيل', 'دليفري', 'طيار', 'طيارين', 'سائق', 'سائقين', 'مندوب', 'مناديب'] },
-  { label: 'كباتن الطلبات', path: '/dashboard/captain-orders', icon: <MdSportsMotorsports size={20} />, keywords: ['كابتن', 'كباتن', 'كابتن طلبات', 'توصيل', 'captain', 'orders'] },
-  { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} />, keywords: ['مصاريف', 'نفقات'] },
-  { label: 'الحسابات المالية', path: '/dashboard/financial-accounts', icon: <MdAccountBalance size={20} />, keywords: ['خزنة', 'بنك', 'درج', 'مالية'] },
-  { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} />, keywords: ['صالة', 'غرفة'] },
-  { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableRestaurant size={20} />, keywords: ['طاولة', 'ترابيزة'] },
-  { label: 'الطلبات', path: '/dashboard/orders', icon: <MdReceipt size={20} />, keywords: ['اوردر', 'اوردرات', 'فواتير'] },
-  { label: 'المطابخ', path: '/dashboard/kitchens', icon: <MdSoupKitchen size={20} />, keywords: ['مطبخ', 'شيف'] },
-  { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} />, keywords: ['تصنيف', 'قسم', 'منيو'] },
-  { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} />, keywords: ['وجبات', 'اصناف', 'اكل'] },
-  { label: 'الإضافات', path: '/dashboard/addons', icon: <MdExtension size={20} />, keywords: ['اضافات', 'اضافة', 'توبنج', 'جبن', 'صوص', 'addon', 'addons'] },
-  { label: 'منتجات غير منتهية التصنيع', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} />, keywords: ['نصف مصنعة', 'تجهيز'] },
-  { label: 'معايير تصنيع المنتجات', path: '/dashboard/product-manufacturings', icon: <MdSchema size={20} />, keywords: ['معيار', 'وصفة', 'رسبي'] },
-  { label: 'أوامر وقوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} />, keywords: ['تشغيل', 'انتاج'] },
-  { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} />, keywords: ['مخزن', 'خامات'] },
-  { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'تسوية'] },
-  { label: 'جرد وصفات التصنيع', path: '/dashboard/recipe-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'وصفات', 'نصف مصنعة', 'تجهيز', 'recipe inventory', 'جرد الوصفات'] },
-  { label: 'جرد مخزون الإضافات', path: '/dashboard/addon-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'اضافات', 'مخزون', 'توبنج', 'addon inventory', 'جرد الإضافات'] },
-  { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} />, keywords: ['فواتير شراء', 'شراء'] },
-  { label: 'المبيعات', path: '/dashboard/sales', icon: <MdPointOfSale size={20} />, keywords: ['فواتير بيع', 'بيع'] },
-  { label: 'الأقساط والديون', path: '/dashboard/dues', icon: <MdAccountBalanceWallet size={20} />, keywords: ['اقساط', 'ديون', 'اجل', 'سداد', 'مشتريات', 'مبيعات', 'مديونيات', 'due', 'dues', 'installments'] },
-  { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} />, keywords: ['تجار', 'توريد'] },
-  { label: 'الموزعين / العملاء', path: '/dashboard/salers', icon: <MdStorefront size={20} />, keywords: ['عميل', 'زبون'] },
-  { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} />, keywords: ['تخفيض', 'كوبون'] },
-  { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} />, keywords: ['ضريبة', 'قيمة مضافة'] },
-  { label: 'وحدات القياس', path: '/dashboard/units', icon: <MdStraighten size={20} />, keywords: ['وحدات', 'قياس', 'كيلو', 'جرام', 'كرتونة', 'unit', 'units', 'معامل تحويل'] },
-  { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} />, keywords: ['هدر', 'تالف'] },
-  { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} />, keywords: ['كاش', 'فيزا', 'دفع'] },
-  { label: 'البانرات الإعلانية', path: '/dashboard/banners', icon: <MdViewCarousel size={20} />, keywords: ['بانرات', 'اعلانات', 'سلايدر', 'عروض', 'banners', 'banner'] },
-  { label: 'الإعدادات', path: '/dashboard/settings', icon: <MdSettings size={20} />, keywords: ['ضبط', 'لوجو'] },
+  { label: 'الرئيسية', path: '/dashboard', icon: <MdDashboard size={20} />, keywords: ['داشبورد', 'احصائيات', 'مبيعات'], permission: 'dashboard' },
+  { label: 'الفروع', path: '/dashboard/branches', icon: <MdStorefront size={20} />, keywords: ['فرع', 'مطعم'], permission: 'branch' },
+  { label: 'المديرين', path: '/dashboard/admins', icon: <MdAdminPanelSettings size={20} />, keywords: ['ادمن', 'مسؤول', 'صلاحيات'], permission: 'admin' },
+  { label: 'الأدوار والصلاحيات', path: '/dashboard/roles', icon: <MdSecurity size={20} />, keywords: ['ادوار', 'صلاحيات', 'اذونات', 'roles', 'permissions', 'رتب'], permission: 'role' },
+  { label: 'الكاشير', path: '/dashboard/cashiers', icon: <MdPointOfSale size={20} />, keywords: ['جهاز', 'نقطة بيع', 'pos'], permission: 'cashier' },
+  { label: 'موظفي الكاشير', path: '/dashboard/cashier-men', icon: <MdPeople size={20} />, keywords: ['كاشيرجي', 'كاشير', 'موظف'], permission: 'cashier_man' },
+  { label: 'الورديات', path: '/dashboard/shifts', icon: <MdSchedule size={20} />, keywords: ['شيفت', 'دوام'], permission: 'shift' },
+  { label: 'تقرير الورديات', path: '/dashboard/reports/start-shifts', icon: <MdAssessment size={20} />, keywords: ['تقارير', 'شيفتات', 'اغلاق'], permission: 'report' },
+  { label: 'مناديب التوصيل', path: '/dashboard/deliveries', icon: <MdDeliveryDining size={20} />, keywords: ['توصيل', 'دليفري', 'طيار', 'طيارين', 'سائق', 'سائقين', 'مندوب', 'مناديب'], permission: 'delivery' },
+  { label: 'كباتن الطلبات', path: '/dashboard/captain-orders', icon: <MdSportsMotorsports size={20} />, keywords: ['كابتن', 'كباتن', 'كابتن طلبات', 'توصيل', 'captain', 'orders'], permission: 'captain_order' },
+  { label: 'قائمة المصروفات', path: '/dashboard/expense-lists', icon: <MdReceiptLong size={20} />, keywords: ['مصاريف', 'نفقات'], permission: 'expense_list' },
+  { label: 'الحسابات المالية', path: '/dashboard/financial-accounts', icon: <MdAccountBalance size={20} />, keywords: ['خزنة', 'بنك', 'درج', 'مالية'], permission: 'financial_account' },
+  { label: 'الصالات', path: '/dashboard/halls', icon: <MdMeetingRoom size={20} />, keywords: ['صالة', 'غرفة'], permission: 'hall' },
+  { label: 'طاولات الصالة', path: '/dashboard/hall-tables', icon: <MdTableRestaurant size={20} />, keywords: ['طاولة', 'ترابيزة'], permission: 'hall_table' },
+  { label: 'الطلبات', path: '/dashboard/orders', icon: <MdReceipt size={20} />, keywords: ['اوردر', 'اوردرات', 'فواتير'], permission: 'order' },
+  { label: 'المطابخ', path: '/dashboard/kitchens', icon: <MdSoupKitchen size={20} />, keywords: ['مطبخ', 'شيف'], permission: 'kitchen' },
+  { label: 'الأقسام', path: '/dashboard/categories', icon: <MdCategory size={20} />, keywords: ['تصنيف', 'قسم', 'منيو'], permission: 'category' },
+  { label: 'المنتجات', path: '/dashboard/products', icon: <MdFastfood size={20} />, keywords: ['وجبات', 'اصناف', 'اكل'], permission: 'product' },
+  { label: 'الإضافات', path: '/dashboard/addons', icon: <MdExtension size={20} />, keywords: ['اضافات', 'اضافة', 'توبنج', 'جبن', 'صوص', 'addon', 'addons'], permission: 'addon' },
+  { label: 'منتجات غير منتهية التصنيع', path: '/dashboard/product-recipes', icon: <MdReceiptLong size={20} />, keywords: ['نصف مصنعة', 'تجهيز'], permission: 'product_recipe' },
+  { label: 'معايير تصنيع المنتجات', path: '/dashboard/product-manufacturings', icon: <MdSchema size={20} />, keywords: ['معيار', 'وصفة', 'رسبي'], permission: 'product_manufacturing' },
+  { label: 'أوامر وقوائم التصنيع', path: '/dashboard/manufacturing', icon: <MdPrecisionManufacturing size={20} />, keywords: ['تشغيل', 'انتاج'], permission: 'manufacturing' },
+  { label: 'المواد الخام', path: '/dashboard/materials', icon: <MdLayers size={20} />, keywords: ['مخزن', 'خامات'], permission: 'material' },
+  { label: 'جرد المواد الخام', path: '/dashboard/material-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'تسوية'], permission: 'inventory' },
+  { label: 'جرد وصفات التصنيع', path: '/dashboard/recipe-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'وصفات', 'نصف مصنعة', 'تجهيز', 'recipe inventory', 'جرد الوصفات'], permission: 'inventory' },
+  { label: 'جرد مخزون الإضافات', path: '/dashboard/addon-inventory', icon: <MdFactCheck size={20} />, keywords: ['جرد', 'اضافات', 'مخزون', 'توبنج', 'addon inventory', 'جرد الإضافات'], permission: 'inventory' },
+  { label: 'المشتريات', path: '/dashboard/purchases', icon: <MdShoppingBag size={20} />, keywords: ['فواتير شراء', 'شراء'], permission: 'purchase' },
+  { label: 'المبيعات', path: '/dashboard/sales', icon: <MdPointOfSale size={20} />, keywords: ['فواتير بيع', 'بيع'], permission: 'sale' },
+  { label: 'الأقساط والديون', path: '/dashboard/dues', icon: <MdAccountBalanceWallet size={20} />, keywords: ['اقساط', 'ديون', 'اجل', 'سداد', 'مشتريات', 'مبيعات', 'مديونيات', 'due', 'dues', 'installments'], permission: 'dues' },
+  { label: 'الموردين', path: '/dashboard/suppliers', icon: <MdLocalShipping size={20} />, keywords: ['تجار', 'توريد'], permission: 'supplier' },
+  { label: 'الموزعين / العملاء', path: '/dashboard/salers', icon: <MdStorefront size={20} />, keywords: ['عميل', 'زبون'], permission: 'saler' },
+  { label: 'الخصومات', path: '/dashboard/discounts', icon: <MdDiscount size={20} />, keywords: ['تخفيض', 'كوبون'], permission: 'discount' },
+  { label: 'الضرائب والرسوم', path: '/dashboard/taxes', icon: <MdMonetizationOn size={20} />, keywords: ['ضريبة', 'قيمة مضافة'], permission: 'tax' },
+  { label: 'وحدات القياس', path: '/dashboard/units', icon: <MdStraighten size={20} />, keywords: ['وحدات', 'قياس', 'كيلو', 'جرام', 'كرتونة', 'unit', 'units', 'معامل تحويل'], permission: 'unit' },
+  { label: 'الهالك والتوالف', path: '/dashboard/wastes', icon: <MdDeleteOutline size={20} />, keywords: ['هدر', 'تالف'], permission: 'waste' },
+  { label: 'طرق الدفع', path: '/dashboard/payment-methods', icon: <MdPayment size={20} />, keywords: ['كاش', 'فيزا', 'دفع'], permission: 'payment_method' },
+  { label: 'البانرات الإعلانية', path: '/dashboard/banners', icon: <MdViewCarousel size={20} />, keywords: ['بانرات', 'اعلانات', 'سلايدر', 'عروض', 'banners', 'banner'], permission: 'banner' },
+  { label: 'الإعدادات', path: '/dashboard/settings', icon: <MdSettings size={20} />, keywords: ['ضبط', 'لوجو'], permission: 'business_setup' },
 ];
 
 const normalizeArabic = (str: string) =>
@@ -120,10 +126,22 @@ const matchesSearch = (item: NavItem, query: string) => {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { can, isSuperAdmin } = usePermissions();
+
+  const authorizedItems = useMemo(() => {
+    return NAV_ITEMS.filter((item) => {
+      if (isSuperAdmin) return true;
+      if (!item.permission) return true;
+      if (item.permission === 'dues') {
+        return can('purchase_due', 'view') || can('sale_due', 'view');
+      }
+      return can(item.permission, item.action || 'view');
+    });
+  }, [can, isSuperAdmin]);
 
   const filteredItems = useMemo(() => {
-    return NAV_ITEMS.filter((item) => matchesSearch(item, searchQuery));
-  }, [searchQuery]);
+    return authorizedItems.filter((item) => matchesSearch(item, searchQuery));
+  }, [authorizedItems, searchQuery]);
 
   return (
     <>
